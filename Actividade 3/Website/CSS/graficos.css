@@ -1,0 +1,204 @@
+﻿    html {
+        width: 100%;
+        height: 100%;
+    }
+
+    /*------------------
+        GridStack
+    ------------------*/
+
+    /* Modificar margem lateral dos "Widgets"*/
+    .grid-stack .grid-stack-item .grid-stack-item-content,
+    .grid-stack .grid-stack-item .placeholder-content {
+        left: 2px !important;
+        right: 2px !important;
+    }
+
+    /* "Retira" imagem da handle de resize: ; */
+    .grid-stack > .grid-stack-item > .ui-resizable-se,
+    .grid-stack > .grid-stack-item > .ui-resizable-sw {
+        background-image: none;
+    }
+
+      /*  Esconder o overflow dentro dos widgets  */
+      .grid-stack-item-content{
+          overflow: hidden !important;
+      }
+
+    /*------------------
+        Widgets
+    ------------------*/
+
+
+    /*
+        Conteudo do widget ( Gráfico )
+    */
+    .wrapper {
+      width: 60%;
+      height: calc(100% - 25px);
+
+      margin-top:5px;
+      margin-left:5px;
+      margin-bottom:5px;
+    }
+
+
+    /*
+        "Navbar" do widget com as opções
+    */
+    .widget-navbar {
+      width: 100%;
+      height:5%;
+      min-height: 20px;
+
+      text-align:center;
+
+      background-color: cadetblue;
+      border-bottom: 1px solid #000;
+    }
+
+    .edita-widget,
+    .remove-widget,
+    .update-widget,
+    .piechart-donut {
+        float:right;
+
+        height:100%;
+
+        border-bottom: 1px solid #000;
+        border-left: 1px solid #000;
+    }
+
+    .update-widget {
+        background-color: yellow;
+        border: none;
+    }
+
+
+    .edita-widget {
+        background-color: green;
+        border: none;
+    }
+
+
+    .remove-widget {
+        background-color: red;
+        border: none;
+    }
+
+    /*
+        Estilo do widget
+    */
+
+    .box {
+        background-color: azure;
+        border: 1px solid #000;
+    }
+
+    /*--------------------
+        CSS dos Eixos
+    ----------------------*/
+
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    /*--------------------
+        Gráfico Area
+    ----------------------*/
+
+    .area {
+      fill: rgb(207, 37, 0);
+    }
+
+    /*--------------------
+        Gráfico Barras
+    --------------------*/
+
+    .bar {
+      fill: red;
+    }
+
+    .bar:hover {
+      fill: blue ;
+    }
+
+    /*--------------------
+        Gráfico Barras
+    --------------------*/
+
+    .bar {
+      fill: red;
+    }
+
+    .bar:hover {
+      fill: blue ;
+    }
+
+    /*--------------------
+        Pie Chart
+    --------------------*/
+
+    /*
+        Puxa o wrapper para a esquerda, para que as legendas
+        possam estar do lado do wrapper
+    */
+    .pieChart > .wrapper {
+        float: left;
+    }
+
+
+    .piechart-donut {
+        background-color: lightyellow;
+        border: none;
+    }
+
+    /* Hover - Fatias do Pie Chart*/
+    svg .slice:hover {
+        opacity: 0.5;
+    }
+
+    /*--------------------
+        Gauge
+    --------------------*/
+
+    .gauge > .wrapper {
+        width: 100% !important;
+
+        margin-left: 2.5% !important;
+    }
+
+    .grafico-pintado {
+      fill: rgb(47, 74, 170);
+    }
+
+    .grafico-vazio {
+      fill: rgb(200, 200, 200);
+    }
+
+    /*--------------------
+        Tabela
+    --------------------*/
+
+    .tabela > .wrapper {
+        overflow:auto !important;
+
+        width: calc(100% - 5px) !important;
+        height: 90% !important;
+
+        margin-bottom: 5px;
+    }
+
+
+    /*--------------------
+        KPI
+    --------------------*/
+
+    .KPI > .wrapper {
+        width: 100% !important;
+        
+        margin: 0 !important;
+    }

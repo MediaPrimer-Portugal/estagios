@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="utf-8">
+<head>
+    <meta charset="utf-8">
+    <title>Dashboard Demo</title>
+    <link rel="stylesheet" href="node_modules\bootstrap\dist\css\bootstrap.min.css">
+    <link rel="stylesheet" href="node_modules\bootstrap\dist\css\bootstrap-theme.min.css">
+    <link rel="stylesheet" href="gridstack.css">
+    <link rel="stylesheet" href="gridstack/dist/gridstack-extra.css">
+    <link rel="stylesheet" href="node_modules\spectrum\spectrum.css">
+    <link rel="stylesheet" href="gauge.css">
+    <link rel="stylesheet" href="bar.css">
+    <link rel="stylesheet" href="gs.css">
+</head>
+<body>
+  <div class="chart-gauge"></div>
+  <div class="wrapper">
+    <div style="margin: 10px; position:relative; left:150px;">
+      <span style="font-size:2em !important;">ATUAL:</span> <input class="valor-atual" type="number"></input>
+    </div>
+    <button type="button" class="update-gauge">update</button>
+  </div>
+
+  <div id = "testeTooltip" data-toggle="tooltip">
+    <span>Want a tip?</span>
+  </div>
+
+      <div id="myModal" class="modal fade">
+
+          <div class="modal-dialog">
+
+              <div class="modal-content">
+
+                  <div class="modal-header">
+
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+
+                      <h4 class="modal-title">Adicionar Widgets</h4>
+
+                  </div>
+
+                  <div class="modal-body">
+
+                      <p>Selecione um widget para adicionar</p>
+                      <div class="tabelaGraficos"></div>
+
+
+                  </div>
+
+                  <div class="modal-footer">
+
+                      <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+
+                      <button type="button" class="btn btn-primary">Escolher</button>
+
+                  </div>
+
+              </div>
+
+          </div>
+
+      </div>
+
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js" ></script>
+    <script src="node_modules\tooltipsy\tooltipsy.min.js"></script>
+    <script src="node_modules\bootstrap\dist\js\bootstrap.min.js"></script>
+    <script src="node_modules\lodash\lodash.js"></script>
+    <script src="gridstack.js"></script>
+    <script src="node_modules\d3\d3.min.js"></script>
+    <script src="node_modules\spectrum\spectrum.js"></script>
+    <script src="node_modules\attrchange-master\js\attrchange.js"></script>
+    <script src="gauge.js"></script>
+
+
+  </body>
+  </html>

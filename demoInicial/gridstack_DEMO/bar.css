@@ -1,0 +1,106 @@
+    .bar {
+    fill: red;
+    }
+
+    .bar:hover {
+    fill: blue ;
+    }
+
+    .square {
+      height: 200px;
+      width: 200px;
+      background-color: #000;
+    }
+
+    span {
+      color: rgb(255, 255, 255);
+    }
+
+    /* Texto Gráficos
+    */
+    .rotated {
+    -webkit-transform: rotate(360deg);  /* Chrome, Safari 3.1+ */
+    -moz-transform: rotate(360deg);  /* Firefox 3.5-15 */
+    -ms-transform: rotate(360deg);  /* IE 9 */
+    -o-transform: rotate(360deg);  /* Opera 10.50-12.00 */
+    transform: rotate(360deg);  /* Firefox 16+, IE 10+, Opera 12.10+ */
+    }
+
+
+    /*  Gráfico Barras
+    */
+    .axis {
+    font: 10px sans-serif;
+    }
+
+    .axis text {
+      font: 10px sans-serif;
+    }
+
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    /* Eixo dos X nos gráficos
+    */
+    .x.axis path {
+      /*display: none;*/
+    }
+
+
+    /* Pie chart Hover
+    */
+    svg .slice:hover {
+      fill:red;
+    }
+
+    /* Conteudo dentro dos widgets
+    */
+    .wrapper {
+      width: 90%;
+      height: calc(100% - 25px);
+
+      margin-left:5px;
+      margin-bottom:5px;
+    }
+
+    .widget-title {
+      height:5%;
+      min-height: 20px;
+
+      background-color: #fff;
+      border-bottom: 1px solid #000;
+    }
+
+    /* --------------------- Gráfico Area -----------------------------------*/
+
+    /*
+      CRISP-EDGES
+      Indicates that the user agent should attempt to emphasize the contrast
+      between clean edges of artwork over rendering speed and geometric precision.
+      To achieve crisp edges, the user agent might turn off anti-aliasing for all
+      lines or possibly just for straight lines which are close to vertical or
+      horizontal. Also, the user agent might adjust line positions and line widths
+      to align edges with device pixels.
+    */
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    .area {
+      fill: rgb(207, 37, 0);
+    }
+
+    /* --------------------Gráfico de Linhas ------------------------------*/
+
+    .line {
+      /*stroke: steelblue;
+      stroke-width: 2;*/
+      fill:none;
+    }

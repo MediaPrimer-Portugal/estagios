@@ -1,0 +1,32 @@
+﻿[
+  {
+    "age": 32,
+    "eyeColor": 7,
+    "hairColor":  5,
+    "date": "14-Aug-21"
+  },
+   {
+    "age": 30,
+    "eyeColor": 20,
+    "hairColor":  2,
+    "date": "14-Aug-22"
+  },
+  {
+    "age": 100,
+    "eyeColor": 10,
+    "hairColor":  1,
+    "date": "14-Aug-30"
+  },
+  {
+    "age": 22,
+    "eyeColor": 7,
+    "hairColor":  6,
+    "date": "14-Sep-2"
+  },
+  {
+    "age": 20,
+    "eyeColor": 3,
+    "hairColor":  1,
+    "date": "14-Sep-10"
+  }
+]

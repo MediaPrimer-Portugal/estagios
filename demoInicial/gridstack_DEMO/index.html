@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+    <meta charset="utf-8">
+    <title>Dashboard Demo</title>
+    <link rel="stylesheet" href="node_modules\bootstrap\dist\css\bootstrap.min.css">
+    <link rel="stylesheet" href="node_modules\bootstrap\dist\css\bootstrap-theme.min.css">
+    <link rel="stylesheet" href="gridstack.css">
+    <link rel="stylesheet" href="gridstack/dist/gridstack-extra.css">
+    <link rel="stylesheet" href="node_modules\spectrum\spectrum.css">
+    <link rel="stylesheet" href="bar.css">
+    <link rel="stylesheet" href="gs.css">
+</head>
+<body>
+
+  <div class="barra-feedback"><p class="feedback-aviso"></p><button type="button" class="close-button"><i class="glyphicon glyphicon-remove"></i></div>
+
+  <nav role="navigation" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+
+      <div class="navbar-header">
+        <button type="button" data-target="#navbarCollapse" data-toggle="collapse" class="navbar-toggle">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a href="#" class="navbar-brand">Dashboard</a>
+      </div>
+
+      <div id="navbarCollapse" class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li class="dropdown"><a href="#" data-toggle="dropdown">Carregar Dashboard</a>
+            <ul class="dropdown-menu">
+              <li class="save-dashboard"><a href="#">indicadores v1.0</a></li>
+              <li class="load-dashboard"><a href="#">sensor 4.0</a></li>
+            </ul>
+          </li>
+          <li class="widgets-popover" data-placement="bottom">
+            <a href="#">Widgets</a>
+          </li>
+          <li class ="add-teste"><a href="#">Adicionar Widget</a></li>
+          <li class="barra-erro"><a href="#">Erro</a></li>
+          <li class="widgets-delete"><a href="#">Delete Widgets</a></li>
+          <li class="gridstack-show"><a href="#">Show Grid</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="gauge.html">Gauge</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar">
+    <div class="col-md-12">
+      <div class="grid-stack grid-stack-1" id="sidebar-gridstack">
+
+        <div class="grid-stack-item" name="teste1" data-gs-auto-position="yes" data-gs-width="1" data-gs-height="1">
+          <div class="grid-stack-item-content box grafico-trigger" >
+            <div class="grafico-descricao">
+              <span>O gráfico de barras é um gráfico com barras retangulares e comprimento
+              proporcional aos valores que ele representa.</span>
+            </div>
+          </div>
+        </div>
+        <div class="grid-stack-item" data-gs-auto-position="yes" data-gs-width="1" data-gs-height="1">
+          <div class="grid-stack-item-content box grafico-trigger" ><div class="grafico-descricao">teste 2</div></div>
+        </div>
+        <div class="grid-stack-item" data-gs-auto-position="yes" data-gs-width="1" data-gs-height="1">
+          <div class="grid-stack-item-content box grafico-trigger" ><div class="grafico-descricao">teste 3</div></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+  <label for="nav-trigger">
+    <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" style="fill: white;" viewBox="0 0 512 512" enable-background="new 0 0 512 512" xml:space="preserve">
+      <path d="M281.6,128H230.4v102.4H128V281.6h102.4V384H281.6V281.6H384V230.4H281.6V128z M256,0C114.562,0,0,114.562,0,256  s114.562,256,256,256s256-114.562,256-256S397.438,0,256,0z M256,460.8C143.106,460.8,51.2,368.9,51.2,256  c0-112.894,91.906-204.8,204.8-204.8c112.9,0,204.8,91.906,204.8,204.8C460.8,368.9,368.9,460.8,256,460.8z"/>
+    </svg>
+  </label>
+
+  <div class="site-wrap">
+    <div class="col-md-12 main-gridstack-wrap">
+
+      <div class="grid-stack" id="main-gridstack" data-gs-width="12">
+        <div class="grid-stack-item" data-gs-min-height="5" data-gs-min-width="5" data-gs-x="4" data-gs-y="0" data-gs-width="1" data-gs-height="2">
+          <div class="grid-stack-item-content box1" >
+            Gráfico Barras
+            <div class="wrapper">
+            </div>
+            <button type="button" class="close-button"><i class="glyphicon glyphicon-remove"></i></button>
+            <button type="button" class="update-widget"><i class="glyphicon glyphicon-refresh"></i></button>
+          </div>
+        </div>
+        <div class="grid-stack-item" name="teste2" data-gs-x="0" data-gs-y="0" data-gs-width="1" data-gs-height="2">
+            <div class="grid-stack-item-content box1">teste2
+              <div class="wrapper">
+              </div>
+              <button type="button" class="close-button"><i class="glyphicon glyphicon-remove"></i></button>
+            </div>
+        </div>
+        <div class="grid-stack-item" name="teste3" data-gs-x="0" data-gs-y="0" data-gs-width="1" data-gs-height="1">
+            <div class="grid-stack-item-content box1">teste3
+              <div class="wrapper">
+              </div>
+              <button type="button" class="close-button"><i class="glyphicon glyphicon-remove"></i></button>
+            </div>
+        </div>
+        <div class="grid-stack-item" name="teste4" data-gs-min-height="2" data-gs-min-width="3" data-gs-x="2" data-gs-y="1" data-gs-width="1" data-gs-height="1">
+            <div class="grid-stack-item-content box1">teste4
+              <button type="button" class="close-button"><i class="glyphicon glyphicon-remove"></i></button>
+
+            <select class="dropdown-widget">
+            </select>
+
+              <button type="button" class="desenha-grafico">desenha</button>
+            </div>
+        </div>
+        <div class="grid-stack-item" name="teste5" data-gs-x="0" data-gs-y="0" data-gs-width="1" data-gs-height="2">
+            <div class="grid-stack-item-content box1">teste5
+              <div class="wrapper">
+              </div>
+              <button type="button" class="update-widget"><i class="glyphicon glyphicon-refresh"></i></button>
+              <button type="button" class="close-button"><i class="glyphicon glyphicon-remove"></i></button>
+            </div>
+        </div>
+        <div class="grid-stack-item" name="teste6" data-gs-x="0" data-gs-y="3" data-gs-width="1" data-gs-height="1">
+            <div class="grid-stack-item-content box1">
+              <div class="widget-title">teste6</div>
+              <button type="button" class="close-button"><i class="glyphicon glyphicon-remove"></i></button>
+              <div class="wrapper">
+              </div>
+              <input name="dados" class="dados-janeiro" type="number" style="margin:5px; max-width:80%;" min="0"></input>
+            </div>
+        </div>
+        <div class="grid-stack-item" name="teste7" data-gs-x="0" data-gs-y="0" data-gs-width="1" data-gs-height="5">
+            <div class="grid-stack-item-content box1">teste7
+              <div class="wrapper">
+              </div>
+              <select class="dropdown-dados">
+                <option value="data">data 1</option>
+                <option value="data2">data 2</option>
+              </select>
+              <button type="button" class="close-button"><i class="glyphicon glyphicon-remove"></i></button>
+            </div>
+        </div>
+        <div class="grid-stack-item" name="teste8" data-gs-x="0" data-gs-y="0" data-gs-width="2" data-gs-height="4">
+            <div class="grid-stack-item-content box1">teste8
+              <div class="wrapper">
+              </div>
+              <button type="button" class="close-button"><i class="glyphicon glyphicon-remove"></i></button>
+              <button type="button" class="update-widget"><i class="glyphicon glyphicon-refresh"></i></button>
+            </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+    <div id="myModal" class="modal fade">
+
+        <div class="modal-dialog">
+
+            <div class="modal-content">
+
+                <div class="modal-header">
+
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+
+                    <h4 class="modal-title">Adicionar Widgets</h4>
+
+                </div>
+
+                <div class="modal-body">
+
+                    <p>Selecione um widget para adicionar</p>
+                    <div class="tabelaGraficos"></div>
+
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancelar</button>
+
+                    <button type="button" class="btn btn-primary">Escolher</button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js" ></script>
+  <script src="node_modules\bootstrap\dist\js\bootstrap.min.js"></script>
+  <script src="node_modules\lodash\lodash.js"></script>
+  <script src="gridstack.js"></script>
+  <script src="node_modules\d3\d3.min.js"></script>
+  <script src="node_modules\spectrum\spectrum.js"></script>
+  <script src="node_modules\attrchange-master\js\attrchange.js"></script>
+  <script src="gs.js"></script>
+  <script src="graficoBarras.js"></script>
+  <script src="graficoArea.js"></script>
+  <script src="graficoAreav2.js"></script>
+  <script src="graficoLinhas.js"></script>
+  <script src="pieChart.js"></script>
+  <script src="teste.js"></script>
+</body>
+</html>

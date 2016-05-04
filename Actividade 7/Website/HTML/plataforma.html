@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    
+    <title>Demo Plataforma</title>
+    <link rel="stylesheet" href="../Plugins/node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../Plugins/node_modules/bootstrap/dist/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="../CSS/graficos.css">
+    <link rel="stylesheet" href="../CSS/gridstack.css">
+    <link rel="stylesheet" href="../Plugins/gridstack/dist/gridstack-extra.min.css">
+    <link rel="stylesheet" href="../CSS/dataTables.css" />
+    <link rel="stylesheet" href="../CSS/dataTables.css" type="text/css" />
+
+</head>
+<body>
+
+
+    <table>
+        <tr>
+            <td>
+                Indique coordenada X:
+            </td>
+            <td>
+                <input type="text" pattern="[0-9]*" class="widgetCoordenadaX" /> 
+                <label class="widgetLabelX" style="color: red;"></label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Indique coordenada Y:
+            </td>
+            <td>
+                <input type="text" pattern="[0-9]*"  class="widgetCoordenadaY" /> 
+                <label class="widgetLabelY" style="color: red;"></label>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <span>Selecione o Widget: </span>
+            </td>
+            <td>
+                <select class="adicionaWidget-tipo">
+                    <option value="area">Gráfico Área</option>
+                    <option value="barras">Gráfico Barras</option>
+                    <option value="linhas">Gráfico Linhas</option>
+                    <option value="gauge">Gauge</option>
+                    <option value="kpi">KPI</option>
+                    <option value="pie">Pie Chart</option>
+                    <option value="tabela">Tabela</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <button type="button" class="adicionaWidget">Adiciona Widget</button>
+            </td>
+            <td>
+                <button type="button" class="informacaoWidgets">Informação sobre Widgets</button>
+            </td>
+        </tr>
+    </table>
+    
+    <p style="position:relative; bottom: 20%; left:10%;">
+        <table>
+            Tipos de botão
+            <td>Update/Muda Gráfico<button type="button" style="border:none; background-color:white;"><i class="glyphicon glyphicon-refresh"></i></button></td>
+            <td>Dados do Widgets<button type="button" style="border:none; background-color:white;"><i class="glyphicon glyphicon-duplicate"></i></button></td>
+            <td>Tooltips<button type="button" style="border:none; background-color:white;"><i class="glyphicon glyphicon-comment"></i></button></td>
+            <td>Legendas<button type="button" style="border:none; background-color:white;"><i class="glyphicon glyphicon-info-sign"></i></button></td>
+            <td>Titulo Widget<button type="button" style="border:none; background-color:white;"><i class="glyphicon glyphicon-edit"></i></button></td>
+        </table>
+    </p>
+
+
+    <div class="site-wrap">
+        <div class="main-gridstack-wrap">
+
+            <div class="grid-stack" id="main-gridstack" data-gs-width="12">
+            </div>
+
+        </div>
+    </div>
+
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+    <script src="../Plugins/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="../Plugins/node_modules/lodash/lodash.js"></script>
+    <script src="../Plugins/gridstack/dist/gridstack.js"></script>
+    <script src="../Plugins/node_modules/d3/d3.min.js"></script>
+    <script src="../Plugins/node_modules/datatables.net/js/jquery.dataTables.js"></script>
+    <script src="../JS/spinner.js"></script>
+    <script src="../JS/tooltips.js"></script>
+
+    <script src="../JS/plataforma.js"></script>
+
+    
+</body>
+</html>

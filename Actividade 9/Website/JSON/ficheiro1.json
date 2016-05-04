@@ -1,0 +1,14 @@
+{"dadosBarras" : [
+  { "nome": "janeiro", "numero": 10 },
+  { "nome": "fev", "numero": 5 },
+  { "nome": "março", "numero": 25 },
+  { "nome": "abril", "numero": 50 },
+  { "nome": "maio", "numero": 6 },
+  { "nome": "junho", "numero": 37 },
+  { "nome": "julho", "numero": 16 },
+  { "nome": "agosto", "numero": 24 },
+  { "nome": "setembro", "numero": 19 },
+  { "nome": "outubro", "numero": 13 },
+  { "nome": "novembro", "numero": 17 },
+  { "nome": "dezembro", "numero": 31 }
+]}
