@@ -1,0 +1,82 @@
+﻿
+    html {
+        width: 100%;
+        height: 100%;
+    }
+
+    /*------------------
+        Gridstack
+    ------------------*/
+
+    #main-gridstack {
+        border: 1px solid #000;
+    }
+
+    /*------------------
+        Botões no Widget
+    ------------------*/
+
+      .remove-widget,
+      .update-widget{
+          position: absolute;
+          border: none;
+          padding: 0;
+          margin: 0;
+
+          background: none;
+
+          height:14px;
+          width:14px;
+      }
+
+      .remove-widget{
+          right: 2px;
+          top: 2px;
+      }
+
+      .update-widget{
+          right: 20px;
+          top: 2px;
+      }
+
+    /*------------------
+        Widgets
+    ------------------*/
+
+
+    /* Modificar margem lateral dos "Widgets"*/
+    .grid-stack .grid-stack-item .grid-stack-item-content,
+    .grid-stack .grid-stack-item .placeholder-content {
+        left: 2px !important;
+        right: 2px !important;
+    }
+
+    /* "Retira" imagem da handle de resize: ; */
+    .grid-stack > .grid-stack-item > .ui-resizable-se,
+    .grid-stack > .grid-stack-item > .ui-resizable-sw {
+        background-image: none;
+    }
+
+      /*  Esconder o overflow dentro dos widgets  */
+      .grid-stack-item-content{
+          overflow: hidden !important;
+
+      }
+
+    .box {
+        background-color: red;
+        border: 1px solid #000;
+    }
+
+    .wrapper {
+        min-height: 100%;
+        min-width: 100%;
+
+        text-align: center;
+    }
+
+    .widget-navbar {        
+        background-color: #e1a500;
+
+        border-bottom: 1px solid #000;
+    }

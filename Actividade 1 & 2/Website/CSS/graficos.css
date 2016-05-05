@@ -1,0 +1,80 @@
+﻿    /*--------------------
+        svg
+    --------------------*/
+
+    svg {
+        max-width: 400px;
+        max-height: 400px;
+    }
+
+
+    /*--------------------
+        wrapper
+        Conteudo dos widgets, gráficos, elementos do d3, 
+        etc vão estar contidos aqui
+    --------------------*/
+
+    .wrapper {
+        max-width: 400px;
+        max-height: 400px;
+    }
+
+
+    /*--------------------
+        CSS dos Eixos
+    ----------------------*/
+
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    /*--------------------
+        Gráfico Area
+    ----------------------*/
+
+    .area {
+      fill: rgb(207, 37, 0);
+    }
+
+    /*--------------------
+        Gráfico Barras
+    --------------------*/
+
+    .bar {
+      fill: red;
+    }
+
+    .bar:hover {
+      fill: blue ;
+    }
+
+    /*--------------------
+        Pie Chart
+    --------------------*/
+
+    .slice:hover {
+       opacity: 0.5;
+    }
+
+    /*--------------------
+        Gauge
+    --------------------*/
+
+    .grafico-pintado {
+      fill: rgb(47, 74, 170);
+    }
+
+    .grafico-vazio {
+      fill: rgb(200, 200, 200);
+    }
+
+    /*--------------------
+        Label Valor
+    --------------------*/
+
+    .labelValor {
+        border: 1px solid #000;
+    }
