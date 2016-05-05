@@ -1,0 +1,612 @@
+﻿{
+  "DashboardID": "asdEGwe23fgwW$GHwegR",
+  "TempoResposta": 364,
+  "Widgets": [
+    {
+      "WidgetID": "widget0",
+      "TotalItems": 30,
+      "Items": [
+        {
+          "Chave": "1420070400000",
+          "ChaveTexto": "01/01/2015 00:00:00",
+          "Data": "2015-01-01T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 6.57083333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 5.94166666666667
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 6.34071759259259
+            }
+          ]
+        },
+        {
+          "Chave": "1420156800000",
+          "ChaveTexto": "02/01/2015 00:00:00",
+          "Data": "2015-01-02T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 5.47083333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 5.3125
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 5.39606481481481
+            }
+          ]
+        },
+        {
+          "Chave": "1420243200000",
+          "ChaveTexto": "03/01/2015 00:00:00",
+          "Data": "2015-01-03T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 6.57083333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 5.8625
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 6.24503367003367
+            }
+          ]
+        },
+        {
+          "Chave": "1420329600000",
+          "ChaveTexto": "04/01/2015 00:00:00",
+          "Data": "2015-01-04T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 7.05
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 6.32083333333333
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 6.7142263986014
+            }
+          ]
+        },
+        {
+          "Chave": "1420416000000",
+          "ChaveTexto": "05/01/2015 00:00:00",
+          "Data": "2015-01-05T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 6.50416666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 5.62083333333333
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 6.05561747280497
+            }
+          ]
+        },
+        {
+          "Chave": "1420502400000",
+          "ChaveTexto": "06/01/2015 00:00:00",
+          "Data": "2015-01-06T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 5.20416666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 5.06666666666667
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 5.14337121212121
+            }
+          ]
+        },
+        {
+          "Chave": "1420588800000",
+          "ChaveTexto": "07/01/2015 00:00:00",
+          "Data": "2015-01-07T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.44583333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.05
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.25969065656566
+            }
+          ]
+        },
+        {
+          "Chave": "1420675200000",
+          "ChaveTexto": "08/01/2015 00:00:00",
+          "Data": "2015-01-08T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.47916666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.15416666666667
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.28661616161616
+            }
+          ]
+        },
+        {
+          "Chave": "1420761600000",
+          "ChaveTexto": "09/01/2015 00:00:00",
+          "Data": "2015-01-09T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.50833333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.39166666666667
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.43857323232323
+            }
+          ]
+        },
+        {
+          "Chave": "1420848000000",
+          "ChaveTexto": "10/01/2015 00:00:00",
+          "Data": "2015-01-10T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.41666666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.33333333333333
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.37607323232323
+            }
+          ]
+        },
+        {
+          "Chave": "1420934400000",
+          "ChaveTexto": "11/01/2015 00:00:00",
+          "Data": "2015-01-11T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.79166666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.3875
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.61229797979798
+            }
+          ]
+        },
+        {
+          "Chave": "1421020800000",
+          "ChaveTexto": "12/01/2015 00:00:00",
+          "Data": "2015-01-12T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 4.1375
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.65833333333333
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.89128787878788
+            }
+          ]
+        },
+        {
+          "Chave": "1421107200000",
+          "ChaveTexto": "13/01/2015 00:00:00",
+          "Data": "2015-01-13T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.34166666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.09583333333333
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.21657196969697
+            }
+          ]
+        },
+        {
+          "Chave": "1421193600000",
+          "ChaveTexto": "14/01/2015 00:00:00",
+          "Data": "2015-01-14T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.52916666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.4
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.44742213804714
+            }
+          ]
+        },
+        {
+          "Chave": "1421280000000",
+          "ChaveTexto": "15/01/2015 00:00:00",
+          "Data": "2015-01-15T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 4.15
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.7875
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 4.01097853535353
+            }
+          ]
+        },
+        {
+          "Chave": "1421366400000",
+          "ChaveTexto": "16/01/2015 00:00:00",
+          "Data": "2015-01-16T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.14583333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 2.92083333333333
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.0479797979798
+            }
+          ]
+        },
+        {
+          "Chave": "1421452800000",
+          "ChaveTexto": "17/01/2015 00:00:00",
+          "Data": "2015-01-17T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.59166666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.45416666666667
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.53544823232323
+            }
+          ]
+        },
+        {
+          "Chave": "1421539200000",
+          "ChaveTexto": "18/01/2015 00:00:00",
+          "Data": "2015-01-18T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 4.38333333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 4.24583333333333
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 4.30149410774411
+            }
+          ]
+        },
+        {
+          "Chave": "1421625600000",
+          "ChaveTexto": "19/01/2015 00:00:00",
+          "Data": "2015-01-19T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.09166666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 2.86666666666667
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 2.97604797979798
+            }
+          ]
+        },
+        {
+          "Chave": "1421712000000",
+          "ChaveTexto": "20/01/2015 00:00:00",
+          "Data": "2015-01-20T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.825
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.40833333333333
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.70950126262626
+            }
+          ]
+        },
+        {
+          "Chave": "1421798400000",
+          "ChaveTexto": "21/01/2015 00:00:00",
+          "Data": "2015-01-21T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.47083333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.3125
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.39623883061383
+            }
+          ]
+        },
+        {
+          "Chave": "1421884800000",
+          "ChaveTexto": "22/01/2015 00:00:00",
+          "Data": "2015-01-22T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.39583333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.2875
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.34125631313131
+            }
+          ]
+        },
+        {
+          "Chave": "1421971200000",
+          "ChaveTexto": "23/01/2015 00:00:00",
+          "Data": "2015-01-23T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.35833333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.275
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.31437613312613
+            }
+          ]
+        },
+        {
+          "Chave": "1422057600000",
+          "ChaveTexto": "24/01/2015 00:00:00",
+          "Data": "2015-01-24T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.975
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.7
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.80155408249158
+            }
+          ]
+        },
+        {
+          "Chave": "1422144000000",
+          "ChaveTexto": "25/01/2015 00:00:00",
+          "Data": "2015-01-25T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 4.69166666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 4.025
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 4.37918366355866
+            }
+          ]
+        },
+        {
+          "Chave": "1422230400000",
+          "ChaveTexto": "26/01/2015 00:00:00",
+          "Data": "2015-01-26T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 2.9375
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 2.76666666666667
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 2.84533556721057
+            }
+          ]
+        },
+        {
+          "Chave": "1422316800000",
+          "ChaveTexto": "27/01/2015 00:00:00",
+          "Data": "2015-01-27T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.90416666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.71666666666667
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.84409722222222
+            }
+          ]
+        },
+        {
+          "Chave": "1422403200000",
+          "ChaveTexto": "28/01/2015 00:00:00",
+          "Data": "2015-01-28T00:00:00",
+          "NumDocumentos": 16,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.53125
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.25
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.31846590909091
+            }
+          ]
+        },
+        {
+          "Chave": "1422489600000",
+          "ChaveTexto": "29/01/2015 00:00:00",
+          "Data": "2015-01-29T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.92916666666667
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.59583333333333
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.7775946969697
+            }
+          ]
+        },
+        {
+          "Chave": "1422576000000",
+          "ChaveTexto": "30/01/2015 00:00:00",
+          "Data": "2015-01-30T00:00:00",
+          "NumDocumentos": 24,
+          "Valores": [
+            {
+              "Nome": "valor.valorMax",
+              "Valor": 3.49583333333333
+            },
+            {
+              "Nome": "valor.valorMin",
+              "Valor": 3.26666666666667
+            },
+            {
+              "Nome": "valor.valorMed",
+              "Valor": 3.39671717171717
+            }
+          ]
+        }
+      ]
+    }
+  ]
+} 
