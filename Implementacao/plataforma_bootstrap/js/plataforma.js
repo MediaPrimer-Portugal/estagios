@@ -88,11 +88,6 @@
         return $.ajax({
             type: "POST",
             data: query,
-            headers: {
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "*",
-                "Access-Control-Allow-Headers": "*"
-            },
             async: false,
             cache: false,
             // Antes de enviar
@@ -588,7 +583,7 @@
             nomeEixoY = "Eixo Y",
             modoVisualizacao = "normal",  // stacked
             suavizarLinhas = false,
-            parseDate = d3.time.format("%y-%b-%d").parse,
+            parseDate = d3.time.format("%Y-%m-%dT%H:%M:%S").parse,
             formatPercent = d3.format(".0%");
 
         /// <summary>
@@ -621,15 +616,17 @@
         /// Adapta os dados e acrescenta-os ao DOM, mais especificamente na secção do SVG
         /// </summary>
         GraficoArea.prototype.InsereDados = function () {
-            var self = this;
+            var self = this,
+                objectoAuxiliar;
 
-            // Largura de cada rectangulo, de acordo com o tamanho do widget
-            larguraRect = (self.largura / self.dados.length);
+
+            // Largura de cada rectangulo, de acordo com o tamanho de dados do widget
+            larguraRect = (self.largura / self.dados.dados.Widgets[0].Items.length);
 
 
             if (self.modoVisualizacao === "stacked") {
                 stack = d3.layout.stack()
-                    .values(function (d) { return d.values; });
+                    .values(function (d) { console.log(d); return d.values; });
             }
 
 
@@ -640,7 +637,7 @@
                 .x(function (d) { return transformaX(d.date); })
                 // y0 é igual a altura pois no d3 a escala é feita de forma contrária
                 .y0(function (d) { return self.altura; })
-                // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
+                // Devolve o "Y" de cada valor no objecto Dados de acordo com a escala Y
                 .y1(function (d) { return transformaY(d.y); });
 
 
@@ -657,16 +654,7 @@
 
             // Inicia controlo de cores padrão to-do
             // Controla as keys (Series) que vão estar contidas no gráfico
-            color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
-
-
-            if (!(self.dados[0].date instanceof Date)) {
-                // Para cada objecto vamos analisar a data
-                self.dados.forEach(function (d) {
-                    // MELHORAR, modificar entre graficos
-                    d.date = parseDate(d.date);
-                });
-            }
+            color.domain(d3.values(self.dados.dados.Widgets[0].Items[0].Valores).map(function (d) { return d.Nome; }));
 
 
             // Caso esteja em modo Stacked
@@ -675,14 +663,24 @@
                 // Criar novo array de objectos para guardar a informação de forma fácil de utilizar
                 // Recorre ao método stack do d3
                 dadosStacked = stack(color.domain().map(function (name) {
-
                     return {
                         // Atribuir nome da chave
                         name: name,
-                        // Atribuir valores
-                        values: self.dados.map(function (d) {
-                            // Data e valor a dividir por 100, pois escala está no padrão [0,1]
-                            return { name: name, date: d.date, y: +d[name] / 100 };
+                        // Mapear os valores
+                        values: self.dados.dados.Widgets[0].Items.map(function (d) {
+                            var arrayValores = [],
+                                arrayDatas = [],
+                                index;
+
+                            //Encontrar index do parametro atual
+                            index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
+
+
+                            // Devolve objecto
+                            return {
+                                y: +d.Valores[index].Valor,
+                                date: parseDate(d.Data)
+                            };
                         })
                     }
                 }));
@@ -744,23 +742,33 @@
             // Caso esteja em modo normal
             } else {
 
-
                 // Criar novo array de objectos para guardar a informação de forma fácil de utilizar
                 dadosNormal = color.domain().map(function (name) {
                     return {
                         // Atribuir nome da chave
                         name: name,
-                        // Atribuir valores
-                        values: self.dados.map(function (d) {
-                            // Data e valor a dividir por 100, pois escala está no padrão [0,1]
-                            return {name: name, date: d.date, y: +d[name]};
+                        // Mapear os valores
+                        values: self.dados.dados.Widgets[0].Items.map(function (d) {
+                            var arrayValores = [],
+                                arrayDatas = [],
+                                index;
+
+                                //Encontrar index do parametro atual
+                                index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
+
+
+                            // Devolve objecto
+                            return {
+                                y: +d.Valores[index].Valor,
+                                date: parseDate(d.Data)
+                            };
                         })
                     }
                 });
 
 
-                // Adquirir valor máximo de cada uma das chaves
-                dadosNormal.forEach(function (item, i) {
+                // Adquirir valor máximo de cada uma das chaves(keys)
+                dadosNormal.forEach(function (item) {
                     chave.push(d3.max(item.values, function (d) { return d.y; }));
                 });
 
@@ -768,9 +776,13 @@
                 // to-do var close
                 transformaY.domain([0, d3.max(chave)]);
 
+                // Atualizar eixo depois de dados inseridos
+                transformaX.domain(d3.extent(dadosNormal[0].values, function (d) { return d.date; }));
+
 
                 // Passar os dados para dentro de um objecto para serem facilmente lidos pelos métodos d3
                 valores = [{ values: dadosNormal }];
+
 
                 // Acrescentar ao SVG
                 dados = self.svg.selectAll(".dados")
@@ -780,12 +792,13 @@
                                 // Compensar margem da esquerda
                                 .attr("transform", "translate(" + self.margem.esquerda/2 + " ,0)");
 
+
                 // Acrescenta o desenho do gráfico
                 dados.append("path")
                     .attr("class", "area")
                     .attr("title", "")
                     // Chamar area() para desenhar de acordo o "path" com os valores
-                    .attr("d", function (d) { return self.area(d.values); })
+                    .attr("d", function (d) { console.log(d); return self.area(d.values); })
                     // Adiciona tooltips
                     .style("fill", function (d) { return color(d.name); });
 
@@ -793,6 +806,7 @@
                 // Grupo das tooltips
                 self.pontos = self.svg.append("g")
                     .attr("class", "pontos");
+
 
                 // Circulo que apresenta o "foco" do utilizador
                 self.pontos.append("circle")
@@ -803,8 +817,6 @@
                     .attr("r", 4)
                         .style("display", "none");
 
-                // Atualizar eixo depois de dados inseridos
-                transformaX.domain(d3.extent(self.dados, function (d) { return d.date; }));
 
                 // Para cada objecto ( Ponto )
                 dadosNormal.forEach(function (item, curIndex) {
@@ -844,7 +856,6 @@
                 // Mapeia o dominio conforme a dadosSelecionados, e o "nome" to-do
                 //.domain(self.dados.map(function (d) { return d.nome; }))
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
-                .domain(d3.extent(self.dados, function (d) { return d.date; }))
                 .range([0, self.largura]);
 
             // Construtor do Eixo dos X
@@ -879,14 +890,14 @@
         GraficoArea.prototype.AtualizaEixos = function () {
             var valores,
                 self = this,
-                intervaloData = (d3.extent(self.dados, function (d) { return d.date; }));
+                intervaloData = (d3.extent(dadosNormal[0].values, function (d) { return d.date; }));
 
             // Atribui valores a Y conforme a sua escala
             transformaX = d3.time.scale()
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
                 .range([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda - self.margem.direita])
                 // Mapeia o dominio conforme a a data disponivel nos dad
-                .domain(d3.extent(self.dados, function (d) { return d.date; }));
+                .domain(d3.extent(dadosNormal[0].values, function (d) { return d.date; }));
 
 
             if (self.modoVisualizacao === "stacked") {
@@ -999,12 +1010,9 @@
         GraficoArea.prototype.ConstroiGrafico = function (id) {
             var self = this;
 
-            // to-do
-            // nome?
-            // teste1?
 
             // To-do Query? Get Query?
-            self.setDados((getDados(self, "age")));
+            self.setDados($.parseJSON(getDados(self, "age")));
 
             console.log(self.dados);
 
@@ -1117,8 +1125,9 @@
         /// </summary>
         GraficoArea.prototype.Atualiza = function () {
             var self = this,
-                // Largura de cada rectangulo, de acordo com o tamanho do widget
-                larguraRect = (self.largura / self.dados.length);
+
+            // Largura de cada rectangulo, de acordo com o tamanho de dados do widget
+            larguraRect = (self.largura / self.dados.dados.Widgets[0].Items.length);
 
             // Pintar gráfico
             self.Renderiza();
@@ -1194,7 +1203,6 @@
 
                 // Para cada objecto ( Ponto )
                 dadosNormal.forEach(function (item, curIndex) {
-
                     // Para cada "variável"
                     self.pontos.selectAll(".ponto" + curIndex)
                         // Ligar o valor dos pontos
@@ -3745,8 +3753,8 @@
         // Opcoes de datas que vão ser utilizadas
         var opcoes =
                 {
-                    "dataInicio": "01 - 01 - 2016",
-                    "dataFim": "01 - 02 - 2016"
+                    "dataInicio": "01-012016",
+                    "dataFim": "01-02-2016"
                 },
             parseDate = d3.time.format("%y-%b-%d").parse;
 
@@ -3983,6 +3991,21 @@
         }
 
 
+        /// <summary>
+        /// Filtra a informação de acordo com as datas guardadas no widget
+        /// </summary>
+        /// <param name="dados"> Recebe os dados de um widget </param>
+        Data.prototype.FiltraDados = function (dados) {
+            var self = this;
+
+            console.log(dados);
+
+
+            return dados;
+
+        }
+
+
         return Data;
 
     })();
@@ -4215,6 +4238,33 @@
                      "</div>" + "</div> " + "</div>";
 
             return el;
+        }
+
+
+        /// TESTE
+        Grid.prototype.FiltraContexto = function () {
+            var self = this;
+
+            // Para cada widget
+            self.listaWidgets.forEach(function (item) {
+                // Caso seja do tipo contexto
+                if (item.widgetTipo === "contexto") {
+
+                    // Para cada widget no seu contexto
+                    item.contexto.forEach(function (widget) {
+                        var dados;
+                        // Procura index
+                        var index = _.findIndex(self.listaWidgets, function (d) { return widget === d.id })
+
+                        // Controlo de erro?
+                        // Envia os dados para o widget poder filtrar
+                        dados = item.FiltraDados(self.listaWidgets[index].dados);
+
+                    });
+                }
+
+            });
+
         }
 
 
