@@ -78,12 +78,12 @@
     /// </summary>
     /// <param name="widget"> Widget que está a pedir dados </param>
     /// <param name="ficheiro"> ficheiro para fazer o pedido </param>
-    var getDados = function (widget, ficheiro) {
+    var getDados = function (widget, opcoes) {
 
         var url = "http://192.168.0.17/dashboard/Implementacao/plataforma_bootstrap/JSON/" + ficheiro + ".JSON",
             url1 = "http://localhost:49167/JSON/" + ficheiro + ".JSON",
             urlprodserver = "http://prodserver1/MP/primerCORE/db/rest/dashboard/valores?sessaoID=sessaoDebug HTTP/1.1",
-            query = '{"sessaoID": "sessaoDebug","dashboardID": "8", "utilizadorID": "2502","widgetsDados": [{"id": "widget0","contexto": ["widget3","widget8"],"agregacoes": [{"funcao": "avg","campo": "valor.valorMax"},{"funcao": "avg","campo": "valor.valorMed"},{"funcao": "avg","campo": "valor.valorMin"}]}], "widgetsContexto": {"contextoQuery": [{"id": "widget3","tipo": "query","filtro": "valor.tagID: 3072"},{"id": "widget4","tipo": "query","filtro": "valor.tagID: 3073"}],"contextoHistograma": [{"id": "widget8","tipo": "histograma","dataInicio": "2015-01-01","dataFim": "2015-01-31"}]}}';
+            query = '{"sessaoID": "sessaoDebug","dashboardID": "8", "utilizadorID": "2502","widgetsDados": [{"id": "widget0","contexto": ["widget3","widget8"],"agregacoes": [{"funcao": "avg","campo": "valor.valorMax"},{"funcao": "avg","campo": "valor.valorMed"},{"funcao": "avg","campo": "valor.valorMin"}]}], "widgetsContexto": {"contextoQuery": [{"id": "widget3","tipo": "query","filtro": "valor.tagID: 3072"},{"id": "widget4","tipo": "query","filtro": "valor.tagID: 3073"}],"contextoHistograma": [{"id": "widget8","tipo": "histograma","dataInicio": \"' + opcoes.dataInicio + '\","dataFim": \"' + opcoes.dataFim + '\"}]}}';
 
         return $.ajax({
             type: "POST",
@@ -91,7 +91,10 @@
             async: false,
             cache: false,
             // Antes de enviar
-            beforeSend: function() {
+            beforeSend: function () {
+
+                $("#" + widget.id).find("wrapper").css("display", "none");
+
                 // Constroi o spinner 
                 ConstroiSpinner(widget);
                 // Adicionar class ao spinner
@@ -99,12 +102,13 @@
             },
             // Depois do pedido estar completo
             complete: function() {
-                setTimeout(function () {
                     // Parar widget
                     widget.spinner.stop();
+
+                    $("#" + widget.id).find("wrapper").css("display", "block");
+
                     // Remover class do spinner
                     $("#" + widget.id).removeClass("carregar");
-                }, 20);
             },
             url: urlprodserver,
             // Ao receber o pedido
@@ -231,9 +235,6 @@
             this.contexto = [];
             
             this.agregacoes = [];
-
-            // Inicializa dados
-            this.dadosOriginais = {};
 
         }
 
@@ -417,15 +418,14 @@
         /// <summary>
         /// Redesenha completamente o gráfico
         /// </summary>
-        Widget.prototype.RedesenhaGrafico = function () {
+        Widget.prototype.RedesenhaGrafico = function ()  {
             var self = this;
 
             // Remove todos os elementos excepto a navbar
-            $("#" + self.id).children().not(".widget-navbar").not(".legenda").children().remove();
+            $("#" + self.id).children().not(".widget-navbar").children().remove();
 
 
             if (self.dados.dados.Widgets[0].Items.length != 0) {
-
                 // Volta a desenhar o gráfico sem algumas opções
                 self.AtualizaDimensoes.call(this);
                 self.ConstroiSVG.call(this, self.id, self);
@@ -433,6 +433,9 @@
                 self.InsereDados.call(this);
                 self.InsereEixos.call(this);
                 self.Atualiza.call(this);
+
+                self.ConstroiLegenda.call(this);
+
 
             } else {
                 self.svg.append("text")
@@ -1053,20 +1056,20 @@
 
 
             // To-do Query? Get Query?
-            self.setDados($.parseJSON(getDados(self, "age")));
+            //self.setDados($.parseJSON(getDados(self, "age")));
 
             // Adiciona classe do gráfico ao widget
             $("#" + self.id).addClass("graficoArea");
 
-            // Atualiza dimensoes atuais
-            self.AtualizaDimensoes();
-            self.ConstroiSVG(id, self);
-            self.ConstroiEixos();
-            self.InsereDados();
+            //Atualiza dimensoes atuais
+            //self.AtualizaDimensoes();
+            //self.ConstroiSVG(id, self);
+            //self.ConstroiEixos();
+            //self.InsereDados();
 
 
-            self.InsereEixos();
-            self.Atualiza();
+            //self.InsereEixos();
+            //self.Atualiza();
 
             // Insere Botões na navbar
             self.OpcaoLegenda();
@@ -3771,7 +3774,7 @@
         // Opcoes de datas que vão ser utilizadas
         var opcoes =
                 {
-                    "dataInicio": "01-012016",
+                    "dataInicio": "01-01-2016",
                     "dataFim": "01-02-2016"
                 };
 
@@ -3812,7 +3815,7 @@
             var self = this;
 
             // Linguagem do browser ( Para motivos de Locale )
-            var linguagem = getLinguagem();
+            var linguagem = "pt";
 
 
             // Acrescenta ao wrapper a primeira escolha
@@ -3939,12 +3942,18 @@
         /// Guarda a data Inicial dos "pickers" no próprio widget
         /// </summary>
         Data.prototype.GuardaDataInicial = function () {
-            var self = this;
+            var self = this,
+                mes;
 
             // Guarda o objecto data no widget ( Data Inicial )
             self.opcoes.dataInicio = $("#" + self.id).find("#datetimepicker-" + self.id).data("DateTimePicker").date()._d;
+
+
+            mes = ("0" + (self.opcoes.dataInicio.getMonth() + 1)).slice(-2);
+            dia = ("0" + self.opcoes.dataInicio.getDate()).slice(-2);
+
             // Passa o objecto data para o formato ideal para o widget guardar
-            //self.opcoes.dataInicio = self.opcoes.dataInicio.getDate() + "-" + (self.opcoes.dataInicio.getMonth() + 1) + "-" + self.opcoes.dataInicio.getFullYear();
+            self.opcoes.dataInicio = self.opcoes.dataInicio.getFullYear() +"-"+ mes + "-" + self.opcoes.dataInicio.getDate();
 
             self.Atualiza();
 
@@ -3955,12 +3964,16 @@
         /// Guarda a data Inicial dos "pickers" no próprio widget
         /// </summary>
         Data.prototype.GuardaDataFinal = function () {
-            var self = this;
+            var self = this,
+                mes;
 
             // Guarda o objecto data no widget ( Data Final )
             self.opcoes.dataFim = $("#" + self.id).find("#datetimepicker2-" + self.id).data("DateTimePicker").date()._d;
+
+            mes = ("0" + (self.opcoes.dataFim.getMonth() + 1)).slice(-2);
+            dia = ("0" + self.opcoes.dataFim.getDate()).slice(-2);
             // Passa o objecto data para o formato ideal para o widget guardar
-            //self.opcoes.dataFim = self.opcoes.dataFim.getDate() + "-" + (self.opcoes.dataFim.getMonth() + 1) + "-" + self.opcoes.dataFim.getFullYear();
+            self.opcoes.dataFim = self.opcoes.dataFim.getFullYear() + "-" + mes + "-" + self.opcoes.dataFim.getDate();
 
             self.Atualiza();
         }
@@ -4014,27 +4027,11 @@
         /// <param name="widget"> Recebe os dados de um widget </param> 
         Data.prototype.FiltraDados = function (widget) {
             var self = this,
-                //Guarda array filtrado
-                arrayFiltrado = [],
-                // Array que contem os dados do widget
-                // Pode / deve ser modificado
-                arrayValores = widget.dadosOriginais,
                 // Datas do filtro convertidas para serem comparadas
                 dataInicioFiltro = Date.parse(self.opcoes.dataInicio),
                 dataFimFiltro = Date.parse(self.opcoes.dataFim);
-            
 
-            // Para cada valor no arrayValores
-            arrayValores.forEach(function (item) {
-                // Caso esteja dentro do limite
-                if (parseInt(item.Chave) >= dataInicioFiltro && parseInt(item.Chave) <= dataFimFiltro) {
-                    // Guardar no array
-                    arrayFiltrado.push(item);
-                }
-            });
-
-            
-            return arrayFiltrado;
+                widget.setDados($.parseJSON(getDados(widget, opcoes)));
 
         }
 
@@ -4124,9 +4121,13 @@
                     // Para cada Widget
                     self.listaWidgets.forEach(function (widget) {
                         // Verificar se widget tem dados para atualizar
-                        if (widget.widgetTipo === "dados" &&  widget.dados.dados.Widgets[0].Items.length !== 0) {
-                            // Atualizar o widget
-                            widget.Atualiza();
+                        if (widget.widgetTipo === "dados") {
+                            if (widget.dados !== undefined) {
+                                if (widget.dados.dados.Widgets[0].Items.length !== 0) {
+                                    // Atualizar o widget
+                                    widget.Atualiza();
+                                }
+                            }
                         }
 
                     });
@@ -4240,8 +4241,8 @@
             ficheiro = "stacked";
 
 
-            // APAGAR - Apenas para teste do icon loading
-            self.Constroi(self.listaWidgets[ultimo]);
+            // Constroi Gráfico no Widget
+            self.listaWidgets[ultimo].ConstroiGrafico(self.listaWidgets[ultimo].id);
  
             // Incrementar para não haver Ids iguais
             idUnico++;
@@ -4297,29 +4298,14 @@
                             index = _.findIndex(self.listaWidgets, function (d) { return widget === d.id });
 
 
-                        // Controlo de erro?
-                        // Envia os dados para o widget poder filtrar
-                        dadosFiltrados = item.FiltraDados(self.listaWidgets[index], widget);
-                        // Iguala os dados do widget aos dados filtrados
-                        self.listaWidgets[index].dados.dados.Widgets[0].Items = dadosFiltrados;
-                        // Desenha novamente o gráfico do inicio
-                        self.listaWidgets[index].RedesenhaGrafico();
+                        item.FiltraDados(self.listaWidgets[index], widget);
+                        self.listaWidgets[index].RedesenhaGrafico(self.listaWidgets[index].id);
 
                     });
                 }
 
             });
 
-        }
-
-
-        // APAGAR - Apenas para teste do icon loading
-        // APAGAR - Apenas para teste do icon loading
-        Grid.prototype.Constroi = function (widget) {
-            setTimeout(function () {
-                // Constroi Gráfico no Widget
-                widget.ConstroiGrafico(widget.id);
-            }, 20);
         }
 
 
