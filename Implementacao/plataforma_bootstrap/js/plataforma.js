@@ -165,6 +165,7 @@
             mostraLegenda,
             ultimaAtualizacao,
             dados,
+            dadosOriginais,
             spinner,
             TamanhoLimite = 350,
             margem = { cima: 20, baixo: 50, esquerda: 30, direita: 50 };
@@ -207,8 +208,10 @@
             this.ModificaTitulo();
 
             this.visivel = false;
+            // Botão para esconder o widget
             this.OpcaoEsconder();
 
+            // Objecto que comunica com o servidor
             this.objectoServidor = {
                 id: "",
                 titulo: "",
@@ -224,8 +227,14 @@
                 ultimaAtualizacao: ""
             }
 
+            // Widgets que estão relacionados com o widget
             this.contexto = [];
+            
             this.agregacoes = [];
+
+            // Inicializa dados
+            this.dadosOriginais = {};
+
         }
 
 
@@ -404,14 +413,44 @@
             return objecto;
         }
 
+
+        /// <summary>
+        /// Redesenha completamente o gráfico
+        /// </summary>
+        Widget.prototype.RedesenhaGrafico = function () {
+            var self = this;
+
+            // Remove todos os elementos excepto a navbar
+            $("#" + self.id).children().not(".widget-navbar").not(".legenda").children().remove();
+
+
+            if (self.dados.dados.Widgets[0].Items.length != 0) {
+
+                // Volta a desenhar o gráfico sem algumas opções
+                self.AtualizaDimensoes.call(this);
+                self.ConstroiSVG.call(this, self.id, self);
+                self.ConstroiEixos.call(this);
+                self.InsereDados.call(this);
+                self.InsereEixos.call(this);
+                self.Atualiza.call(this);
+
+            } else {
+                self.svg.append("text")
+                    .style("text", "Não há dados possiveis");
+
+            }
+
+        }
+
+
         /// <summary>
         /// Get e set para o objecto dados
         /// </summary>
-        Widget.prototype.setDados = function (dados) {
+        Widget.prototype.setDados = function (objecto) {
             var self = this;
 
-            self.dados = dados;
-
+            self.dados = objecto;
+            self.dadosOriginais = objecto.dados.Widgets[0].Items;
         }
 
 
@@ -479,6 +518,8 @@
 
             return self.agregacoes;
         }
+
+
 
         /// #Region - Botões
 
@@ -626,7 +667,7 @@
 
             if (self.modoVisualizacao === "stacked") {
                 stack = d3.layout.stack()
-                    .values(function (d) { console.log(d); return d.values; });
+                    .values(function (d) { return d.values; });
             }
 
 
@@ -798,7 +839,7 @@
                     .attr("class", "area")
                     .attr("title", "")
                     // Chamar area() para desenhar de acordo o "path" com os valores
-                    .attr("d", function (d) { console.log(d); return self.area(d.values); })
+                    .attr("d", function (d) { return self.area(d.values); })
                     // Adiciona tooltips
                     .style("fill", function (d) { return color(d.name); });
 
@@ -1013,8 +1054,6 @@
 
             // To-do Query? Get Query?
             self.setDados($.parseJSON(getDados(self, "age")));
-
-            console.log(self.dados);
 
             // Adiciona classe do gráfico ao widget
             $("#" + self.id).addClass("graficoArea");
@@ -1285,16 +1324,7 @@
                 if (self.modoVisualizacao !== "normal") {
                     self.modoVisualizacao = "normal";
 
-                    // Remove todos os elementos excepto a navbar
-                    $("#" + self.id).children().not(".widget-navbar").not(".legenda").children().remove();
-
-                    // Volta a desenhar o gráfico sem algumas opções
-                    self.AtualizaDimensoes();
-                    self.ConstroiSVG(self.id, self);
-                    self.ConstroiEixos();
-                    self.InsereDados();
-                    self.InsereEixos();
-                    self.Atualiza();
+                    self.RedesenhaGrafico();
                     
                 }
                     // Caso esteja em modo stacked ( Empilhado )
@@ -1302,17 +1332,7 @@
                     if (self.modoVisualizacao !== "stacked") {
                         self.modoVisualizacao = "stacked";
 
-
-                        // Remove todos os elementos excepto a navbar
-                        $("#" + self.id).children().not(".widget-navbar").not(".legenda").children().remove();
-
-                        // Volta a desenhar o gráfico sem algumas opções
-                        self.AtualizaDimensoes();
-                        self.ConstroiSVG(self.id, self);
-                        self.ConstroiEixos();
-                        self.InsereDados();
-                        self.InsereEixos();
-                        self.Atualiza();
+                        self.RedesenhaGrafico();
                         
                     }
                 }
@@ -2028,7 +2048,7 @@
             series.append("path")
               .attr("class", "linha")
               // Componente D3(area) devolve o path calculado de acordo com os valores
-              .attr("d", function (d) { console.log(d); return linha(d.values); })
+              .attr("d", function (d) { return linha(d.values); })
                 // Uma cor é automaticamente escolhida de acordo com o componente color, para cada key
                 .style("stroke", function (d) { return color(d.name); })
                 .style("stroke-width", "2px")
@@ -2093,8 +2113,6 @@
             transformaY = d3.scale.linear()
                 .domain([0, d3.max(chave)])
                 .range([self.altura, 0]);
-
-            console.log(transformaY.domain());
 
             // Atualização da escala dos Eixos
             escalaX.scale(transformaX);
@@ -3755,8 +3773,7 @@
                 {
                     "dataInicio": "01-012016",
                     "dataFim": "01-02-2016"
-                },
-            parseDate = d3.time.format("%y-%b-%d").parse;
+                };
 
 
         /// <summary>
@@ -3853,7 +3870,7 @@
 
 
         /// <summary>
-        /// Método que impõe os eventos de limite de data aos "pickers"
+        /// Liga os eventos de limite de data aos "pickers"
         /// </summary>
         Data.prototype.LimitaDatas = function () {
             var self = this;
@@ -3927,7 +3944,7 @@
             // Guarda o objecto data no widget ( Data Inicial )
             self.opcoes.dataInicio = $("#" + self.id).find("#datetimepicker-" + self.id).data("DateTimePicker").date()._d;
             // Passa o objecto data para o formato ideal para o widget guardar
-            self.opcoes.dataInicio = self.opcoes.dataInicio.getDate() + "-" + (self.opcoes.dataInicio.getMonth() + 1) + "-" + self.opcoes.dataInicio.getFullYear();
+            //self.opcoes.dataInicio = self.opcoes.dataInicio.getDate() + "-" + (self.opcoes.dataInicio.getMonth() + 1) + "-" + self.opcoes.dataInicio.getFullYear();
 
             self.Atualiza();
 
@@ -3943,7 +3960,7 @@
             // Guarda o objecto data no widget ( Data Final )
             self.opcoes.dataFim = $("#" + self.id).find("#datetimepicker2-" + self.id).data("DateTimePicker").date()._d;
             // Passa o objecto data para o formato ideal para o widget guardar
-            self.opcoes.dataFim = self.opcoes.dataFim.getDate() + "-" + (self.opcoes.dataFim.getMonth() + 1) + "-" + self.opcoes.dataFim.getFullYear();
+            //self.opcoes.dataFim = self.opcoes.dataFim.getDate() + "-" + (self.opcoes.dataFim.getMonth() + 1) + "-" + self.opcoes.dataFim.getFullYear();
 
             self.Atualiza();
         }
@@ -3994,14 +4011,30 @@
         /// <summary>
         /// Filtra a informação de acordo com as datas guardadas no widget
         /// </summary>
-        /// <param name="dados"> Recebe os dados de um widget </param>
-        Data.prototype.FiltraDados = function (dados) {
-            var self = this;
+        /// <param name="widget"> Recebe os dados de um widget </param> 
+        Data.prototype.FiltraDados = function (widget) {
+            var self = this,
+                //Guarda array filtrado
+                arrayFiltrado = [],
+                // Array que contem os dados do widget
+                // Pode / deve ser modificado
+                arrayValores = widget.dadosOriginais,
+                // Datas do filtro convertidas para serem comparadas
+                dataInicioFiltro = Date.parse(self.opcoes.dataInicio),
+                dataFimFiltro = Date.parse(self.opcoes.dataFim);
+            
 
-            console.log(dados);
+            // Para cada valor no arrayValores
+            arrayValores.forEach(function (item) {
+                // Caso esteja dentro do limite
+                if (parseInt(item.Chave) >= dataInicioFiltro && parseInt(item.Chave) <= dataFimFiltro) {
+                    // Guardar no array
+                    arrayFiltrado.push(item);
+                }
+            });
 
-
-            return dados;
+            
+            return arrayFiltrado;
 
         }
 
@@ -4090,9 +4123,14 @@
                 setTimeout(function () {
                     // Para cada Widget
                     self.listaWidgets.forEach(function (widget) {
-                        // Atualizar o widget
-                        widget.Atualiza();
+                        // Verificar se widget tem dados para atualizar
+                        if (widget.widgetTipo === "dados" &&  widget.dados.dados.Widgets[0].Items.length !== 0) {
+                            // Atualizar o widget
+                            widget.Atualiza();
+                        }
+
                     });
+
                     // Guarda informação
                     self.GuardaInformacao();
                 }, 20);
@@ -4241,7 +4279,9 @@
         }
 
 
-        /// TESTE
+        /// <summary>
+        /// Método para filtrar os dados de um conjunto de widgets ligado a um contexto 
+        /// </summary>
         Grid.prototype.FiltraContexto = function () {
             var self = this;
 
@@ -4252,13 +4292,18 @@
 
                     // Para cada widget no seu contexto
                     item.contexto.forEach(function (widget) {
-                        var dados;
-                        // Procura index
-                        var index = _.findIndex(self.listaWidgets, function (d) { return widget === d.id })
+                        var dadosFiltrados,
+                            // Procura index
+                            index = _.findIndex(self.listaWidgets, function (d) { return widget === d.id });
+
 
                         // Controlo de erro?
                         // Envia os dados para o widget poder filtrar
-                        dados = item.FiltraDados(self.listaWidgets[index].dados);
+                        dadosFiltrados = item.FiltraDados(self.listaWidgets[index], widget);
+                        // Iguala os dados do widget aos dados filtrados
+                        self.listaWidgets[index].dados.dados.Widgets[0].Items = dadosFiltrados;
+                        // Desenha novamente o gráfico do inicio
+                        self.listaWidgets[index].RedesenhaGrafico();
 
                     });
                 }
@@ -4522,12 +4567,20 @@
     });
 
 
+    ///TESTE
+
+    $(".obterValores").click(function () {
+        gridPrincipal.FiltraContexto();
+
+    })
+
+
 
 
     /// TESTE SIDEBAR
 
     // Ao remover um widget da dashboard
-    $('.grid-stack').on('removed', function (event, items) {
+    $(".grid-stack").on("removed", function (event, items) {
         setTimeout(function () {
             // Remove lista de widgets
             $(".associaWidget-lista").children().remove();
@@ -4542,7 +4595,7 @@
     });
 
     // Ao adicionar um widget, é adicionado um valor ao sidebar
-    $('.grid-stack').on('added', function (event, items) {
+    $(".grid-stack").on("added", function (event, items) {
         setTimeout(function () {
 
             // Remove lista de widgets
