@@ -40,38 +40,6 @@
     }
 
 
-    /// <summary>
-    /// Constroi icon que simbolilza o loading
-    /// </summary>
-    /// <param name="elemento"> Elemento que vai receber o Spinner </param>
-    var ConstroiSpinner = function (widget) {
-        var opts = {
-            lines: 14, // The number of lines to draw
-            length: 0, // The length of each line
-            width: 20, // The line thickness
-            radius: 46, // The radius of the inner circle
-            scale: 0.75, 
-            corners: 1, // Corner roundness (0..1)
-            rotate: 81, // The rotation offset
-            direction: 1, // 1: clockwise, -1: counterclockwise
-            color: '#fff', // #rgb or #rrggbb or array of colors
-            speed: 1, // Rounds per second
-            trail: 47, // Afterglow percentage
-            opacity: 0,
-            shadow: false, // Whether to render a shadow
-            hwaccel: false, // Whether to use hardware acceleration
-            className: "spinner", // The CSS class to assign to the spinner
-            zIndex: 2e9, // The z-index (defaults to 2000000000)
-            top: "50%", // Top position relative to parent
-            left: "50%" // Left position relative to parent
-        };
-
-        // Atribuir o alvo do spinner
-        var alvo = $("#" + widget.id).find(".wrapper")[0];
-        // Criar o spinner
-        widget.spinner = new Spinner(opts).spin(alvo);
-    }
-
 
     /// <summary>
     /// Função que efetua os pedidos ajax para adquirir os dados necessários para a visualização
@@ -102,13 +70,13 @@
             },
             // Depois do pedido estar completo
             complete: function() {
-                    // Parar widget
-                    widget.spinner.stop();
+                // Parar widget
+                widget.spinner.stop();
 
-                    $("#" + widget.id).find("wrapper").css("display", "block");
+                $("#" + widget.id).find("wrapper").css("display", "block");
 
-                    // Remover class do spinner
-                    $("#" + widget.id).removeClass("carregar");
+                // Remover class do spinner
+                $("#" + widget.id).removeClass("carregar");
             },
             url: urlprodserver,
             // Ao receber o pedido
@@ -117,12 +85,14 @@
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 console.log(xhr.responseText);
-                alert(xhr.status);
-                alert(thrownError);
+                //alert(xhr.status);
+                //alert(thrownError);
+                alert("O seu pedido sofreu um erro e não foi concretizado");
             },
         }).responseText;
 
     }
+
 
 
     /// <summary>
@@ -132,6 +102,7 @@
     var getLinguagem = function () {
         return userLang = navigator.language || navigator.userLanguage;
     }
+
 
 
     /// <summary>
@@ -145,7 +116,10 @@
         return inteiro.test(valor) && Math.floor(valor) == valor;
     }
 
+
+
     /// Classes ----------------------------------------------------------------------------------------------------
+
 
     /// <summary>
     /// Class pai de todas as outras, contém maior parte da informação que vai ser partilhada entre os widget
@@ -169,7 +143,6 @@
             mostraLegenda,
             ultimaAtualizacao,
             dados,
-            dadosOriginais,
             spinner,
             TamanhoLimite = 350,
             margem = { cima: 20, baixo: 50, esquerda: 30, direita: 50 };
@@ -447,13 +420,16 @@
 
 
         /// <summary>
-        /// Get e set para o objecto dados
+        /// Manda o pedido para atribuir os dados ao widget
         /// </summary>
-        Widget.prototype.setDados = function (objecto) {
-            var self = this;
+        Widget.prototype.setDados = function (opcoes) {
+            var self = this,
+                query = '{"sessaoID": "sessaoDebug","dashboardID": "8", "utilizadorID": "2502","widgetsDados": [{"id": "widget0","contexto": ["widget3","widget8"],"agregacoes": [{"funcao": "avg","campo": "valor.valorMax"},{"funcao": "avg","campo": "valor.valorMed"},{"funcao": "avg","campo": "valor.valorMin"}]}], "widgetsContexto": {"contextoQuery": [{"id": "widget3","tipo": "query","filtro": "valor.tagID: 3072"},{"id": "widget4","tipo": "query","filtro": "valor.tagID: 3073"}],"contextoHistograma": [{"id": "widget8","tipo": "histograma","dataInicio": \"' + opcoes.dataInicio + '\","dataFim": \"' + opcoes.dataFim + '\"}]}}';
 
-            self.dados = objecto;
-            self.dadosOriginais = objecto.dados.Widgets[0].Items;
+
+            self.dados = ((primerCORE.DashboardDevolveWidget(self, query)));
+            console.log(self.dados);
+            self.dados = $.parseJSON(self.dados);
         }
 
 
@@ -783,7 +759,7 @@
 
                 });
 
-            // Caso esteja em modo normal
+                // Caso esteja em modo normal
             } else {
 
                 // Criar novo array de objectos para guardar a informação de forma fácil de utilizar
@@ -797,8 +773,8 @@
                                 arrayDatas = [],
                                 index;
 
-                                //Encontrar index do parametro atual
-                                index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
+                            //Encontrar index do parametro atual
+                            index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
 
 
                             // Devolve objecto
@@ -983,7 +959,7 @@
             }
             // Caso seja menor ou igual, apenas dispões os numeros pares
             if (self.largura <= self.TamanhoLimite) {
-               // escalaX.tickValues(d3.time.months(intervaloData[0], intervaloData[1]));
+                // escalaX.tickValues(d3.time.months(intervaloData[0], intervaloData[1]));
             }
             // Caso seja apenas menor que o TamanhoLimite - 100 vai apenas dispor os numeros divisiveis por 5
             if (self.largura < (self.TamanhoLimite - 100)) {
@@ -1016,16 +992,16 @@
 
 
             if (self.modoVisualizacao === "stacked") {
-            // Insere eixo dos X (Stacked)
-            self.svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(" + self.margem.esquerda +"," + self.altura + ")")
-                .call(self.escalaX);
+                // Insere eixo dos X (Stacked)
+                self.svg.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(" + self.margem.esquerda +"," + self.altura + ")")
+                    .call(self.escalaX);
 
-            // Insere eixo dos Y (Stacked)
-            self.svg.append("g")
-                .attr("class", "y axis")
-                .call(self.escalaY);
+                // Insere eixo dos Y (Stacked)
+                self.svg.append("g")
+                    .attr("class", "y axis")
+                    .call(self.escalaY);
                 
             } else {
                 self.svg.append("g")
@@ -1041,7 +1017,7 @@
                     .attr("y", 6)
                     .attr("dy", ".71em")
                     .style("text-anchor", "end")
-                    //.text("nomeEixoY");
+                //.text("nomeEixoY");
             }
 
         }
@@ -1215,28 +1191,28 @@
                     }         
 
                     // Marcas no gráfico
-                        // Mostra a marca no gráfico
-                                //// to-do  !!!
-                                //// Mostra circulo/ponto onde o utilziar está focado
-                                // d3.select("."+self.id).select(".circuloFoco").style("display", null)
-                                //// Adicionar metade da largura de um rectangulo para centrar o ponto
-                                //    .attr("transform", "translate(" + ((parseInt($(this).attr("x")) + larguraRect / 2) + self.margem.esquerda) + "," + $(this).attr("y") + ")");
+                    // Mostra a marca no gráfico
+                    //// to-do  !!!
+                    //// Mostra circulo/ponto onde o utilziar está focado
+                    // d3.select("."+self.id).select(".circuloFoco").style("display", null)
+                    //// Adicionar metade da largura de um rectangulo para centrar o ponto
+                    //    .attr("transform", "translate(" + ((parseInt($(this).attr("x")) + larguraRect / 2) + self.margem.esquerda) + "," + $(this).attr("y") + ")");
 
-                                //// Cria uma marca auxiliar no gráfico
-                                //d3.select(this.parentNode).append("rect")
-                                //    .attr("class", "marcaAuxiliar")
-                                //    .attr("x", (parseInt($(this).attr("x")) + self.margem.esquerda))
-                                //    .attr("y", $(this).attr("y"))
-                                //    .attr("width", "2")
-                                //    .attr("height", (self.altura - $(this).attr("y")))
-                                //    .style("fill", "red");
+                    //// Cria uma marca auxiliar no gráfico
+                    //d3.select(this.parentNode).append("rect")
+                    //    .attr("class", "marcaAuxiliar")
+                    //    .attr("x", (parseInt($(this).attr("x")) + self.margem.esquerda))
+                    //    .attr("y", $(this).attr("y"))
+                    //    .attr("width", "2")
+                    //    .attr("height", (self.altura - $(this).attr("y")))
+                    //    .style("fill", "red");
 
-                        // Mostra a marca do ponto
-                                // Esconde circulo/ponto
-                                //d3.select("." + self.id).select(".circuloFoco").style("display", "none");
+                    // Mostra a marca do ponto
+                    // Esconde circulo/ponto
+                    //d3.select("." + self.id).select(".circuloFoco").style("display", "none");
 
-                                // Remove marca auxiliar
-                                //d3.select(".marcaAuxiliar").remove();
+                    // Remove marca auxiliar
+                    //d3.select(".marcaAuxiliar").remove();
 
 
                 });
@@ -1891,7 +1867,7 @@
                     // Aumentar o conteudo gráfico
                     $widget.find(".wrapper").css("width", "100%");
                     self.Atualiza();
-                // Caso esteja escondida
+                    // Caso esteja escondida
                 } else {
                     // Mostra
                     $widget.find(".legenda").show();
@@ -2093,7 +2069,7 @@
             escalaY = d3.svg.axis()
               .scale(transformaY)
               .orient("left");
-              //.ticks(10);
+            //.ticks(10);
 
         }
 
@@ -3774,8 +3750,8 @@
         // Opcoes de datas que vão ser utilizadas
         var opcoes =
                 {
-                    "dataInicio": "01-01-2016",
-                    "dataFim": "01-02-2016"
+                    "dataInicio": "2015-01-01",
+                    "dataFim": "2015-01-20"
                 };
 
 
@@ -4031,7 +4007,7 @@
                 dataInicioFiltro = Date.parse(self.opcoes.dataInicio),
                 dataFimFiltro = Date.parse(self.opcoes.dataFim);
 
-                widget.setDados($.parseJSON(getDados(widget, opcoes)));
+            widget.setDados(opcoes);
 
         }
 
@@ -4502,7 +4478,7 @@
         minWidth: 680,
         draggable: {
             handle: ".widget-navbar"
-            },
+        },
         acceptWidgets: ".grid-stack-item",
         resizable: {
             handles: "sw, se"
@@ -4559,9 +4535,20 @@
         gridPrincipal.FiltraContexto();
 
     })
+    
+    // Query para a lista de widgets
+    var queryListaWidgets = '{ "sessaoID": "sessaoDebug", "dashboardID": "8", "utilizadorID": "2502", "widgetsDados": [{ "id": "widget0", "contexto": ["widget3", "widget4", "widget8"], "agregacoes": [{ "funcao": "avg", "campo": "valor.valorMax" }, { "funcao": "avg", "campo": "valor.valorMed" }, { "funcao": "avg", "campo": "valor.valorMin" }] }, { "id": "widget1", "contexto": [""], "agregacoes": [{ "funcao": "avg", "campo": "valor.valorMax" }, { "funcao": "avg", "campo": "valor.valorMed" }, { "funcao": "avg", "campo": "valor.valorMin" }] }, { "id": "widget2", "contexto": ["widget3", "widget8"], "agregacoes": [{ "funcao": "avg", "campo": "valor.valorMax" }, { "funcao": "avg", "campo": "valor.valorMed" }, { "funcao": "avg", "campo": "valor.valorMin" }] }], "widgetsContexto": { "contextoQuery": [{ "id": "widget3", "tipo": "query", "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "query", "filtro": "valor.tagID: 3073" }], "contextoHistograma": [{ "id": "widget8", "tipo": "histograma", "dataInicio": "2015-01-01", "dataFim": "2015-01-31" }] } }'
 
+    // Query para o DashboardCria
+    var query = {
+        "UtilizadorID": 2508,
+        "Nome": "teste_dois",
+        "Descricao": "teste_dois desc",
+        "Configuracao": "{\"id\":\"widget0\",\"largura\":271,\"altura\":120,\"titulo\":\"ola\",\"widgetAltura\":20,\"widgetLargura\":20,\"widgetX\":400,\"widgetTipo\":\"dados\",\"widgetElemento\":\"graficoBarras|graficoLinhas|graficoPie|etiqueta|tabela\",\"mostraLegenda\":false,\"mostraToolTip\":false,\"visivel\":true,\"ultimaAtualizacao\":\"4/11/16\",\"contexto\":[\"widget1\",\"widget2\"],\"agregacoes\":[{\"funcao\":\"avg\",\"campo\":\"valor.valorMax\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMed\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMin\"}]}",
+        "Activo": false
+    };
 
-
+    console.log($.parseJSON(primerCORE.DashboardDevolve(10)));
 
     /// TESTE SIDEBAR
 
@@ -4629,6 +4616,41 @@
         widget2.AssociaWidget($(this).parent().parent().attr("valor"));
 
     });
+
+    // property Grid - TEST
+
+    // This is our target object
+    var theObj = {
+        font: 'Consolas',
+        fontSize: 14,
+        fontColor: '#a3ac03',
+        jQuery: true,
+        modernizr: false,
+        framework: 'angular',
+        iHaveNoMeta: 'Never mind...',
+        iAmReadOnly: 'I am a label which is not editable'
+    };
+
+    // This is the metadata object that describes the target object properties (optional)
+    var theMeta = {
+        // Since string is the default no nees to specify type
+        font: { group: 'Editor', name: 'Font', description: 'The font editor to use' },
+        // The "options" would be passed to jQueryUI as its options
+        fontSize: { group: 'Editor', name: 'Font size', type: 'number', options: { min: 0, max: 20, step: 2 } },
+        // The "options" would be passed to Spectrum as its options
+        fontColor: { group: 'Editor', name: 'Font color', type: 'color', options: { preferredFormat: 'hex' } },
+        // since typeof jQuery is boolean no need to specify type, also since "jQuery" is also the display text no need to specify name
+        jQuery: { group: 'Plugins', description: 'Whether or not to include jQuery on the page' },
+        // We can specify type boolean if we want...
+        modernizr: { group: 'Plugins', type: 'boolean', description: 'Whether or not to include modernizr on the page' },
+        framework: { name: 'Framework', group: 'Plugins', type: 'options', options: ['None', { text: 'AngularJS', value: 'angular' }, { text: 'Backbone.js', value: 'backbone' }], description: 'Whether to include any additional framework' },
+        iAmReadOnly: { name: 'I am read only', type: 'label', description: 'Label types use a label tag for read-only properties', showHelp: false }
+
+    };
+
+    // Create the grid
+    $('#propGrid').jqPropertyGrid(theObj, theMeta);
+
 
 
 })

@@ -7,6 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
     <title>Plataforma de Indicadores</title>
+
     <!-- Bootstrap Core CSS -->
     <link href="../bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap theme -->
@@ -26,6 +27,11 @@
     <!--Datatable CSS-->
     <link href="../dist/css/dataTables.css" rel="stylesheet">
 
+    <!--jqProperty Grid CSS-->
+    <link href="../bower_components/jqPropertyGrid/jqPropertyGrid.css" rel="stylesheet">
+
+    <!--Spectrum -> jqProperty Grid CSS-->
+    <link href="../bower_components/spectrum/spectrum.css" rel="stylesheet">
 
     <!-- MetisMenu CSS -->
     <link href="../bower_components/metisMenu/dist/metisMenu.min.css" rel="stylesheet">
@@ -326,6 +332,14 @@
                             <ul class="associaWidget-lista"></ul>
                         </li>
                         <!-- Associar Widgets -->
+                        <!-- Editar Widgets ( property grid ) -->
+                        <li>
+                            <a href="#"><i class="fa fa-bar-chart-o fa-fw propertyGrid-sidebar"></i>Propriedades<span class="fa arrow"></span></a>
+                            <ul class="propertyGrid">
+                                <li><div id='propGrid'></div></li>
+                            </ul>
+                        </li>
+                        <!-- Editar Widgets -->
 
                     </ul>
                 </div>
@@ -433,16 +447,29 @@
 
     <!-- Tabelas -->
     <script src="../bower_components/datatables/media/js/jquery.dataTables.min.js"></script>
-    <!-- Tratamento do Loading (Spinner) -->
-    <script src="../js/spinner.js"></script>
+    
+    <!-- Property Grid (Tabela de propriedades) -->
+    <script src="../bower_components/jqPropertyGrid/jqPropertyGrid.js"></script>
+
+    <!-- Color picker -->
+    <script src="../bower_components/spectrum/spectrum.js"></script>
+
+    <!-- Loading (Spinner) -->
+    <script src="../js/spinner.js" type="text/javascript"></script>
 
     <!-- Tooltips -->
-    <script src="../js/tooltips.js"></script>
+    <script src="../js/tooltips.js" type="text/javascript"></script>
 
+
+    <!-- Métodos de comunicação com o primerCORE -->
+    <script src="../js/primerCORE.js"></script>
+    
     <!-- Script Plataforma de Indicadores -->
-    <script src="../js/plataforma.js"></script>
+    <script src="../js/plataforma.js" type="text/javascript"></script>
+
 
     <!-- Custom Theme JavaScript -->
     <script src="../dist/js/sb-admin-2.js"></script>
+
 </body>
 </html>
