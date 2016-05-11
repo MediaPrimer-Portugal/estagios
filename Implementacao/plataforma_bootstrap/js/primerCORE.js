@@ -455,8 +455,8 @@ primerCORE = (function () {
             cache: false,
             // Antes de enviar
             beforeSend: function () {
-
-                $("#" + widget.id).find("wrapper").css("display", "none");
+                // Apaga a representação antes de pedir novos dados
+                $("#" + widget.id).find(".wrapper").find("svg").remove();
 
                 // Constroi o spinner 
                 ConstroiSpinner(widget);
@@ -467,8 +467,6 @@ primerCORE = (function () {
             complete: function () {
                 // Parar widget
                 widget.spinner.stop();
-
-                $("#" + widget.id).find("wrapper").css("display", "block");
 
                 // Remover class do spinner
                 $("#" + widget.id).removeClass("carregar");

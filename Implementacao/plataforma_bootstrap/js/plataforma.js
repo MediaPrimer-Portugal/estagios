@@ -13,8 +13,8 @@
         .offset([0, 0])
         .html(function (d) {
             return "<p>Dados: <span style='color:green'>" + d.name + "</span></p>" +
-                "<p></p>"+
-                "<p>Data: "+ (d.y1-d.y0) + "</p>" +
+                "<p></p>" +
+                "<p>Data: " + (d.y1 - d.y0) + "</p>" +
                 "<p>Percentagem: " + ((Number(d.y).toFixed(2))) + "%</p>";
         });
 
@@ -60,8 +60,7 @@
             cache: false,
             // Antes de enviar
             beforeSend: function () {
-
-                $("#" + widget.id).find("wrapper").css("display", "none");
+                $("#" + widget.id).find(".wrapper").find("svg").remove();
 
                 // Constroi o spinner 
                 ConstroiSpinner(widget);
@@ -69,7 +68,7 @@
                 $("#" + widget.id).addClass("carregar")
             },
             // Depois do pedido estar completo
-            complete: function() {
+            complete: function () {
                 // Parar widget
                 widget.spinner.stop();
 
@@ -80,7 +79,7 @@
             },
             url: urlprodserver,
             // Ao receber o pedido
-            success: function() {
+            success: function () {
                 console.log("Dados obtidos");
             },
             error: function (xhr, ajaxOptions, thrownError) {
@@ -206,7 +205,7 @@
 
             // Widgets que estão relacionados com o widget
             this.contexto = [];
-            
+
             this.agregacoes = [];
 
         }
@@ -336,24 +335,53 @@
         /// Associa widget e regista no atributo apropriado
         /// </summary>
         /// <param name="widget"> STRING com o id do widget </param>
+        /// <returns> Booleano que retorna true caso associe com sucesso</returns>
         Widget.prototype.AssociaWidget = function (widget) {
-            var self = this;
+            var self = this,
+                index = _.findIndex(self.contexto, function (valor) { return valor === widget; });
 
-            self.contexto.push(widget);
-            
+
+            // Verificar que contexto do widget tem apenas um item do tipo dados, para não redesenhar por cima 
+
+            if (index === -1) {
+                self.contexto.push(widget);
+
+                return true;
+            }
+
+            return false;
+
         }
 
 
         /// <summary>
         /// Remove associacao dos widgets
         /// </summary>
-        /// <param name="widget"> String do Id de widget a ser desassociado </param>
+        /// <param name="widget"> STRING do Id de widget a ser desassociado </param>
+        /// <returns> Booleano que retorna true caso desaassocie com sucesso</returns>
         Widget.prototype.DesassociaWidget = function (widget) {
-            var self = this;
+            var self = this,
+                tamanho = self.contexto.length;
 
             _.remove(self.contexto, function (item) {
                 return widget === item;
             })
+
+            // Caso não tenha nenhum contexto
+            if (self.widgetTipo === "dados" && self.contexto.length === 0) {
+                // Dados passam a 0
+                self.dados = {};
+                // Apaga gráfico, pois não tem nenhuma fonte de dados
+                self.RedesenhaGrafico();
+            }
+
+            // Caso o tamanho do contexto seja diferente que o inicial foi desassociado
+            if (self.contexto.length !== tamanho) {
+                
+                return true;
+            }
+
+            return false;
 
         }
 
@@ -391,29 +419,34 @@
         /// <summary>
         /// Redesenha completamente o gráfico
         /// </summary>
-        Widget.prototype.RedesenhaGrafico = function ()  {
+        Widget.prototype.RedesenhaGrafico = function () {
             var self = this;
 
             // Remove todos os elementos excepto a navbar
             $("#" + self.id).children().not(".widget-navbar").children().remove();
 
+            console.log(self);
 
-            if (self.dados.dados.Widgets[0].Items.length != 0) {
-                // Volta a desenhar o gráfico sem algumas opções
-                self.AtualizaDimensoes.call(this);
-                self.ConstroiSVG.call(this, self.id, self);
-                self.ConstroiEixos.call(this);
-                self.InsereDados.call(this);
-                self.InsereEixos.call(this);
-                self.Atualiza.call(this);
+            // Caso os dados estejam vazios
+            if (self.dados.dados !== undefined) {
+                // Caso tenha items para desenhar
+                if (self.dados.dados.Widgets[0].Items.length != 0) {
+                    // Volta a desenhar o gráfico sem algumas opções
+                    self.AtualizaDimensoes.call(this);
+                    self.ConstroiSVG.call(this, self.id, self);
+                    self.ConstroiEixos.call(this);
+                    self.InsereDados.call(this);
+                    self.InsereEixos.call(this);
+                    self.Atualiza.call(this);
 
-                self.ConstroiLegenda.call(this);
+                    self.ConstroiLegenda.call(this);
 
 
-            } else {
-                self.svg.append("text")
-                    .style("text", "Não há dados possiveis");
+                } else {
+                    self.svg.append("text")
+                        .style("text", "Não há dados possiveis");
 
+                }
             }
 
         }
@@ -426,10 +459,9 @@
             var self = this,
                 query = '{"sessaoID": "sessaoDebug","dashboardID": "8", "utilizadorID": "2502","widgetsDados": [{"id": "widget0","contexto": ["widget3","widget8"],"agregacoes": [{"funcao": "avg","campo": "valor.valorMax"},{"funcao": "avg","campo": "valor.valorMed"},{"funcao": "avg","campo": "valor.valorMin"}]}], "widgetsContexto": {"contextoQuery": [{"id": "widget3","tipo": "query","filtro": "valor.tagID: 3072"},{"id": "widget4","tipo": "query","filtro": "valor.tagID: 3073"}],"contextoHistograma": [{"id": "widget8","tipo": "histograma","dataInicio": \"' + opcoes.dataInicio + '\","dataFim": \"' + opcoes.dataFim + '\"}]}}';
 
+                self.dados = ((primerCORE.DashboardDevolveWidget(self, query)));
+                self.dados = $.parseJSON(self.dados);
 
-            self.dados = ((primerCORE.DashboardDevolveWidget(self, query)));
-            console.log(self.dados);
-            self.dados = $.parseJSON(self.dados);
         }
 
 
@@ -623,6 +655,8 @@
             this.objectoServidor["widgetElemento"] = "graficoArea";
             this.objectoServidor["contexto"] = [];
             this.objectoServidor["agregacoes"] = [];
+
+            this.chave = [];
         };
 
 
@@ -654,19 +688,19 @@
             // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
             self.area = d3.svg.area()
                 // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
-                .x(function (d) { return transformaX(d.date); })
+                .x(function (d) { return self.transformaX(d.date); })
                 // y0 é igual a altura pois no d3 a escala é feita de forma contrária
                 .y0(function (d) { return self.altura; })
                 // Devolve o "Y" de cada valor no objecto Dados de acordo com a escala Y
-                .y1(function (d) { return transformaY(d.y); });
+                .y1(function (d) { return self.transformaY(d.y); });
 
 
-            if(self.modoVisualizacao === "stacked") {
+            if (self.modoVisualizacao === "stacked") {
                 self.area
                     // y0 é igual a altura pois no d3 a escala é feita de forma contrária
-                    .y0(function (d) { return transformaY(d.y0); })
+                    .y0(function (d) { return self.transformaY(d.y0); })
                     // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
-                    .y1(function (d) { return transformaY(d.y0 + d.y); });
+                    .y1(function (d) { return self.transformaY(d.y0 + d.y); });
             } else {
                 //to-do
             }
@@ -704,7 +738,7 @@
                         })
                     }
                 }));
-               
+
 
                 // Acrescentar ao SVG
                 dados = self.svg.selectAll(".dados")
@@ -712,7 +746,7 @@
                               .enter().append("g")
                                 .attr("class", "dados")
                                 // Compensar margem da esquerda
-                                .attr("transform", "translate(" + self.margem.esquerda/2 + " ,0)");
+                                .attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
 
 
                 // Acrescenta o desenho do gráfico
@@ -740,7 +774,7 @@
                         .style("display", "none");
 
                 // Atualizar eixo depois de dados inseridos
-                transformaX.domain(d3.extent(self.dados, function (d) { return d.date; }));
+                self.transformaX.domain(d3.extent(self.dados, function (d) { return d.date; }));
 
                 // Para cada objecto ( Ponto )
                 dadosStacked.forEach(function (item, curIndex) {
@@ -751,10 +785,10 @@
                       // Inserir rectangulo
                       .enter().append("rect")
                         .attr("class", "ponto" + curIndex)
-                        .attr("x", function (d) { return transformaX(d.date); })
-                        .attr("y", function (d) { return transformaY(d.y0 + d.y); })
+                        .attr("x", function (d) { return self.transformaX(d.date); })
+                        .attr("y", function (d) { return self.transformaY(d.y0 + d.y); })
                         .attr("width", larguraRect)
-                        .attr("height", function (d) { return self.altura - transformaY(d.y); })
+                        .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
                         .style("opacity", "0");
 
                 });
@@ -789,15 +823,15 @@
 
                 // Adquirir valor máximo de cada uma das chaves(keys)
                 dadosNormal.forEach(function (item) {
-                    chave.push(d3.max(item.values, function (d) { return d.y; }));
+                    self.chave.push(d3.max(item.values, function (d) { return d.y; }));
                 });
 
 
                 // to-do var close
-                transformaY.domain([0, d3.max(chave)]);
+                self.transformaY.domain([0, d3.max(self.chave)]);
 
                 // Atualizar eixo depois de dados inseridos
-                transformaX.domain(d3.extent(dadosNormal[0].values, function (d) { return d.date; }));
+                self.transformaX.domain(d3.extent(dadosNormal[0].values, function (d) { return d.date; }));
 
 
                 // Passar os dados para dentro de um objecto para serem facilmente lidos pelos métodos d3
@@ -810,7 +844,7 @@
                               .enter().append("g")
                                 .attr("class", "dados")
                                 // Compensar margem da esquerda
-                                .attr("transform", "translate(" + self.margem.esquerda/2 + " ,0)");
+                                .attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
 
 
                 // Acrescenta o desenho do gráfico
@@ -847,10 +881,10 @@
                       // Inserir rectangulo
                       .enter().append("rect")
                         .attr("class", "ponto" + curIndex)
-                        .attr("x", function (d) { return transformaX(d.date); })
-                        .attr("y", function (d) { return transformaY(d.y); })
+                        .attr("x", function (d) { return self.transformaX(d.date); })
+                        .attr("y", function (d) { return self.transformaY(d.y); })
                         .attr("width", larguraRect)
-                        .attr("height", function (d) { return self.altura - transformaY(d.y); })
+                        .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
                         .style("opacity", "0");
 
                 });
@@ -872,7 +906,7 @@
 
 
             // Atribui valores a Y conforme a sua escala
-            transformaX = d3.time.scale()
+            self.transformaX = d3.time.scale()
                 // Mapeia o dominio conforme a dadosSelecionados, e o "nome" to-do
                 //.domain(self.dados.map(function (d) { return d.nome; }))
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
@@ -880,26 +914,24 @@
 
             // Construtor do Eixo dos X
             self.escalaX = d3.svg.axis()
-              .scale(transformaX)
+              .scale(self.transformaX)
               // Orientação da escala
               .orient("bottom");
 
             // Atribui valores a Y conforme a sua escala
-            transformaY = d3.scale.linear()
+            self.transformaY = d3.scale.linear()
               //.domain([0, d3.max(self.dados, function (d) { return d.teste1; })])
               .range([self.altura, 0]);
 
             // Construtor do Eixo dos Y
             self.escalaY = d3.svg.axis()
-              .scale(transformaY)
+              .scale(self.transformaY)
               .orient("left");
 
             // Adiciona escala em formato percentagem 
             if (self.modoVisualizacao === "stacked") {
                 self.escalaY
                     .tickFormat(formatPercent);
-            } else {
-            
             }
         }
 
@@ -913,7 +945,7 @@
                 intervaloData = (d3.extent(dadosNormal[0].values, function (d) { return d.date; }));
 
             // Atribui valores a Y conforme a sua escala
-            transformaX = d3.time.scale()
+            self.transformaX = d3.time.scale()
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
                 .range([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda - self.margem.direita])
                 // Mapeia o dominio conforme a a data disponivel nos dad
@@ -922,22 +954,22 @@
 
             if (self.modoVisualizacao === "stacked") {
                 // Atribui valores a Y conforme a sua escala
-                transformaY = d3.scale.linear()
+                self.transformaY = d3.scale.linear()
                     // Para stack não é preciso domain
                     //.domain([0, d3.max(self.dados, function (d) { return d.teste1; })])
                     .range([self.altura, 0]);
 
             } else {
-                transformaY = d3.scale.linear()
+                self.transformaY = d3.scale.linear()
                     // to-do close
-                    .domain([0, d3.max(chave)])
+                    .domain([0, d3.max(self.chave)])
                     .range([self.altura, 0]);
 
             }
 
             //// Atualização da escala dos Eixos
-            self.escalaX.scale(transformaX);
-            self.escalaY.scale(transformaY);
+            self.escalaX.scale(self.transformaX);
+            self.escalaY.scale(self.transformaY);
 
 
             // Numero de representações nos eixos de acordo com o tamanho do widget
@@ -969,7 +1001,7 @@
             // Atualização do eixo dos X
             self.svg.select(".x.axis")
                 .attr("class", "x axis")
-                .attr("transform", "translate(" + self.margem.esquerda/2 + " ," + self.altura + ")")
+                .attr("transform", "translate(" + self.margem.esquerda / 2 + " ," + self.altura + ")")
                 .call(self.escalaX)
             .selectAll("text")
               .attr("dx", "-2em")
@@ -979,7 +1011,7 @@
             // Atualização do eixo dos Y
             self.svg.select(".y.axis")
                 .attr("class", "y axis")
-                .attr("transform", "translate("+ self.margem.esquerda / 2 + " , 0)")
+                .attr("transform", "translate(" + self.margem.esquerda / 2 + " , 0)")
                 .call(self.escalaY);
         }
 
@@ -995,14 +1027,14 @@
                 // Insere eixo dos X (Stacked)
                 self.svg.append("g")
                     .attr("class", "x axis")
-                    .attr("transform", "translate(" + self.margem.esquerda +"," + self.altura + ")")
+                    .attr("transform", "translate(" + self.margem.esquerda + "," + self.altura + ")")
                     .call(self.escalaX);
 
                 // Insere eixo dos Y (Stacked)
                 self.svg.append("g")
                     .attr("class", "y axis")
                     .call(self.escalaY);
-                
+
             } else {
                 self.svg.append("g")
                     .attr("class", "x axis")
@@ -1017,7 +1049,7 @@
                     .attr("y", 6)
                     .attr("dy", ".71em")
                     .style("text-anchor", "end")
-                //.text("nomeEixoY");
+
             }
 
         }
@@ -1096,7 +1128,7 @@
                 legenda.append("circle")
                     .attr("r", 5)
                     .attr("cx", 15)
-                    .attr("cy", 15+20 * i)
+                    .attr("cy", 15 + 20 * i)
                     .style("fill", color(color.domain()[i]));
 
                 legenda.append("text")
@@ -1169,26 +1201,26 @@
                         // Ligar o valor dos pontos
                         .data(item.values)
                       // Inserir rectangulo
-                        .attr("x", function (d) { return transformaX(d.date); })
-                        .attr("y", function (d) { return transformaY(d.y0 + d.y); })
+                        .attr("x", function (d) { return self.transformaX(d.date); })
+                        .attr("y", function (d) { return self.transformaY(d.y0 + d.y); })
                         .attr("width", larguraRect)
-                        .attr("height", function (d) { return self.altura - transformaY(d.y); })
+                        .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
                             .style("opacity", "0")
                         // Compensar margem para eixo dos Y
-                        .attr("transform", "translate(" + self.margem.esquerda/2 + " ,0)");
+                        .attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
 
 
                     // Adicionar tooltip
-                    if(self.mostraToolTip === true) {
+                    if (self.mostraToolTip === true) {
                         self.pontos.selectAll(".ponto" + curIndex)
                         .on("mouseover", tip.show)
                         .on("mouseout", tip.hide);
 
                     } else {
                         self.pontos.selectAll(".ponto" + curIndex)
-                        .on("mouseover", function() {})
-                        .on("mouseout", function() {});
-                    }         
+                        .on("mouseover", function () { })
+                        .on("mouseout", function () { });
+                    }
 
                     // Marcas no gráfico
                     // Mostra a marca no gráfico
@@ -1226,10 +1258,10 @@
                         // Ligar o valor dos pontos
                         .data(item.values)
                       // Inserir rectangulo
-                        .attr("x", function (d) { return transformaX(d.date); })
-                        .attr("y", function (d) { return transformaY(d.y); })
+                        .attr("x", function (d) { return self.transformaX(d.date); })
+                        .attr("y", function (d) { return self.transformaY(d.y); })
                         .attr("width", larguraRect)
-                        .attr("height", function (d) { return self.altura - transformaY(d.y); })
+                        .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
                             .style("opacity", "0")
                         // Compensar margem para eixo dos Y
                         .attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
@@ -1263,22 +1295,22 @@
                 // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
                 self.area = d3.svg.area()
                     // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
-                    .x(function (d) { return transformaX(d.nome); })
+                    .x(function (d) { return self.transformaX(d.nome); })
                     // y0 é igual a altura pois no d3 a escala é feita de forma contrária
                     .y0(self.altura)
                     // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
-                    .y1(function (d) { return transformaY(d.teste1); })
+                    .y1(function (d) { return self.transformaY(d.teste1); })
                      //Faz a interpolação para suavizar as linhas
                     .interpolate("basis");
             } else {
                 // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
                 self.area = d3.svg.area()
                     // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
-                    .x(function (d) { return transformaX(d.nome); })
+                    .x(function (d) { return self.transformaX(d.nome); })
                     // y0 é igual a altura pois no d3 a escala é feita de forma contrária
                     .y0(self.altura)
                     // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
-                    .y1(function (d) { return transformaY(d.teste1); });
+                    .y1(function (d) { return self.transformaY(d.teste1); });
             }
 
             // Atualiza gráfico
@@ -1304,7 +1336,7 @@
                     self.modoVisualizacao = "normal";
 
                     self.RedesenhaGrafico();
-                    
+
                 }
                     // Caso esteja em modo stacked ( Empilhado )
                 else {
@@ -1312,7 +1344,7 @@
                         self.modoVisualizacao = "stacked";
 
                         self.RedesenhaGrafico();
-                        
+
                     }
                 }
             });
@@ -1374,15 +1406,15 @@
         /// Passa o gráfico para modo Grouped ( Agrupado ) 
         /// desenha todas as barras novamente e calcula o máximo, para os eixos depois serem ajustados
         /// </summary>
-        GraficoBarras.prototype.Agrupa = function() {
+        GraficoBarras.prototype.Agrupa = function () {
             var self = this;
 
             self.AtualizaEixos();
 
             self.selecao.selectAll("rect")
                 // to-do modificar nome State para um genérico - Contar numero de keys e substituir pelo inteiro
-                .attr("x", function (d, curIndex) { return transformaX(self.dados[curIndex].date) / 2 ; })
-            .transition("grouped")  
+                .attr("x", function (d, curIndex) { return transformaX(self.dados[curIndex].date) / 2; })
+            .transition("grouped")
                 .attr("y", function (d) { return transformaY(d.y1 - d.y0); })
                 .attr("height", function (d) { return self.altura - transformaY(d.y1 - d.y0); })
                 .attr("width", transformaX.rangeBand() / 2)
@@ -1454,7 +1486,7 @@
                 // to-do  ( Modificar de state para outra variavel )
                 color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
 
-                
+
 
                 // Mapear dados através de d.ages (to-do)
                 self.dados.forEach(function (d) {
@@ -1555,7 +1587,7 @@
 
                 // Atualizar posição X de cada uma das "colunas"
                 self.selecao
-                    .attr("transform", function (d) { var somaAuxiliar = transformaX(d.date) + self.margem.esquerda / 2; return "translate(" + somaAuxiliar+ ",0)"; });
+                    .attr("transform", function (d) { var somaAuxiliar = transformaX(d.date) + self.margem.esquerda / 2; return "translate(" + somaAuxiliar + ",0)"; });
 
                 self.Empilha();
 
@@ -1701,7 +1733,7 @@
                 //escalaX.tickValues(transformaX.domain().filter(function (d, i) { return !(i % 5); }));
             }
 
-            escalaX.tickFormat(function (d) { return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() ;})
+            escalaX.tickFormat(function (d) { return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); })
 
             // Atualização do eixo dos X
             self.svg.select(".x.axis")
@@ -1820,7 +1852,7 @@
 
             // Atualizar escala - para dentro do atualiza to-do
             self.AtualizaEixos();
- 
+
         }
 
 
@@ -2454,7 +2486,7 @@
                 setInterval(function () {
                     self.Atualiza();
                 }, 1500);
-                
+
             }
             // Constroi Gráfico Horizontal
             if (modoVisualizacao === "horizontal") {
@@ -2653,7 +2685,7 @@
                 //valorMinimo = $(".valor-minimo").val();
                 //meta = $(".valor-meta").val();
 
-                valorAtual = random ;
+                valorAtual = random;
                 valorMaximo = 100;
                 valorMinimo = 0;
                 meta = 50;
@@ -2772,10 +2804,10 @@
         Gauge.prototype.MostraOpcoes = function () {
             var self = this;
 
-            $("body").append("<div id=\"myModal\" class=\"modal fade\">"  +
-                "<div class=\"modal-dialog\">"  +
-                "<div class=\"modal-content\">"  +
-                "<div class=\"modal-header\">"  +
+            $("body").append("<div id=\"myModal\" class=\"modal fade\">" +
+                "<div class=\"modal-dialog\">" +
+                "<div class=\"modal-content\">" +
+                "<div class=\"modal-header\">" +
                 "<button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">" + "&times;" + "</button>" +
                 "<h4 class=\"modal-title\">" + "Opcoes da Gauge" + "</h4>" +
             "</div>" +
@@ -3123,7 +3155,7 @@
         PieChart.prototype.ConstroiSVG = function (id) {
             var self = this;
 
-        
+
             // Seleciona o wrapper para inserir o svg
             self.svg = d3.select("#" + id).select(".wrapper").insert("svg")
                 // 80% para deixar algum espaço para as tooltip/legenda
@@ -3144,7 +3176,7 @@
         /// </summary>
         PieChart.prototype.InsereDados = function () {
             var self = this,
-                ArraySoma=[0],
+                ArraySoma = [0],
                 soma = 0,
                 somaAtual = 0,
                 dadosPie = [0],
@@ -3244,7 +3276,7 @@
         PieChart.prototype.InsereLegenda = function (dadosPie) {
             var self = this;
 
-  
+
             // to-do Legendas
             // unico = id 
             $("#" + self.id).append("<div class=\"legenda\" style=\"float:left; max-width:30px;\"></div>")
@@ -3589,7 +3621,7 @@
         }
 
 
-       
+
 
 
         return Tabela;
@@ -3608,7 +3640,7 @@
         var opcoes =
             [
                 { Nome: "Opção A", Valor: "index:indicadores AND type:dadomedido AND tagID: 773" },
-                { Nome: "Opção B", Valor: "index:indicadores AND type:dadomedido AND tagID: 774"}, 
+                { Nome: "Opção B", Valor: "index:indicadores AND type:dadomedido AND tagID: 774" },
                 { Nome: "Opção C", Valor: "index:indicadores AND type:dadomedido AND tagID: 775" }
             ],
             parseDate = d3.time.format("%y-%b-%d").parse;
@@ -3669,7 +3701,7 @@
             self.opcoes = opcoes;
 
             self.opcoes.forEach(function (item) {
-                $("#" + self.id).find(".filtros-opcoes").append("<option value="+ item.Valor +">"+ item.Nome +"</option>");
+                $("#" + self.id).find(".filtros-opcoes").append("<option value=" + item.Valor + ">" + item.Nome + "</option>");
             })
 
         }
@@ -3748,11 +3780,7 @@
     var Data = (function () {
 
         // Opcoes de datas que vão ser utilizadas
-        var opcoes =
-                {
-                    "dataInicio": "2015-01-01",
-                    "dataFim": "2015-01-20"
-                };
+        //var opcoes;
 
 
         /// <summary>
@@ -3761,9 +3789,12 @@
         function Data(titulo, widgetAltura, widgetLargura, widgetX, widgetY) {
             // Construtor de Widget é chamado
             Widget.call(this, titulo, widgetAltura, widgetLargura, widgetX, widgetY);
-            
+
             this.contexto = [];
-            this.opcoes = opcoes;
+            this.opcoes = {
+                "dataInicio": "2015-01-01",
+                "dataFim": "2015-01-20"
+            };
 
             this.widgetTipo = "contexto";
             this.widgetElemento = "datahora_simples";
@@ -3772,7 +3803,7 @@
             this.objectoServidor["widgetTipo"] = "contexto";
             this.objectoServidor["widgetElemento"] = "datahora_simples";
             this.objectoServidor["contexto"] = [];
-            this.objectoServidor["opcoes"] = opcoes;
+            this.objectoServidor["opcoes"] = this.opcoes;
 
         };
 
@@ -3797,17 +3828,17 @@
             // Acrescenta ao wrapper a primeira escolha
             self.svg = $("#" + self.id).find(".wrapper").append("<span>Data Inicio</span>: <div class=\"container\">"
                 + "<div class=\"row\">"
-                +" <div class=\"col-sm-4\">"
-                +" <div class=\"form-group\">"
-                +" <div class=\"input-group date\" id=\"datetimepicker-"+self.id+"\">"
-                  +"  <input type=\"text\" class=\"form-control\" />"
-                   +" <span class=\"input-group-addon\">"
-                   +" <span class=\"glyphicon glyphicon-calendar\"></span>"
-                   +" </span>" 
-                   +" </div></div></div></div></div>");
+                + " <div class=\"col-sm-4\">"
+                + " <div class=\"form-group\">"
+                + " <div class=\"input-group date\" id=\"datetimepicker-" + self.id + "\">"
+                  + "  <input type=\"text\" class=\"form-control\" />"
+                   + " <span class=\"input-group-addon\">"
+                   + " <span class=\"glyphicon glyphicon-calendar\"></span>"
+                   + " </span>"
+                   + " </div></div></div></div></div>");
 
             // Ligar o date time picker ao elemento
-            $("#"+self.id).find("#datetimepicker-"+self.id).datetimepicker({
+            $("#" + self.id).find("#datetimepicker-" + self.id).datetimepicker({
                 locale: linguagem,
                 widgetPositioning: {
                     vertical: "bottom"
@@ -3875,17 +3906,6 @@
         }
 
 
-        /// <summary>
-        /// Acrescenta os diferentes filtros à "dropdown"
-        /// </summary>
-        Data.prototype.InsereDados = function (id) {
-            var self = this;
-
-            self.opcoes = opcoes;
-
-        }
-
-
         //TO-DO
         /// <summary>
         /// Método que atualiza a tabela, p.ex a sua escala ou os dados
@@ -3893,7 +3913,7 @@
         Data.prototype.Atualiza = function () {
             var self = this
 
-            self.objectoServidor["opcoes"] = opcoes;
+            self.objectoServidor["opcoes"] = self.opcoes;
 
         }
 
@@ -3909,7 +3929,6 @@
 
             // Inserir dados na tabela
             self.ConstroiSVG();
-            self.InsereDados();
 
         }
 
@@ -3929,7 +3948,7 @@
             dia = ("0" + self.opcoes.dataInicio.getDate()).slice(-2);
 
             // Passa o objecto data para o formato ideal para o widget guardar
-            self.opcoes.dataInicio = self.opcoes.dataInicio.getFullYear() +"-"+ mes + "-" + self.opcoes.dataInicio.getDate();
+            self.opcoes.dataInicio = self.opcoes.dataInicio.getFullYear() + "-" + mes + "-" + self.opcoes.dataInicio.getDate();
 
             self.Atualiza();
 
@@ -4007,7 +4026,7 @@
                 dataInicioFiltro = Date.parse(self.opcoes.dataInicio),
                 dataFimFiltro = Date.parse(self.opcoes.dataFim);
 
-            widget.setDados(opcoes);
+            widget.setDados(self.opcoes);
 
         }
 
@@ -4053,7 +4072,7 @@
         Grid.prototype.Inicializa = function () {
 
             var self = this;
-            
+
             // Inicializa lista de widgets
             self.listaWidgets = listaWidgets;
 
@@ -4130,7 +4149,7 @@
                     self.GuardaInformacao();
                 }, 20);
             });
-   
+
         }
 
         /// <summary>
@@ -4164,7 +4183,7 @@
 
             // Altura e largura minima para cada widget
             minHeight = minWidth = 2;
-            
+
             // Impor limite no eixo do X para widget não sair fora dos limites
             if ($coordenadaX > 10) {
                 $coordenadaX = 10;
@@ -4173,7 +4192,7 @@
             // Impor limite no eixo do Y
             if ($coordenadaY >= 50) {
                 $coordenadaY = 50;
-            } 
+            }
 
             // Adiciona widget, biblioteca gridstack
             // apenas é obrigatório o atributo el
@@ -4213,16 +4232,16 @@
                     break;
             }
 
-            
+
             ficheiro = "stacked";
 
 
             // Constroi Gráfico no Widget
             self.listaWidgets[ultimo].ConstroiGrafico(self.listaWidgets[ultimo].id);
- 
+
             // Incrementar para não haver Ids iguais
             idUnico++;
-           
+
         }
 
 
@@ -4267,14 +4286,16 @@
                 // Caso seja do tipo contexto
                 if (item.widgetTipo === "contexto") {
 
-                    // Para cada widget no seu contexto
+                    // Para cada widget dentro do seu contexto
                     item.contexto.forEach(function (widget) {
                         var dadosFiltrados,
-                            // Procura index
+                            // Procura index do widget no contexto
                             index = _.findIndex(self.listaWidgets, function (d) { return widget === d.id });
 
-
+                        // Adquire os dados filtrados
                         item.FiltraDados(self.listaWidgets[index], widget);
+
+                        // Redeseha os dados de acordo com os dados adquiridos
                         self.listaWidgets[index].RedesenhaGrafico(self.listaWidgets[index].id);
 
                     });
@@ -4470,6 +4491,62 @@
     })();
 
 
+
+    /// <summary>
+    /// Classe que contém as definições e métodos da property Grid (jqPropertyGrid)
+    /// Module Pattern
+    /// </summary>
+    var PropertyGrid = (function(){
+        var PropertyGrid = {};
+
+        function PropertyGrid() {
+            this.PropertyGrid = {};
+        }
+
+        PropertyGrid.propriedades = {
+            WidgetDados: "Widget",
+            WidgetContexto: "Widget"
+        }
+
+        PropertyGrid.widgets = {};
+
+        PropertyGrid.setWidgets = function (listaWidgetsDados, listaWidgetsContexto) {
+            this.widgets = {
+                WidgetDados: { name: "Widget Dados", group: "Associação", type: "options", options: listaWidgetsDados, description: "Widgets que contêm os gráficos" },
+                WidgetContexto: { name: "Widget Contexto", group: "Associação", type: "options", options: listaWidgetsContexto, description: "Widget que contêm os dados/filtros" }
+            };
+        }
+
+        PropertyGrid.getWidgetsDados = function () {
+            return objecto.widgets.WidgetDados;
+        }
+
+        PropertyGrid.getWidgetsDados = function () {
+            return objecto.widgets.WidgetContexto;
+        }
+
+        PropertyGrid.Constroi = function () {
+            // Cria a grid com as suas propriedades
+            $('#propGrid').jqPropertyGrid(this.propriedades, this.widgets);
+        }
+
+        PropertyGrid.Inicializa = function () {
+
+            inicializaWidgets = {
+                WidgetDados: { name: "Widget Dados", group: "Associação", type: "options", options: ["Escolha Opção"], description: "Widgets que contêm os gráficos" },
+                WidgetContexto: { name: "Widget Contexto", group: "Associação", type: "options", options: ["Escolha Opção"], description: "Widget que contêm os dados/filtros" }
+            }
+
+            // Cria a grid
+            $('#propGrid').jqPropertyGrid(this.propriedades, inicializaWidgets);
+        }
+
+        return PropertyGrid;
+
+    })();
+
+
+
     // Opções da gridstack
     options = {
         verticalMargin: 2,
@@ -4529,13 +4606,158 @@
     });
 
 
-    ///TESTE
+    /// TESTE SIDEBAR - Gestão de elementos para a dropdownlist das "Propriedades"
+    /// Método antigo
+    // Ao remover um widget da dashboard
+    $(".grid-stack").on("removed", function (event, items) {
 
+        var widgets,
+            listaWidgetDados = ["Escolha Opção"],
+            listaWidgetContexto = ["Escolha Opção"];
+
+        setTimeout(function () {
+            //// Remove lista de widgets
+            //$(".associaWidget-lista").children().remove();
+
+            // Para cada widget na Lista
+            gridPrincipal.listaWidgets.forEach(function (item) {
+                // Preenche a sidebar
+                //$(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.titulo + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
+
+                // Adiciona ao array de objectos correcto
+                (item.widgeTipo === "contexto") ? listaWidgetContexto.push({ text: item.id, value: item.id }) : listaWidgetDados.push({ text: item.id, value: item.id })
+
+            });
+
+            // Define widgets na PropertyGrid
+            PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
+            // Constroi a PropertyGrid
+            PropertyGrid.Constroi();
+
+        }, 20)
+
+    });
+
+    // Ao adicionar um widget, é adicionado um valor ao sidebar
+    $(".grid-stack").on("added", function (event, items) {
+
+        var widgets,
+            listaWidgetsDados = ["Escolha Opção"],
+            listaWidgetsContexto = ["Escolha Opção"];
+
+        setTimeout(function () {
+
+            // Remove lista de widgets
+            $(".associaWidget-lista").children().remove();
+
+            // Para cada widget na Lista
+            gridPrincipal.listaWidgets.forEach(function (item) {
+                // Preenche a sidebar
+                $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
+
+                // Adiciona ao array de objectos correcto
+                (item.widgetTipo === "contexto")? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
+
+            });
+
+            // Define widgets na PropertyGrid
+            PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
+            // Constroi a PropertyGrid
+            PropertyGrid.Constroi();
+            
+        }, 20)
+
+
+    });
+
+
+    /// TESTE - Propriedade menu (Sidebar)
+    // Ao pressionar adicionar
+    $(".adicionarAssociacao").click(function () {
+        // Widgets a serem associados
+        var widget1,
+            widget2,
+            // Adquire valores da caixa de propriedades em formato Objecto
+            valores = jQuery.parseJSON(JSON.stringify($('#propGrid').jqPropertyGrid('get'), null, '\t'));
+
+        // Caso sejam 2 valores diferentes do "default"
+        if (valores.WidgetDados !== "Escolha Opção" && valores.WidgetContexto !== "Escolha Opção") {
+
+            // Adquire referencia dos widgets a associar
+            widget1 = gridPrincipal.getWidget(valores.WidgetDados);
+            widget2 = gridPrincipal.getWidget(valores.WidgetContexto);
+
+            if ((_.findIndex(widget1.contexto, function (contexto) { return gridPrincipal.getWidget(contexto).widgetTipo === "contexto" })) === -1) {
+
+                // Associa o widget a cada um
+                verifica1 = widget1.AssociaWidget(valores.WidgetContexto);
+                verifica2 = widget2.AssociaWidget(valores.WidgetDados);
+
+
+                // Caso os 2 tenham associado com sucesos 
+                if (verifica1 === true & verifica2 === true) {
+                    // Apresentar aviso
+                    alert(valores.WidgetDados + " foi associado com sucesso a " + valores.WidgetContexto);
+                }
+
+                // Chama função para filtrar e desenhar os dados
+                gridPrincipal.FiltraContexto();
+
+            } else {
+                alert("O " + valores.WidgetDados + " já tem um widget contexto associado");
+            }
+        }
+
+    });
+
+    // Ao remover associacao
+    $(".removerAssociacao").click(function () {
+        // Widgets a serem associados
+        var widget1,
+            widget2,
+            // Adquire valores da caixa de propriedades em formato Objecto
+            valores = jQuery.parseJSON(JSON.stringify($('#propGrid').jqPropertyGrid('get'), null, '\t'));
+
+        // Caso sejam 2 valores diferentes do "default"
+        if (valores.WidgetDados !== "Escolha Opção" && valores.WidgetContexto !== "Escolha Opção") {
+
+            // Adquire referencia dos widgets a associar
+             widget1 = gridPrincipal.getWidget(valores.WidgetDados);
+             widget2 = gridPrincipal.getWidget(valores.WidgetContexto);
+
+             // Associa o widget a cada um
+             verifica1 = widget1.DesassociaWidget(valores.WidgetContexto);
+             verifica2 = widget2.DesassociaWidget(valores.WidgetDados);
+        }
+
+        
+        // Caso os 2 tenham desassociado com sucesso 
+        if (verifica1 === true & verifica2 === true) {
+            // Apresentar aviso
+            alert(valores.WidgetDados + " foi desassociado com sucesso a " + valores.WidgetContexto);
+
+            // Chama função para filtrar e desenhar os dados
+            gridPrincipal.FiltraContexto();
+
+        } else {
+            // Apresentar aviso
+            alert(valores.WidgetDados + " não está associado com " + valores.WidgetContexto);
+        }
+
+
+    });
+
+    // property Grid - TEST
+    PropertyGrid.Inicializa();
+
+
+
+    ///TESTES - Comunicação
     $(".obterValores").click(function () {
         gridPrincipal.FiltraContexto();
 
     })
-    
+
     // Query para a lista de widgets
     var queryListaWidgets = '{ "sessaoID": "sessaoDebug", "dashboardID": "8", "utilizadorID": "2502", "widgetsDados": [{ "id": "widget0", "contexto": ["widget3", "widget4", "widget8"], "agregacoes": [{ "funcao": "avg", "campo": "valor.valorMax" }, { "funcao": "avg", "campo": "valor.valorMed" }, { "funcao": "avg", "campo": "valor.valorMin" }] }, { "id": "widget1", "contexto": [""], "agregacoes": [{ "funcao": "avg", "campo": "valor.valorMax" }, { "funcao": "avg", "campo": "valor.valorMed" }, { "funcao": "avg", "campo": "valor.valorMin" }] }, { "id": "widget2", "contexto": ["widget3", "widget8"], "agregacoes": [{ "funcao": "avg", "campo": "valor.valorMax" }, { "funcao": "avg", "campo": "valor.valorMed" }, { "funcao": "avg", "campo": "valor.valorMin" }] }], "widgetsContexto": { "contextoQuery": [{ "id": "widget3", "tipo": "query", "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "query", "filtro": "valor.tagID: 3073" }], "contextoHistograma": [{ "id": "widget8", "tipo": "histograma", "dataInicio": "2015-01-01", "dataFim": "2015-01-31" }] } }'
 
@@ -4549,108 +4771,4 @@
     };
 
     console.log($.parseJSON(primerCORE.DashboardDevolve(10)));
-
-    /// TESTE SIDEBAR
-
-    // Ao remover um widget da dashboard
-    $(".grid-stack").on("removed", function (event, items) {
-        setTimeout(function () {
-            // Remove lista de widgets
-            $(".associaWidget-lista").children().remove();
-
-            // Para cada widget na Lista
-            gridPrincipal.listaWidgets.forEach(function (item) {
-                // Preenche a sidebar
-                $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.titulo + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
-
-            });
-        }, 20)
-    });
-
-    // Ao adicionar um widget, é adicionado um valor ao sidebar
-    $(".grid-stack").on("added", function (event, items) {
-        setTimeout(function () {
-
-            // Remove lista de widgets
-            $(".associaWidget-lista").children().remove();
-
-            // Para cada widget na Lista
-            gridPrincipal.listaWidgets.forEach(function (item) {
-                // Preenche a sidebar
-                $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
-
-            });
-
-        }, 20)
-    });
-
-
-    // Ao clickar no elemento
-    $(".sidebar").on("click", ".associaWidget-elemento", function () {
-        var $elemento = $(this);
-
-        // Remover os elementos anteriores
-        $(this).find("ul").find("li").remove()
-
-        // Esconder/Mostrar filhos
-        $(this).children().toggle();
-
-
-        gridPrincipal.listaWidgets.forEach(function (item) {
-            if (item.id !== $elemento.attr("valor")) {
-                $elemento.find("ul").append("<li class=\"associaWidget-liga\" valor=" + item.id + ">" + item.titulo + "</li>");
-            }
-        });
-
-
-    });
-
-
-    $(".sidebar").on("click", ".associaWidget-liga", function () {
-        // Seleciona o valor(id) dos widgets escolhidos
-        var widget = gridPrincipal.getWidget(($(this).parent().parent().attr("valor"))),
-            widget2 = gridPrincipal.getWidget($(this).attr("valor"))
-
-        // Associa contexto aos widgets
-        widget.AssociaWidget($(this).attr("valor"));
-        widget2.AssociaWidget($(this).parent().parent().attr("valor"));
-
-    });
-
-    // property Grid - TEST
-
-    // This is our target object
-    var theObj = {
-        font: 'Consolas',
-        fontSize: 14,
-        fontColor: '#a3ac03',
-        jQuery: true,
-        modernizr: false,
-        framework: 'angular',
-        iHaveNoMeta: 'Never mind...',
-        iAmReadOnly: 'I am a label which is not editable'
-    };
-
-    // This is the metadata object that describes the target object properties (optional)
-    var theMeta = {
-        // Since string is the default no nees to specify type
-        font: { group: 'Editor', name: 'Font', description: 'The font editor to use' },
-        // The "options" would be passed to jQueryUI as its options
-        fontSize: { group: 'Editor', name: 'Font size', type: 'number', options: { min: 0, max: 20, step: 2 } },
-        // The "options" would be passed to Spectrum as its options
-        fontColor: { group: 'Editor', name: 'Font color', type: 'color', options: { preferredFormat: 'hex' } },
-        // since typeof jQuery is boolean no need to specify type, also since "jQuery" is also the display text no need to specify name
-        jQuery: { group: 'Plugins', description: 'Whether or not to include jQuery on the page' },
-        // We can specify type boolean if we want...
-        modernizr: { group: 'Plugins', type: 'boolean', description: 'Whether or not to include modernizr on the page' },
-        framework: { name: 'Framework', group: 'Plugins', type: 'options', options: ['None', { text: 'AngularJS', value: 'angular' }, { text: 'Backbone.js', value: 'backbone' }], description: 'Whether to include any additional framework' },
-        iAmReadOnly: { name: 'I am read only', type: 'label', description: 'Label types use a label tag for read-only properties', showHelp: false }
-
-    };
-
-    // Create the grid
-    $('#propGrid').jqPropertyGrid(theObj, theMeta);
-
-
-
 })
