@@ -397,7 +397,7 @@ primerCORE = (function () {
         var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard?sessaoID=sessaoDebug";
 
             return $.ajax({
-                type: "GET",
+                type: "POST",
                 data: query,
                 async: false,
                 cache: false,
@@ -442,11 +442,14 @@ primerCORE = (function () {
     /// <param name="widget"> Widget que está a pedir dados </param>
     /// <param name="opcoes"> Opcoes para filtrar o pedido (data inicio, fim) </param>
     /// <returns> Devolve um objecto com a informação do  widget  </returns>
-    objecto.DashboardDevolveWidget = function (widget, query) {
+    objecto.DashboardDevolveWidget = function (widget, opcoes) {
 
-        var url = "http://192.168.0.17/dashboard/Implementacao/plataforma_bootstrap/JSON/" + ficheiro + ".JSON",
-            url1 = "http://localhost:49167/JSON/" + ficheiro + ".JSON",
-            urlprodserver = "http://prodserver1/MP/primerCORE/db/rest/dashboard/valores?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/valores?sessaoID=sessaoDebug";
+
+        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "8","utilizadorID": "2502", "widgetsDados": [ { "id": \"' + widget.id +
+            '\", "tipo": \"' + widget.widgetTipo +
+            '\", "elemento": \"' + widget.widgetElemento +
+            '\", "contexto": [ "widget3", "widget8" ], "series": [ {"funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": ""}, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMin", "index": "indicadores", "type": "" } ], "buckets": [ {"tipo": "histogramadata", "campo": "data", "intervalo": "dia" } ]} ], "widgetsContexto": { "contextoPesquisa": [ { "id": "widget3", "tipo": "contexto",  "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "contexto", "filtro": "valor.tagID: 3073"} ],  "contextoData": [  {  "id": "widget8",  "campo": "data", "dataInicio": \"' + opcoes.dataInicio + '\",  "dataFim": \"' + opcoes.dataFim + '\" } ] } }';
 
         return $.ajax({
             type: "POST",
@@ -456,22 +459,22 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
                 // Apaga a representação antes de pedir novos dados
-                $("#" + widget.id).find(".wrapper").find("svg").remove();
+                //$("#" + widget.id).find(".wrapper").find("svg").remove();
 
                 // Constroi o spinner 
-                ConstroiSpinner(widget);
+                //ConstroiSpinner(widget);
                 // Adicionar class ao spinner
-                $("#" + widget.id).addClass("carregar")
+                //$("#" + widget.id).addClass("carregar")
             },
             // Depois do pedido estar completo
             complete: function () {
                 // Parar widget
-                widget.spinner.stop();
+                //widget.spinner.stop();
 
                 // Remover class do spinner
-                $("#" + widget.id).removeClass("carregar");
+                //$("#" + widget.id).removeClass("carregar");
             },
-            url: urlprodserver,
+            url: url,
             // Ao receber o pedido
             success: function () {
                 console.log("Dados obtidos");
