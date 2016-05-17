@@ -436,8 +436,16 @@
     };
 
     GridStackEngine.prototype.getGridHeight = function () {
-        /* Adicionado ( Modificado 0 por 6/10) */
-        return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 6);
+        /**  (Adicionado) Modificado 0 por 10 
+         *
+         *   Define o minimo da grid a 10, para ser possivel adicionar novos widgets, mesmo que não existam
+         *   criados na dashboard, pois se o minimo for 0, a gridstack não tem height, e é impossivel arrastar
+         *   para lá widgets
+         *
+         */
+
+        return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 10);
+
         /*----------------------------------------------------------------------------------------------*/
     };
 
@@ -546,7 +554,13 @@
             removeTimeout: 2000,
             verticalMarginUnit: 'px',
             cellHeightUnit: 'px',
-            /* Adicionado */
+            /** Adicionado 
+             *
+             *  gridObject - Objecto da grid para podermos chamar os seus métodos
+             *  Atributos que definem o tamanho e largura "default" da grid
+             *  
+             */
+            gridObject: opts.gridObject || null,
             swapGridWidth: opts.swapGridWidth || null,
             swapGridHeight: opts.swapGridHeight || null
             /* -------------------------------------------------------- */
@@ -715,7 +729,15 @@
                 var y = Math.max(0, pos.y);
 
                 if (!node._added) {
-                    /* Adicionado */
+
+                    /**  Adicionado
+                     *
+                     *   Método que ao adicionar um node modifica o tamanho da mesma para igualar
+                     *   as variaveis swapGridHeight/Width. Isto resulta em que o node fique com 
+                     *   os valores "default" da grid
+                     *
+                     */
+
                     self.checkChangeGridSize(node);
                     /* ---------------------------------------------------- */
                     node._added = true;
@@ -807,10 +829,24 @@
                         .removeData('draggable')
                         .removeClass('ui-draggable ui-draggable-dragging ui-draggable-disabled')
                         .unbind('drag', onDrag);
+
+                    /**  Adicionado
+                    *
+                    * Método para adicionar a lista da grid o widget que acaba de ser transferido de uma grid
+                    * para a outra
+                    * Ocorre - Quando o utilizador faz o "drop" do widget na grid principal
+                    *
+                    */
+                    self.AdicionaWidgetGrid(el);
+
+                    /*-----------------------------------------*/
+
                     self.container.append(el);
                     self._prepareElementByNode(el, node);
                     self._updateContainerHeight();
                     self._triggerChangeEvent();
+
+
 
                     self.grid.endUpdate();
                 }
@@ -987,10 +1023,6 @@
             var y = Math.floor((ui.position.top + cellHeight / 2) / cellHeight);
             var width;
             var height;
-            /* Adicionado */
-            var swapHeight;
-            var swapWidth;
-            /* ------------------------ */
 
             if (event.type != 'drag') {
                 width = Math.round(ui.size.width / cellWidth);
@@ -1141,7 +1173,14 @@
         el.attr('data-gs-locked', node.locked ? 'yes' : null);
     };
 
-    /* Adicionado */
+
+    /**  Adicionado
+     *
+     *   Método que ao adicionar um node modifica o tamanho da mesma para igualar
+     *   as variaveis swapGridHeight/Width. Isto resulta em que o node fique com 
+     *   os valores "default" da grid
+     *
+     */
     GridStack.prototype.checkChangeGridSize = function(node) {
       if(this.opts.swapGridWidth !== null){
         node.width = this.opts.swapGridWidth;
@@ -1150,6 +1189,50 @@
         node.height = this.opts.swapGridHeight;
       }
     };
+
+
+    /**  Adicionado
+     *
+     * Método para adicionar a lista da grid o widget que acaba de ser transferido de uma grid
+     * para a outra
+     *
+     */
+    GridStack.prototype.AdicionaWidgetGrid = function (node) {
+
+        // ALTERAR
+
+        var widgets,
+            listaWidgetsDados = ["Escolha Opção"],
+            listaWidgetsContexto = ["Escolha Opção"];
+
+        // Adquire ultima class do widget ( Class que identifica o tipo de widget )
+        var tipoWidget = node.children().attr('class').split(' ').pop(),
+            // Adquire ID do widget
+            idWidget = node.children().attr("id");
+        
+        // Adicionar a lista da grid o widget
+        this.opts.gridObject.AdicionaWidgetLista(tipoWidget, idWidget);
+
+        //console.log(this.opts.gridObject);
+
+
+        //    this.opts.gridObject.listaWidgets.forEach(function (item) {
+        //        // Preenche a sidebar
+        //        $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
+
+        //        // Adiciona ao array de objectos correcto
+        //        (item.widgetTipo === "contexto") ? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
+
+        //    });
+
+        //    // Define widgets na PropertyGrid
+        //    PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
+        //    // Constroi a PropertyGrid
+        //    PropertyGrid.Constroi();
+
+    }
+
+
     /* ------------------------------------ */
 
     GridStack.prototype._prepareElement = function(el, triggerAddEvent) {

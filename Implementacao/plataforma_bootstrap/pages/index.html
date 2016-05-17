@@ -330,16 +330,23 @@
                         <li>
                             <a href="#"><i class="fa fa-bar-chart-o fa-fw propertyGrid-sidebar"></i>Propriedades<span class="fa arrow"></span></a>
                             <ul class="propertyGrid">
-                                <li>
-                                    <div id="propGrid"></div>
-                                </li>
                                 <li style="float:right;">
                                     <button type="button" class="adicionarAssociacao"> Adicionar </button>
                                     <button type="button" class="removerAssociacao"> Remover </button>
                                 </li>
+                                <li>
+                                    <div id="propGrid"></div>
+                                </li>
                             </ul>
                         </li>
                         <!-- PropertyGRID ( Widgets ) -->
+                        <!--Barra lateral ( Widgets )-->
+                            <ul class="widgets-sidebar">
+                                <div class="grid-stack" id="sidebar-gridstack" data-gs-width="12">
+                                </div>
+                            </ul>
+                        </li>
+                        <!--Barra lateral ( Widgets )-->
 
                     </ul>
                 </div>
@@ -351,7 +358,7 @@
             <div class="row">
                 <div class="col-lg-12">
                     <h1 class="page-header">Dashboard</h1>
-                    <!-- table add widget -->
+                    <!-- Opcoes adicionar widget -->
                     <table>
                         <tr>
                             <td>
@@ -403,8 +410,8 @@
                             </td>
                         </tr>
                     </table>
-                    <!-- table add widget -->
-
+                    <!-- Opcoes adicionar Widget -->
+                    <!--Gridstack Principal-->
                     <div class="site-wrap">
                         <div class="main-gridstack-wrap">
 
@@ -413,6 +420,7 @@
 
                         </div>
                     </div>
+                    <!--Gridstack Principal-->
                 </div>
                 <!-- /.col-lg-12 -->
             </div>
@@ -439,8 +447,8 @@
     <!-- Dependencia do gridstack -->
     <script src="../bower_components/lodash/lodash.js"></script>
 
-    <!-- Gerencia de widgets -->
-    <script src="../bower_components/gridstack/dist/gridstack.js"></script>
+    <!-- ( GRIDSTACK ) Gerencia de widgets -->
+    <script src="../bower_components/gridstack/gridstack.js"></script>
 
     <!-- Desenho de gráficos -->
     <script src="../bower_components/d3/d3.min.js"></script>
