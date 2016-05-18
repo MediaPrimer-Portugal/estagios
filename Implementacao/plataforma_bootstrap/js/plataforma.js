@@ -5,10 +5,10 @@
     var idUnico = 0;
 
 
-    // to-do? 
+    // to-do?
     // Modificar tooltips
     // Caso os dados a receber sejam diferentes, arranjar maneira de analisar e
-    // alterar para que possam encaixar todos num método 
+    // alterar para que possam encaixar todos num método
     var tip = d3.tip()
         .attr('class', 'd3-tip')
         .offset([0, 0])
@@ -30,7 +30,7 @@
     /// to-do encapsular métodos auxiliares
 
     /// <summary>
-    /// Método auxiliar para concretizar a herança entre classes, neste caso atribuimos o 
+    /// Método auxiliar para concretizar a herança entre classes, neste caso atribuimos o
     /// Construtor ao filho
     /// </summary>
     /// <param name="Filho"> Class que vai herdar os métodos da classe Base </param>
@@ -63,7 +63,7 @@
             beforeSend: function () {
                 $("#" + widget.id).find(".wrapper").find("svg").remove();
 
-                // Constroi o spinner 
+                // Constroi o spinner
                 ConstroiSpinner(widget);
                 // Adicionar class ao spinner
                 $("#" + widget.id).addClass("carregar")
@@ -154,7 +154,6 @@
             // Definir elemento que contém os atributos do widget
             var $elemento = $("#" + el).parent();
 
-
             // Atribuição de altura e largura conforme o elemento em que se encontra
             // to-do
             this.largura = $("#" + el).width();
@@ -182,10 +181,9 @@
             this.margem = margem;
             this.TamanhoLimite = TamanhoLimite;
 
-            // Liga evento para mudar titulo
-            this.ModificaTitulo();
-
+            // Boolean que indica se está visivel ou não
             this.visivel = false;
+
             // Botão para esconder o widget
             this.OpcaoEsconder();
 
@@ -304,20 +302,6 @@
 
         }
 
-        /// <summary>
-        /// Evento que vai modifica ro nome caso o utilizador o queira
-        /// </summary>
-        Widget.prototype.ModificaTitulo = function () {
-            var self = this;
-
-            // Ligamos o evento ao botão do widget
-            $("#" + self.id).on("click", ".edita-widget", function () {
-                // Ao clicar chama o método setTitulo
-                self.setTitulo(prompt("Digite o titulo que pretende", "titulo"));
-            });
-
-        }
-
 
         /// <summary>
         /// Verifica se o widget contém algum "contexto", caso não tenha apresenta um aviso
@@ -340,7 +324,7 @@
         /// <returns> Booleano que retorna true caso associe com sucesso</returns>
         Widget.prototype.AssociaWidget = function (widget) {
             var self = this,
-                // Verificar que contexto do widget tem apenas um item do tipo dados, para não redesenhar por cima 
+                // Verificar que contexto do widget tem apenas um item do tipo dados, para não redesenhar por cima
                 index = _.findIndex(self.contexto, function (valor) { return valor === widget; });
 
 
@@ -378,7 +362,7 @@
 
             // Caso o tamanho do contexto seja diferente que o inicial foi desassociado
             if (self.contexto.length !== tamanho) {
-                
+
                 return true;
             }
 
@@ -397,8 +381,8 @@
                 objecto = {};
 
             // Atualização do widget e o Objecto que comunica com o servidor
-            objecto["widgetLargura"] = $elemento.attr("data-gs-height");
-            objecto["widgetAltura"] = $elemento.attr("data-gs-width");
+            objecto["widgetLargura"] = $elemento.attr("data-gs-width");
+            objecto["widgetAltura"] = $elemento.attr("data-gs-height");
             objecto["widgetX"] = $elemento.attr("data-gs-x");
             objecto["widgetY"] = $elemento.attr("data-gs-y");
             objecto["widgetTipo"] = self.widgetTipo;
@@ -416,6 +400,34 @@
             return objecto;
         }
 
+
+        /// <summary>
+        /// Atualiza o widget com as funções que podem ser alteradas
+        /// </summary>
+        Widget.prototype.AtualizaObjectoWidget = function () {
+            var self = this,
+                $elemento = $("#" + self.id).parent(),
+                objecto = {};
+
+            // Atualizar dimensões do object
+            self.altura = $elemento.height();
+            self.largura = $elemento.width();
+
+            // Atualização do widget e o Objecto que comunica com o servidor
+            self.widgetLargura = $elemento.attr("data-gs-width");
+            self.widgetAltura = $elemento.attr("data-gs-height");
+            self.widgetX = $elemento.attr("data-gs-x");
+            self.widgetY = $elemento.attr("data-gs-y");
+
+            self.visivel = self.visivel;
+            self.mostraLegenda = self.mostraLegenda;
+            self.mostraToolTip = self.mostraToolTip;
+            self.titulo = self.titulo;
+            self.ultimaAtualizacao = self.ultimaAtualizacao;
+            self.contexto = self.contexto;
+            self.agregacoes = self.agregacoes;
+
+        }
 
         /// <summary>
         /// Redesenha completamente o gráfico
@@ -452,6 +464,16 @@
                 }
             }
 
+        }
+
+
+        /// <summary>
+        /// Atribui a class de acordo com o tipo de widget ao elemento
+        /// </summary>
+        Widget.prototype.setWidgetClass = function (widgetTipo) {
+            var self = this;
+
+            $("#" + self.id).addClass(widgetTipo);
         }
 
 
@@ -598,9 +620,25 @@
         }
 
 
+        /// #Region ---------------------------------
 
-        /// #Region
+        /// #Region -  Eventos
 
+        /// <summary>
+        /// Evento que vai modifica ro nome caso o utilizador o queira
+        /// </summary>
+        Widget.prototype.ModificaTitulo = function () {
+            var self = this;
+
+            // Ligamos o evento ao botão do widget
+            $("#" + self.id).on("click", ".edita-widget", function () {
+                // Ao clicar chama o método setTitulo
+                self.setTitulo(prompt("Digite o titulo que pretende", "titulo"));
+            });
+
+        }
+
+        /// #Region ---------------------------------
 
 
         /// Retorna o objeto criado
@@ -611,7 +649,7 @@
 
 
     /// <summary>
-    /// Classe Gráfico de Área 
+    /// Classe Gráfico de Área
     /// Module Pattern
     /// </summary>
     var GraficoArea = (function () {
@@ -636,7 +674,7 @@
             formatPercent = d3.format(".0%");
 
         /// <summary>
-        /// Método construtor para a classe GraficoArea, chama o construtor do Widget 
+        /// Método construtor para a classe GraficoArea, chama o construtor do Widget
         /// </summary>
         function GraficoArea(el, titulo) {
             // Construtor de Widget é chamado
@@ -897,7 +935,7 @@
 
             var self = this;
 
-            // to-do 
+            // to-do
             // nome? data
             // teste1? valores
 
@@ -925,7 +963,7 @@
               .scale(self.transformaY)
               .orient("left");
 
-            // Adiciona escala em formato percentagem 
+            // Adiciona escala em formato percentagem
             if (self.modoVisualizacao === "stacked") {
                 self.escalaY
                     .tickFormat(formatPercent);
@@ -948,8 +986,6 @@
                 // Mapeia o dominio conforme a a data disponivel nos dad
                 .domain(d3.extent(self.dadosNormal[0].values, function (d) { return d.date; }));
 
-
-            console.log(self.escalaX);
 
             if (self.modoVisualizacao === "stacked") {
                 // Atribui valores a Y conforme a sua escala
@@ -1065,7 +1101,7 @@
             //self.setDados($.parseJSON(getDados(self, "age")));
 
             // Adiciona classe do gráfico ao widget
-            $("#" + self.id).addClass("area");
+            //$("#" + self.id).addClass("area");
 
             //Atualiza dimensoes atuais
             //self.AtualizaDimensoes();
@@ -1086,12 +1122,15 @@
             // Liga evento de modificar visualização ao gráfico
             self.ModificaVisualizacao();
 
+            // Liga evento para modificar titulo
+            self.ModificaTitulo();
+
             //self.ConstroiLegenda();
         }
 
 
         /// <summary>
-        /// "Desenha" no ecra após as atualizações necessárias, de dimensão ou dados 
+        /// "Desenha" no ecra após as atualizações necessárias, de dimensão ou dados
         /// </summary>
         GraficoArea.prototype.Renderiza = function () {
             var self = this;
@@ -1336,7 +1375,7 @@
             // Ao pressionar o botão update-widget, troca entre visualizações
             $("#" + self.id).on("click", ".update-widget", function () {
 
-                // Caso esteja em modo grouped ( Agrupado ) 
+                // Caso esteja em modo grouped ( Agrupado )
                 if (self.modoVisualizacao !== "normal") {
                     self.modoVisualizacao = "normal";
 
@@ -1385,7 +1424,7 @@
             chave = [];
 
         /// <summary>
-        /// Método construtor para a classe GraficoBarras, chama o construtor do Widget 
+        /// Método construtor para a classe GraficoBarras, chama o construtor do Widget
         /// </summary>
         function GraficoBarras(titulo, widgetAltura, widgetLargura, widgetX, widgetY) {
             // Construtor de Widget é chamado
@@ -1408,7 +1447,7 @@
 
 
         /// <summary>
-        /// Passa o gráfico para modo Grouped ( Agrupado ) 
+        /// Passa o gráfico para modo Grouped ( Agrupado )
         /// desenha todas as barras novamente e calcula o máximo, para os eixos depois serem ajustados
         /// </summary>
         GraficoBarras.prototype.Agrupa = function () {
@@ -1487,6 +1526,33 @@
             // nome
             // teste1 / nome
 
+
+            // Provisório ---------------------------------
+
+            //self.dadosAnalisados = color.domain().map(function (name) {
+            //    return {
+            //        name: name,
+            //        values: self.dados.dados.Widgets[0].Items.map(function (d) {
+            //            var arrayvalores = [],
+            //                arrayDatas = [],
+            //                index;
+
+            //            index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
+
+            //            return {
+            //                y: +d.Valores[index].Valor,
+            //                date: parseDate(d.Data)
+            //            };
+            //        })
+            //    }
+            //});
+
+
+            //console.log(self.dadosAnalisados);
+
+            // ------------------------------------------
+
+
             if (self.modoVisualizacao === "stacked" || self.modoVisualizacao === "grouped") {
                 // to-do  ( Modificar de state para outra variavel )
                 color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
@@ -1499,7 +1565,7 @@
                     d.date = parseDate(d.date);
                     d.objecto = color.domain().map(function (name) { return { name: name, y0: y0, y1: y0 += +d[name] }; });
                     d.total = d.objecto[d.objecto.length - 1].y1;
-
+                    
                 });
 
 
@@ -1539,7 +1605,7 @@
                         .on("mouseout", tip.hide);
             }
 
-            // Caso seja modo Grouped ( Agrupado ) 
+            // Caso seja modo Grouped ( Agrupado )
             if (self.modoVisualizacao === "grouped") {
 
                 // Verificar máximo de cada "state" (modificar state para genérico to-do)
@@ -1620,7 +1686,7 @@
         GraficoBarras.prototype.ConstroiEixos = function () {
             var self = this;
 
-            // to-do 
+            // to-do
             // nome? data
             // teste1? valores
 
@@ -1669,7 +1735,7 @@
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
                 .rangeRoundBands([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda - self.margem.direita], 0.2);
 
-            // Caso o modo seja stacked ( Empilhado ) 
+            // Caso o modo seja stacked ( Empilhado )
             if (self.modoVisualizacao === "stacked") {
                 // Atribui valores a Y conforme a sua escala
                 transformaY = d3.scale.linear()
@@ -1807,7 +1873,7 @@
         GraficoBarras.prototype.ConstroiGrafico = function (id) {
             var self = this;
 
-            // to-do 
+            // to-do
             // nome?
             // teste1?
 
@@ -1815,7 +1881,7 @@
             //self.setDados($.parseJSON(getDados(self, "age")));
 
             // Adiciona classe do gráfico ao widget
-            $("#" + self.id).addClass("barras");
+            //$("#" + self.id).addClass("barras");
 
             // Atualiza dimensoes atuais
             //self.AtualizaDimensoes();
@@ -1841,7 +1907,7 @@
 
 
         /// <summary>
-        /// "Desenha" no ecra após as atualizações necessárias, de dimensão ou dados 
+        /// "Desenha" no ecra após as atualizações necessárias, de dimensão ou dados
         /// </summary>
         GraficoBarras.prototype.Renderiza = function () {
             var self = this;
@@ -1931,7 +1997,7 @@
             // Ao pressionar o botão update-widget, troca entre visualizações
             $("#" + self.id).on("click", ".update-widget", function () {
 
-                // Caso esteja em modo grouped ( Agrupado ) 
+                // Caso esteja em modo grouped ( Agrupado )
                 if (self.modoVisualizacao !== "grouped") {
                     self.modoVisualizacao = "grouped";
                     self.Agrupa();
@@ -1953,7 +2019,7 @@
 
     })();
 
-    
+
 
     /// <summary>
     /// Classe Gráfico de Linhas
@@ -1981,7 +2047,7 @@
 
 
         /// <summary>
-        /// Método construtor para a classe GraficoLinhas, chama o construtor do Widget 
+        /// Método construtor para a classe GraficoLinhas, chama o construtor do Widget
         /// </summary>
         function GraficoLinhas(titulo, widgetAltura, widgetLargura, widgetX, widgetY) {
             // Construtor de Widget é chamado
@@ -2079,7 +2145,7 @@
         GraficoLinhas.prototype.ConstroiEixos = function () {
             var self = this;
 
-            // to-do 
+            // to-do
             // dadosSelecionados?
             // nome? data
             // teste1? valores
@@ -2260,7 +2326,7 @@
             //self.setDados($.parseJSON(getDados(self, "age")));
 
             // Adiciona classe do gráfico ao widget
-            $("#" + self.id).addClass("linhas");
+            //$("#" + self.id).addClass("linhas");
 
 
             //self.AtualizaDimensoes()
@@ -2279,7 +2345,7 @@
 
 
         /// <summary>
-        /// "Desenha" no ecra após as atualizações necessárias, de dimensão ou dados 
+        /// "Desenha" no ecra após as atualizações necessárias, de dimensão ou dados
         /// </summary>
         GraficoLinhas.prototype.Renderiza = function () {
             var self = this;
@@ -2291,7 +2357,7 @@
             self.AtualizaDimensoes();
 
 
-            // Atualiza SVG 
+            // Atualiza SVG
             d3.select("#" + self.id).select(".wrapper svg")
                 .attr("width", self.largura + self.margem.esquerda + self.margem.direita)
                 .attr("height", self.altura + self.margem.cima + self.margem.baixo);
@@ -2356,7 +2422,7 @@
 
 
     /// <summary>
-    /// Classe Gauge 
+    /// Classe Gauge
     /// Module Pattern
     /// </summary>
     var Gauge = (function () {
@@ -2378,7 +2444,7 @@
 
 
         /// <summary>
-        /// Método construtor para a classe GraficoArea, chama o construtor do Widget 
+        /// Método construtor para a classe GraficoArea, chama o construtor do Widget
         /// </summary>
         function Gauge(titulo, widgetAltura, widgetLargura, widgetX, widgetY) {
             // Construtor de Widget é chamado
@@ -2479,7 +2545,7 @@
 
 
             // Adiciona classe do gráfico ao widget
-            $("#" + self.id).addClass("gauge");
+            //$("#" + self.id).addClass("gauge");
 
             // to-do
             //self.MostraOpcoes();
@@ -2597,7 +2663,7 @@
             // Define angulo final do arco pintado
             // Divisão por dois devido a ser um arco e não uma circunferencia completa
             arcEndRad = arcStartRad + PercentagemParaRadianos(percentagem / 2);
-            // Path do arco pintado calculado 
+            // Path do arco pintado calculado
             arcPintado.startAngle(arcStartRad).endAngle(arcEndRad);
 
 
@@ -2627,7 +2693,7 @@
 
         /// <summary>
         /// Cria uma transição nova com os dados que lhe são fornecidos
-        /// Recebe um angulo novo e a partir do ultimo angulo conhecido calcula as posições a serem desenhadas 
+        /// Recebe um angulo novo e a partir do ultimo angulo conhecido calcula as posições a serem desenhadas
         /// até chegar a esse destino
         /// </summary>
         /// <param name="elemento"> Elemento a aplicar o tween </param>
@@ -2662,7 +2728,7 @@
         /// </summary>
         Gauge.prototype.DesenhaMeta = function () {
 
-            // Definir angulos para a meta, adicionado percentagemInicio para se 
+            // Definir angulos para a meta, adicionado percentagemInicio para se
             // encaixar dentro do arco de forma correta
             arcStartRadMeta = PercentagemParaRadianos(meta / 2 + percentagemInicio);
             arcEndRadMeta = PercentagemParaRadianos((meta / 2 + 0.005 + percentagemInicio));
@@ -2684,7 +2750,7 @@
                 textTween;
 
             if (modoVisualizacao === "arco") {
-                // Vamos buscar os valores 
+                // Vamos buscar os valores
                 // to-do
                 //valorAtual = $(".valor-atual").val();
                 //valorMaximo = $(".valor-maximo").val();
@@ -2861,7 +2927,7 @@
 
 
         /// <summary>
-        /// Método construtor para a classe PieChart, chama o construtor do Widget 
+        /// Método construtor para a classe PieChart, chama o construtor do Widget
         /// </summary>
         function KPI(titulo, widgetAltura, widgetLargura, widgetX, widgetY) {
 
@@ -2973,7 +3039,7 @@
                 // Mantém a proporção de imagem independentemente do tamanho, e tenta sempre posiciona-la a meio
                 .attr("preserveAspectRatio", "xMidYMid")
               .append("g")
-                // Translação do raio minimo para estar dentro do svg de forma adequada 
+                // Translação do raio minimo para estar dentro do svg de forma adequada
                 .attr("transform", "translate(" + (Math.min(self.largura, self.altura) / 2) + "," + (Math.min(self.largura, self.altura) / 2) + ")");
 
         }
@@ -3040,7 +3106,7 @@
             // teste1?
 
             // Adiciona classe do gráfico ao widget
-            $("#" + self.id).addClass("kpi");
+            //$("#" + self.id).addClass("kpi");
 
             // Constroi SVG
             self.ConstroiSVG();
@@ -3126,7 +3192,7 @@
 
 
         /// <summary>
-        /// Método construtor para a classe PieChart, chama o construtor do Widget 
+        /// Método construtor para a classe PieChart, chama o construtor do Widget
         /// </summary>
         function PieChart(titulo, widgetAltura, widgetLargura, widgetX, widgetY) {
             var self = this;
@@ -3172,7 +3238,7 @@
                 // Mantém a proporção de imagem independentemente do tamanho, e tenta sempre posiciona-la a meio
                 .attr("preserveAspectRatio", "xMidYMid")
               .append("g")
-                // Translação do raio minimo para estar dentro do svg de forma adequada 
+                // Translação do raio minimo para estar dentro do svg de forma adequada
                 .attr("transform", "translate(" + (Math.min(self.largura, self.altura) / 2) + "," + (Math.min(self.largura, self.altura) / 2) + ")");
         }
 
@@ -3284,7 +3350,7 @@
 
 
             // to-do Legendas
-            // unico = id 
+            // unico = id
             $("#" + self.id).append("<div class=\"legenda\" style=\"float:left; max-width:30px;\"></div>")
 
             // Insere SVG das legendas
@@ -3297,7 +3363,7 @@
                 d3.select("#" + self.id).select(".legenda").select("svg")
                   // Insere um circulo para cada um dos conjuntos
                   .append("circle")
-                    // Nome padrão é circulo legenda + o seu numero 
+                    // Nome padrão é circulo legenda + o seu numero
                     .attr("class", "circuloLegenda" + curIndex)
                     .attr("cx", 20)
                     .attr("cy", 20 + (curIndex * 20))
@@ -3370,7 +3436,7 @@
             //self.setDados($.parseJSON(getDados(self, "age")));
 
             // Adiciona classe do gráfico ao widget
-            $("#" + self.id).addClass("pie");
+            //$("#" + self.id).addClass("pie");
 
             //self.ConstroiSVG(id);
             //self.InsereDados();
@@ -3492,7 +3558,7 @@
             parseDate = d3.time.format("%y-%b-%d").parse;
 
         /// <summary>
-        /// Método construtor para a classe Tabela, chama o construtor do Widget 
+        /// Método construtor para a classe Tabela, chama o construtor do Widget
         /// </summary>
         function Tabela(elemento, titulo, dados) {
             // Construtor de Widget é chamado
@@ -3595,7 +3661,7 @@
             }
 
             // Adiciona classe do gráfico ao widget
-            $("#" + self.id).addClass("tabela");
+            //$("#" + self.id).addClass("tabela");
 
             // to-do fazer a a analise da data sem modificar os dados originais
 
@@ -3653,7 +3719,7 @@
             parseDate = d3.time.format("%y-%b-%d").parse;
 
         /// <summary>
-        /// Método construtor para a classe Filtros, chama o construtor do Widget 
+        /// Método construtor para a classe Filtros, chama o construtor do Widget
         /// </summary>
         function Filtros(titulo, widgetAltura, widgetLargura, widgetX, widgetY) {
             // Construtor de Widget é chamado
@@ -3733,7 +3799,7 @@
             var self = this;
 
             // Adiciona classe do gráfico ao widget
-            $("#" + self.id).addClass("filtros");
+            //$("#" + self.id).addClass("filtros");
 
             // Inserir dados na tabela
             self.ConstroiSVG();
@@ -3751,6 +3817,7 @@
             var self = this,
                 $elemento = $("#" + self.id).parent(),
                 objecto = {};
+
 
             // Atualização do widget e o Objecto que comunica com o servidor
             objecto["widgetLargura"] = $elemento.attr("data-gs-height");
@@ -3791,7 +3858,7 @@
 
 
         /// <summary>
-        /// Método construtor para a classe Data, chama o construtor do Widget 
+        /// Método construtor para a classe Data, chama o construtor do Widget
         /// </summary>
         function Data(titulo, widgetAltura, widgetLargura, widgetX, widgetY) {
             // Construtor de Widget é chamado
@@ -3932,7 +3999,7 @@
             var self = this;
 
             // Adiciona classe do gráfico ao widget
-            $("#" + self.id).addClass("data");
+            //$("#" + self.id).addClass("data");
 
             // Inserir dados na tabela
             self.ConstroiSVG();
@@ -4026,7 +4093,7 @@
         /// <summary>
         /// Filtra a informação de acordo com as datas guardadas no widget
         /// </summary>
-        /// <param name="widget"> Recebe os dados de um widget </param> 
+        /// <param name="widget"> Recebe os dados de um widget </param>
         Data.prototype.FiltraDados = function (widget) {
             var self = this,
                 // Datas do filtro convertidas para serem comparadas
@@ -4062,6 +4129,8 @@
 
         PropertyGrid.widgets = {};
 
+
+        // Atribui as opções possiveis no menu da associação
         PropertyGrid.setWidgets = function (listaWidgetsDados, listaWidgetsContexto) {
             this.widgets = {
                 WidgetDados: { name: "Widget Dados", group: "Associação", type: "options", options: listaWidgetsDados, description: "Widgets que contêm os gráficos" },
@@ -4069,24 +4138,27 @@
             };
         }
 
+
+        // Getters para os dados disponiveis nas dropdowns
         PropertyGrid.getWidgetsDados = function () {
             return objecto.widgets.WidgetDados;
         }
-
-        PropertyGrid.getWidgetsDados = function () {
+        PropertyGrid.getWidgetsContexto = function () {
             return objecto.widgets.WidgetContexto;
         }
 
+        // Constroi a propertyGrid conforme as suas propriedades
         PropertyGrid.Constroi = function () {
             // Cria a grid com as suas propriedades
             $('#propGrid').jqPropertyGrid(this.propriedades, this.widgets);
         }
 
+        // Inicialização da PropertyGrid
         PropertyGrid.Inicializa = function () {
 
             inicializaWidgets = {
-                WidgetDados: { name: "Widget Dados", group: "Associação", type: "options", options: ["Escolha Opção"], description: "Widgets que contêm os gráficos" },
-                WidgetContexto: { name: "Widget Contexto", group: "Associação", type: "options", options: ["Escolha Opção"], description: "Widget que contêm os dados/filtros" }
+                WidgetDados: { name: "Widget Dados", group: "Associação", type: "options", options: ["Dados"], description: "Widgets que contêm os gráficos" },
+                WidgetContexto: { name: "Widget Contexto", group: "Associação", type: "options", options: ["Contexto"], description: "Widget que contêm os dados/filtros" }
             }
 
             // Cria a grid
@@ -4146,10 +4218,13 @@
 
             // Inicialização da "grid" com as opcoes enviadas no construtor
             self.opcoes["gridObject"] = self;
+            self.opcoes["PropertyGrid"] = PropertyGrid;
             self.grid.gridstack(self.opcoes);
 
-            // Atualiza ao fazer resize
-            self.AtualizaWidgets();
+            if (self.id === "main-gridstack") {
+                // Atualiza ao fazer resize
+                self.AtualizaWidgets();
+            }
 
             // Evento para esconder widgets
             self.EscondeWidget();
@@ -4158,7 +4233,7 @@
             self.RemoveWidget();
 
             // Guarda informação no Widget sempre que um é modificado
-            self.GuardaInformacao();
+            //self.GuardaInformacao();
 
             // Liga o evento ao botão cria dados e ao clickar no botão uma tabela é criada
             // com os dados desse widget
@@ -4221,7 +4296,7 @@
         /// </summary>
         /// <param name="tipoWidget"> Tipo de widget a ser adicionado a grid </param>
         /// <param name
-        Grid.prototype.AdicionaWidget = function (tipoWidget, titulo, dados, width) {
+        Grid.prototype.AdicionaWidget = function (tipoWidget, titulo, dados, width, height) {
             var self = this,
                 $coordenadaX = $(".widgetCoordenadaX").val() || "0",
                 $coordenadaY = $(".widgetCoordenadaY").val() || "0",
@@ -4238,11 +4313,11 @@
             // Dar titulo caso o recebido seja inválido
             if (titulo === undefined) titulo = "titulo";
             if (width === undefined) width = 2;
+            if (height === undefined) height = 2;
             if (dados === undefined) dados = null;
 
 
             el = self.CriaElemento(idUnico, titulo);
-
 
             // Atributo opcional, define uma posição automática para o widget
             // Ao modificar para fora, insere numa posição diferente
@@ -4272,16 +4347,23 @@
             // Define tamanho da listaWidgets
             ultimo = self.listaWidgets.length;
 
-
+            // Adiciona o widget criado ao dashboard
             self.AdicionaWidgetLista(tipoWidget, "widget" + idUnico, dados);
 
+            // Atribui ao widget a sua class
+            self.listaWidgets[ultimo].setWidgetClass(tipoWidget);
 
-            // Constroi Gráfico no Widget
-            self.listaWidgets[ultimo].ConstroiGrafico(self.listaWidgets[ultimo].id);
+            // Caso o dashboard não seja o sidebar
+            if (self.id !== "sidebar-gridstack") {
+                // Constroi Gráfico no Widget
+                self.listaWidgets[ultimo].ConstroiGrafico(self.listaWidgets[ultimo].id);
+            } else {
+                var path = '../resources/' + tipoWidget+".png";
+                $("#" + self.listaWidgets[ultimo].id).find(".wrapper").append('<img class="imagem-widget" src="'+ path +'" />')
+            }
 
             // Incrementar para não haver Ids iguais
             idUnico++;
-            console.log("idUnico: " + idUnico);
 
         }
 
@@ -4344,7 +4426,7 @@
                      "<div class=\"widget-navbar panel-heading\">" +
                         // Titulo do widget
                         "<span class=\" titulo\">" + titulo + "</span>" +
-                        // Dropdown com as opcoes possiveis para o widget 
+                        // Dropdown com as opcoes possiveis para o widget
                        "<div class=\"dropdown\" style=\"float:right;\">" +
                        "<button class=\"btn btn-default dropdown-toggle\" style=\"background-image:none; padding:2px;\" type=\"button\" id=\"dropdownMenu1\" data-toggle=\"dropdown\" aria-haspopup=\"true\" aria-expanded=\"true\">" +
                        "Acções" +
@@ -4366,7 +4448,7 @@
 
 
         /// <summary>
-        /// Método para filtrar os dados de um conjunto de widgets ligado a um contexto 
+        /// Método para filtrar os dados de um conjunto de widgets ligado a um contexto
         /// </summary>
         Grid.prototype.FiltraContexto = function () {
             var self = this;
@@ -4405,10 +4487,10 @@
             // Ao clickar em qualquer botão de classe remove-widget
             $(document).on("click", ".esconde-widget", function () {
 
-                // Selecionar o elemento "grid-stack-item" mais próximo do botão, ou seja, 
+                // Selecionar o elemento "grid-stack-item" mais próximo do botão, ou seja,
                 // a "node" do widget para poder eliminar da grid
                 var el = $(this).closest(".grid-stack-item"),
-                    // Seleciona o "widget" 
+                    // Seleciona o "widget"
                     widget = el.find(".grid-stack-item-content"),
                     index;
 
@@ -4475,6 +4557,7 @@
 
                     // Atualiza objecto servidor
                     item.objectoServidor = item.AtualizaObjectoServidor();
+                    item.AtualizaObjectoWidget();
 
                 }
 
@@ -4587,7 +4670,7 @@
             {
                 // Para cada widget adiciona
                 widgets.forEach(function (item) {
-                    self.AdicionaWidget(item, item, undefined, 12);
+                    self.AdicionaWidget(item, item, undefined, 12, 1);
                 });
             } else {
                 $("#sidebar-gridstack").children().remove()
@@ -4688,8 +4771,8 @@
     $(".grid-stack").on("removed", function (event, items) {
 
         var widgets,
-            listaWidgetsDados = ["Escolha Opção"],
-            listaWidgetsContexto = ["Escolha Opção"];
+            listaWidgetsDados = ["Dados"],
+            listaWidgetsContexto = ["Contexto"];
 
         setTimeout(function () {
             //// Remove lista de widgets
@@ -4698,7 +4781,7 @@
             // Para cada widget na Lista
             gridPrincipal.listaWidgets.forEach(function (item) {
                 // Preenche a sidebar
-               
+
                 // Adiciona ao array de objectos correcto
                 (item.widgeTipo === "contexto") ? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
 
@@ -4717,8 +4800,8 @@
     $("#main-gridstack").on("added", function (event, items) {
 
         var widgets,
-            listaWidgetsDados = ["Escolha Opção"],
-            listaWidgetsContexto = ["Escolha Opção"];
+            listaWidgetsDados = ["Dados"],
+            listaWidgetsContexto = ["Contexto"];
 
         setTimeout(function () {
 
@@ -4739,7 +4822,7 @@
             PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
             // Constroi a PropertyGrid
             PropertyGrid.Constroi();
-            
+
         }, 20)
 
 
@@ -4751,7 +4834,6 @@
 
     /// TESTE - Propriedade menu (Sidebar)
 
-
     // Ao pressionar adicionar
     $(".adicionarAssociacao").click(function () {
         // Widgets a serem associados
@@ -4761,7 +4843,7 @@
             valores = jQuery.parseJSON(JSON.stringify($('#propGrid').jqPropertyGrid('get'), null, '\t'));
 
         // Caso sejam 2 valores diferentes do "default"
-        if (valores.WidgetDados !== "Escolha Opção" && valores.WidgetContexto !== "Escolha Opção") {
+        if (valores.WidgetDados !== "Dados" && valores.WidgetContexto !== "Contexto") {
 
             // Adquire referencia dos widgets a associar
             widget1 = gridPrincipal.getWidget(valores.WidgetDados);
@@ -4774,7 +4856,7 @@
                 verifica2 = widget2.AssociaWidget(valores.WidgetDados);
 
 
-                // Caso os 2 tenham associado com sucesos 
+                // Caso os 2 tenham associado com sucesos
                 if (verifica1 === true & verifica2 === true) {
                     // Apresentar aviso
                     alert(valores.WidgetDados + " foi associado com sucesso a " + valores.WidgetContexto);
@@ -4790,6 +4872,7 @@
 
     });
 
+
     // Ao remover associacao
     $(".removerAssociacao").click(function () {
         // Widgets a serem associados
@@ -4799,7 +4882,7 @@
             valores = jQuery.parseJSON(JSON.stringify($('#propGrid').jqPropertyGrid('get'), null, '\t'));
 
         // Caso sejam 2 valores diferentes do "default"
-        if (valores.WidgetDados !== "Escolha Opção" && valores.WidgetContexto !== "Escolha Opção") {
+        if (valores.WidgetDados !== "Dados" && valores.WidgetContexto !== "Contexto") {
 
             // Adquire referencia dos widgets a associar
              widget1 = gridPrincipal.getWidget(valores.WidgetDados);
@@ -4810,8 +4893,8 @@
              verifica2 = widget2.DesassociaWidget(valores.WidgetDados);
         }
 
-        
-        // Caso os 2 tenham desassociado com sucesso 
+
+        // Caso os 2 tenham desassociado com sucesso
         if (verifica1 === true & verifica2 === true) {
             // Apresentar aviso
             alert(valores.WidgetDados + " foi desassociado com sucesso a " + valores.WidgetContexto);
@@ -4826,6 +4909,7 @@
 
 
     });
+
 
     // property Grid - TEST
     PropertyGrid.Inicializa();

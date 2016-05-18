@@ -29,8 +29,13 @@
 
     }
 
-    /**/
+    /* Property Grid ocupa 100% da largura do seu espaço*/
     .pgTable{
+        width: 100% !important;
+    }
+
+    /* Todas as dropdowns dentro de uma tablea de property ocupa 100% do espaço*/
+    .pgCell > select {
         width: 100% !important;
     }
 
@@ -141,6 +146,17 @@
       margin-bottom:5px;
     }
 
+    /*
+        Imagens dispostas nos widgets
+         Ajustar de acordo com a largua do menu de widgets
+     */
+    .wrapper img{
+        width:25%;
+        height: 75%;
+
+        position:relative;
+        left:25%;
+    }
 
     /*
         Estilo do widget

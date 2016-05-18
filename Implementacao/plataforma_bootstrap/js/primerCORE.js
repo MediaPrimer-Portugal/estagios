@@ -459,20 +459,23 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
                 // Apaga a representação antes de pedir novos dados
-                //$("#" + widget.id).find(".wrapper").find("svg").remove();
+                $("#" + widget.id).find(".wrapper").find("svg").remove();
+                $("#" + widget.id).find(".legenda").hide();
 
                 // Constroi o spinner 
-                //ConstroiSpinner(widget);
+                ConstroiSpinner(widget);
                 // Adicionar class ao spinner
-                //$("#" + widget.id).addClass("carregar")
+                $("#" + widget.id).addClass("carregar")
             },
             // Depois do pedido estar completo
             complete: function () {
                 // Parar widget
-                //widget.spinner.stop();
+                widget.spinner.stop();
+
+                $("#" + widget.id).find(".legenda").show();
 
                 // Remover class do spinner
-                //$("#" + widget.id).removeClass("carregar");
+                $("#" + widget.id).removeClass("carregar");
             },
             url: url,
             // Ao receber o pedido

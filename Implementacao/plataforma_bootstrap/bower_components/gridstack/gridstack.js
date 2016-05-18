@@ -561,6 +561,7 @@
              *  
              */
             gridObject: opts.gridObject || null,
+            PropertyGrid: opts.PropertyGrid || null,
             swapGridWidth: opts.swapGridWidth || null,
             swapGridHeight: opts.swapGridHeight || null
             /* -------------------------------------------------------- */
@@ -847,6 +848,7 @@
                     self._triggerChangeEvent();
 
 
+                    self.ConstroiWidget();
 
                     self.grid.endUpdate();
                 }
@@ -1202,33 +1204,57 @@
         // ALTERAR
 
         var widgets,
-            listaWidgetsDados = ["Escolha Opção"],
-            listaWidgetsContexto = ["Escolha Opção"];
-
-        // Adquire ultima class do widget ( Class que identifica o tipo de widget )
-        var tipoWidget = node.children().attr('class').split(' ').pop(),
+            grid = this.opts.gridObject,
+            listaWidgetsDados = ["Dados"],
+            listaWidgetsContexto = ["Contexto"],
+            // Adquire ultima class do widget ( Class que identifica o tipo de widget )
+            tipoWidget = node.children().attr('class').split(' ').pop(),
             // Adquire ID do widget
             idWidget = node.children().attr("id");
-        
+
         // Adicionar a lista da grid o widget
-        this.opts.gridObject.AdicionaWidgetLista(tipoWidget, idWidget);
+        grid.AdicionaWidgetLista(tipoWidget, idWidget);
 
-        //console.log(this.opts.gridObject);
+        // Para cada item
+        grid.listaWidgets.forEach(function (item) {
+            // Preenche a sidebar
+            $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
+
+            // Adiciona ao array de objectos correcto
+            (item.widgetTipo === "contexto") ? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
+
+        });
+
+        // Define widgets na PropertyGrid
+        this.opts.PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
+        // Constroi a PropertyGrid
+        this.opts.PropertyGrid.Constroi();
+
+    }
 
 
-        //    this.opts.gridObject.listaWidgets.forEach(function (item) {
-        //        // Preenche a sidebar
-        //        $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
+    /**  Adicionado
+    *
+    * Constroi o Widget ap]os este ser colocado na nova grid
+    *
+    */
+    GridStack.prototype.ConstroiWidget = function () {
+        var grid = this.opts.gridObject;    
 
-        //        // Adiciona ao array de objectos correcto
-        //        (item.widgetTipo === "contexto") ? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
+        // Remove o bloqueio de resize posto na sidebar anterior
+        $("#"+grid.id).data("gridstack").resizable($("#"+grid.listaWidgets[grid.listaWidgets.length - 1].id).closest(".grid-stack-item"), true);
 
-        //    });
+        // Escolhe o widget e remove a imagem ( Sidebar )
+        $("#"+grid.listaWidgets[grid.listaWidgets.length - 1].id).find(".imagem-widget").remove();
 
-        //    // Define widgets na PropertyGrid
-        //    PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
-        //    // Constroi a PropertyGrid
-        //    PropertyGrid.Constroi();
+        // Escolhe o ultimo widget adicionado e constroi, conforme a sua class
+        grid.listaWidgets[grid.listaWidgets.length - 1].ConstroiGrafico(grid.listaWidgets[grid.listaWidgets.length - 1].id);
+
+        // Para cada widget atualizar a sua estrutura de dados
+        grid.listaWidgets.forEach(function (item) {
+            item.objectoServidor = item.AtualizaObjectoServidor();
+            item.AtualizaObjectoWidget();
+        });
 
     }
 
