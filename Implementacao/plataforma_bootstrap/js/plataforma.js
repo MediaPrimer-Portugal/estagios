@@ -983,7 +983,7 @@
             // Atribui valores a Y conforme a sua escala
             self.transformaX = d3.time.scale()
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
-                .range([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda - self.margem.direita])
+                .range([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda])
                 // Mapeia o dominio conforme a a data disponivel nos dad
                 .domain(d3.extent(self.dadosNormal[0].values, function (d) { return d.date; }));
 
@@ -1413,7 +1413,8 @@
             dadosAnalisados,
             valores,
             chave = [],
-            escalaGrouped,
+            escalaOriginal,
+            escalaSecundaria,
             escalaY,
             escalaX,
             transformaX,
@@ -1462,18 +1463,17 @@
 
             self.AtualizaEixos();
 
-            console.log(escalaGrouped.rangeBand());
-
             self.dadosAnalisados.forEach(function (item, curIndex) {
+
                 self.selecao.selectAll(".barra" + curIndex)
                     // to-do modificar nome State para um genérico - Contar numero de keys e substituir pelo inteiro
-
-                    .attr("x", function (d, curIndex) { return transformaX(d.date); })
+                    .attr("x", function (d, curIndex) { return escalaSecundaria(d.name); })
                 .transition("grouped")
                     .attr("y", function (d) { return transformaY(d.y); })
-                    .attr("width", escalaGrouped.rangeBand())
+                    .attr("width", escalaSecundaria.rangeBand())
                     .attr("height", function (d) { return self.altura - transformaY(d.y); })
-                    //.attr("transform", function (d, i) { return "translate(" + x1(i) + ",0)"; });
+                    // Translação da data, mais o pequeno desvio do eixo (margem)
+                    .attr("transform", function (d) { return "translate(" + (escalaOriginal(d.date) + self.margem.esquerda / 2) + ",0)"; });
 
             })
 
@@ -1504,16 +1504,20 @@
 
             self.AtualizaEixos();
 
-            // Update de todas as barras
-            self.selecao.selectAll("rect")
-                .transition("stacked")
-                 // "Remover" atributo X, caso tenha sido atribuido quando estava em modo Grouped
-                .attr("x", null)
-                .attr("width", transformaX.range()[1])
-                // Atribui a posição inicial
-                .attr("y", function (d) { return transformaY(d.y1); })
-                // Atribui altura correta conforme a sua posição inicial
-                .attr("height", function (d) { return transformaY(d.y0) - transformaY(d.y1); })
+
+            self.dadosAnalisados.forEach(function (item, curIndex) {
+                // Para todas as barras com numero curIndex
+                self.selecao.selectAll(".barra" + curIndex)
+                    // "Remover" atributo X, caso tenha sido atribuido quando estava em modo Grouped
+                    .attr("x", null)
+                //.transition("grouped")
+                    .attr("y", function (d, valorAtual) { return transformaY(d.y + d.yStacked); })
+                    .attr("width", escalaOriginal.rangeBand())
+                    .attr("height", function (d, valorAtual) { return self.altura - transformaY(d.y); })
+                    // Translação da data, mais o pequeno desvio do eixo (margem)
+                    .attr("transform", function (d) { return "translate(" + (escalaOriginal(d.date) + self.margem.esquerda / 2) + ",0)"; });
+
+            })
 
             // Adicionar tooltip
             if (self.mostraToolTip === true) {
@@ -1536,19 +1540,15 @@
         /// </summary>
         GraficoBarras.prototype.InsereDados = function () {
             var self = this,
-                objectoAuxiliar
-            // to-do id?
-            // nome
-            // teste1 / nome
-
-
-            // Provisório ---------------------------------
+                objectoAuxiliar,
+                listaSeries = [];
+            
 
             // Controla as keys (Series) que vão estar contidas no gráfico
             color.domain(d3.values(self.dados.dados.Widgets[0].Items[0].Valores).map(function (d) { return d.Nome; }));
 
             // Criar novo array de objectos para guardar a informação de uma forma mais fácil de utilizar
-            self.dadosAnalisados = color.domain().map(function (name) {
+            self.dadosAnalisados = color.domain().map(function (name, curIndex) {
                 return {
                     // Atribuir nome a chave (Serie)
                     name: name,
@@ -1562,7 +1562,9 @@
                         index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
 
                         return {
+                            name: name,
                             y: +d.Valores[index].Valor,
+                            yStacked: 0,
                             date: parseDate(d.Data)
                         };
                     })
@@ -1570,68 +1572,86 @@
             });
 
 
-            // Adquirir valor máximo de cada uma das chaves (keys)
+            // Atribui o valor "yStacked" que é a soma de todas as barras anteriores para que seja possivel
+            // a concretização do tipo e gráfico stacked
+            // Para cada data
+            for (var index = 0; self.dadosAnalisados[0].values.length > index; index++) {
+                // Para cada série
+                for (var indexSeries = 1; self.dadosAnalisados.length > indexSeries ; indexSeries++) {
+                    // Adicionar ao yStacked a soma entre o y e o yStacked anteriores
+                    self.dadosAnalisados[indexSeries].values[index].yStacked = self.dadosAnalisados[indexSeries - 1].values[index].y + self.dadosAnalisados[indexSeries - 1].values[index].yStacked;
+                }
+            }
+
+            // Adquirir valor máximo de cada uma das séries (chave)
             self.dadosAnalisados.forEach(function (item) {
                 self.chave.push(d3.max(item.values, function (d) { return d.y; }))
             });
 
 
-            // Ajustar escalas
+            // Ajustar escalas de acordo com o máximo
             transformaY.domain([0, d3.max(self.chave)]);
 
-            // Atualizar eixo depois de dados inseridos
-            transformaX.domain(d3.extent(self.dadosAnalisados[0].values, function (d) { return d.date; }));
+
+            // Guarda o nome de cada série para "filtrar"
+            self.dadosAnalisados.forEach(function (item) {
+                listaSeries.push(item.name);
+            });
 
 
-            // Modificar
-            escalaGrouped.domain(d3.map(self.dadosAnalisados[0].values, function (d) { return d.date; }));
+            // Atualizar eixo X
+            escalaOriginal
+                .rangeRoundBands([0, self.largura], 0.1)
+                .domain(self.dadosAnalisados[0].values.map(function (d) { return d.date; }));
 
-            console.log(escalaGrouped.rangeBand());
+            // Atualizar eixo secundário X
+            escalaSecundaria
+                .domain(listaSeries).rangeRoundBands([0, escalaOriginal.rangeBand()]);
+
 
             // Criar elemento "g" para cada representação
             self.selecao = self.svg.append("g")
                 .attr("class", "dados")
-                // Translação equivale à coordenada X de cada barra
-                //.attr("transform", function (d) { return "translate(" + transformaX(d.date) + ",0)"; });
 
 
             // Caso seja modo Stacked (Empilhado)
             if (self.modoVisualizacao === "stacked") {
 
-                // Adicionar "barras" ao gráfico
-                self.selecao.selectAll("rect")
-                    .data(function (d) { return d.objecto; })
-                .enter().append("rect")
-                    .attr("class", "barra")
-                    // rangeBand() - Função que o espaço em "bandas" equivalentes
-                    .attr("width", transformaX.rangeBand())
-                    // Atribui a posição inicial
-                    .attr("y", function (d) { return transformaY(d.y1); })
-                    // Atribui altura correta conforme a sua posição inicial
-                    .attr("height", function (d) { return transformaY(d.y0) - transformaY(d.y1); })
-                        .style("fill", function (d) { return color(d.name); })
-                        // Atribuir tooltips
-                        .on("mouseover", tip.show)
-                        .on("mouseout", tip.hide);
+
+                self.dadosAnalisados.forEach(function ( item, curIndex) {
+                    // Adicionar "barras" ao gráfico
+                    self.selecao.selectAll("rect")
+                        .data(item.values)
+                    .enter().append("rect")
+                        .attr("class", "barra"+curIndex)
+                        .attr("x", function (d) { return escalaOriginal(d.date); })
+                        .attr("y", function (d) { return transformaY(d.y); })
+                        // rangeBand() - Função que divide o espaço em "bandas" equivalentes
+                        .attr("width", escalaOriginal.rangeBand())
+                        .attr("height", function (d) { return self.altura - transformaY(d.y); })
+                            .style("fill", function (d) { return color(d.name); })
+                            // Atribuir tooltips
+                            .on("mouseover", tip.show)
+                            .on("mouseout", tip.hide);
+
+                })
             }
 
 
             // Caso seja modo Grouped ( Agrupado )
             if (self.modoVisualizacao === "grouped") {
 
-                console.log(self.dadosAnalisados[0]);
-
+                // Para cada "serie" criar as barras necessárias para complementar o atributo data
+                // desse elemento
                 self.dadosAnalisados.forEach(function (item, curIndex) {
-                    console.log(curIndex);
-
                     self.selecao.selectAll(".barra"+curIndex)
                         .data(item.values)
                     .enter().append("rect")
                         .attr("class", "barra"+curIndex)
-                        // to-do modificar nome State para um genérico - Contar numero de keys e substituir pelo inteiro
-                        .attr("x", function (d, curIndex) { return transformaX(d.date); })
+                        .attr("x", function (d, curIndex) { return escalaOriginal(d.date); })
                         .attr("y", function (d) { return transformaY(d.y); })
-                        .attr("width", 6)
+                        // rangeBand() - Função que divide o espaço em "bandas" equivalentes
+                        .attr("width", escalaSecundaria.rangeBand())
                         .attr("height", function (d) { return self.altura - transformaY(d.y); })
                         .style("fill", function (d, curIndex) { return color(item.name); })
                            // Atribuir tooltips
@@ -1641,95 +1661,6 @@
                 })
             }
 
-            
-
-
-            // ------------------------------------------
-
-
-            //if (self.modoVisualizacao === "stacked" || self.modoVisualizacao === "grouped") {
-            //    // to-do  ( Modificar de state para outra variavel )
-            //    color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
-
-
-
-            //    // Mapear dados através de d.ages (to-do)
-            //    self.dados.forEach(function (d) {
-            //        var y0 = 0;
-            //        d.date = parseDate(d.date);
-            //        d.objecto = color.domain().map(function (name) { return { name: name, y0: y0, y1: y0 += +d[name] }; });
-            //        d.total = d.objecto[d.objecto.length - 1].y1;
-
-            //    });
-
-
-            //    // Atualizar dominio do eixo depois de dados inseridos
-            //    // Mapear de acordo com cada "State"
-            //    transformaX.domain(self.dados.map(function (d) { return d.date; }));
-            //    // Valor máximo dos dados
-            //    transformaY.domain([0, d3.max(self.dados, function (d) { return d.total; })]);
-
-
-            //    // Criar elemento "g" para cada representação
-            //    self.selecao = self.svg.selectAll(".dados")
-            //        .data(self.dados)
-            //      .enter().append("g")
-            //        .attr("class", "dados")
-            //        // Translação equivale à coordenada X de cada barra
-            //        .attr("transform", function (d) { return "translate(" + transformaX(d.date) + ",0)"; });
-            //}
-
-            //// Caso seja modo Stacked (Empilhado)
-            //if (self.modoVisualizacao === "stacked") {
-
-            //    // Adicionar "barras" ao gráfico
-            //    self.selecao.selectAll("rect")
-            //        .data(function (d) { return d.objecto; })
-            //    .enter().append("rect")
-            //        .attr("class", "barra")
-            //        // rangeBand() - Função que o espaço em "bandas" equivalentes
-            //        .attr("width", transformaX.rangeBand())
-            //        // Atribui a posição inicial
-            //        .attr("y", function (d) { return transformaY(d.y1); })
-            //        // Atribui altura correta conforme a sua posição inicial
-            //        .attr("height", function (d) { return transformaY(d.y0) - transformaY(d.y1); })
-            //            .style("fill", function (d) { return color(d.name); })
-            //            // Atribuir tooltips
-            //            .on("mouseover", tip.show)
-            //            .on("mouseout", tip.hide);
-            //}
-
-            //// Caso seja modo Grouped ( Agrupado )
-            //if (self.modoVisualizacao === "grouped") {
-
-            //    // Verificar máximo de cada "state" (modificar state para genérico to-do)
-
-            //    // Para cada elemento dos dados
-            //    self.dados.forEach(function (item, curIndex) {
-            //        // Descobre o maior e empurra para um Array Chave
-            //        chave.push(d3.max(item.objecto, function (d) { return d.y1 - d.y0; }));
-            //    })
-
-            //    // Atualiza o dominio com o máximo da Chave
-            //    transformaY.domain([0, d3.max(chave)]);
-
-            //    self.selecao.selectAll("rect")
-            //        .data(function (d) { return d.objecto; })
-            //    .enter().append("rect")
-            //        .attr("class", "barra")
-            //        // to-do modificar nome State para um genérico - Contar numero de keys e substituir pelo inteiro
-            //        .attr("x", function (d, curIndex) { return transformaX(self.dados[curIndex].date) / 2; })
-            //        .attr("width", transformaX.rangeBand() / 2)
-            //        .attr("y", function (d) { return transformaY(d.y1 - d.y0); })
-            //        .attr("height", function (d) { return self.altura - transformaY(d.y1 - d.y0); })
-            //    .style("fill", function (d) { return color(d.name); })
-            //           // Atribuir tooltips
-            //           .on("mouseover", tip.show)
-            //           .on("mouseout", tip.hide);
-
-            //}
-
-
         }
 
 
@@ -1738,36 +1669,21 @@
         /// </summary>
         GraficoBarras.prototype.Atualiza = function () {
             var self = this
-            // to-do
-            // dadosSelecionados
-            // nome
-            // teste1 / numero
-
-
+            
             // Pintar gráfico
             self.Renderiza();
 
-
             // Caso esteja em modo Stacked ( Empilhado )
             if (self.modoVisualizacao === "stacked") {
-
-                // Atualizar posição X de cada uma das "colunas"
-                //self.selecao
-                //    .attr("transform", function (d) { var somaAuxiliar = transformaX(d.date) + self.margem.esquerda / 2; return "translate(" + somaAuxiliar + ",0)"; });
-
-                //self.Empilha();
+                // Muda de modo
+                self.Empilha();
 
             }
 
 
             // Caso esteja em modo Grouped ( Agrupado )
             if (self.modoVisualizacao === "grouped") {
-
-                // Atualizar posição X de cada uma das "colunas"
-                //self.selecao
-                //    .attr("transform", function (d) { console.log(d); var somaAuxiliar = transformaX(d.date) + self.margem.esquerda / 2; return "translate(" + somaAuxiliar + ",0)"; });
-
-
+                // Muda de modo
                 self.Agrupa();
 
             }
@@ -1781,26 +1697,18 @@
         GraficoBarras.prototype.ConstroiEixos = function () {
             var self = this;
 
-            // to-do
-            // nome? data
-            // teste1? valores
+            // Escala original do eixo dos X
+            escalaOriginal = d3.scale.ordinal()
+                    .rangeRoundBands([0, self.largura], 0.1);
 
 
-            escalaGrouped = d3.scale.ordinal()
-                .rangeBands([0, self.largura], 0.4, 0);
-               
-
-            // Atribui valores a Y conforme a sua escala
-            transformaX = d3.time.scale()
-                // Mapeia o dominio conforme a dadosSelecionados, e o "nome" to-do
-                //.domain(self.dados.map(function (d) { return d.nome; }))
-                // Intervalo de valores que podem ser atribuidos, conforme o dominio
-                .range([0, self.largura], 0.1);
+            // Escala secundária por causa do "agrupamento das barras"
+            escalaSecundaria = d3.scale.ordinal();
 
 
             // Construtor do Eixo dos X
             escalaX = d3.svg.axis()
-              .scale(transformaX)
+              .scale(escalaOriginal)
               // Orientação da escala
               .orient("bottom");
 
@@ -1827,47 +1735,58 @@
         /// </summary>
         GraficoBarras.prototype.AtualizaEixos = function () {
             var self = this,
-                intervaloData = (d3.extent(self.dadosAnalisados[0].values, function (d) { return d.date; }));
+                intervaloData = (d3.extent(self.dadosAnalisados[0].values, function (d) { return d.date; })),
+                listaSeries = [];
 
-            // Atribui valores a Y conforme a sua escala
-            transformaX = d3.time.scale()
-                // Mapeia o dominio conforme a dadosSelecionados, e o "nome" to-do
-                //.domain(self.dados.map(function (d) { return d.date; }))
-                // Intervalo de valores que podem ser atribuidos, conforme o dominio
-                .range([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda - self.margem.direita])
-                // Mapeia o dominio conforme a a data disponivel nos dados
-                .domain(d3.extent(self.dadosAnalisados[0].values, function (d) { return d.date; }));
+            // Guarda os nomes de todas as séries
+            self.dadosAnalisados.forEach(function (item) {
+                listaSeries.push(item.name);
+            });
 
+            // Atualizar escala original
+            escalaOriginal
+                .rangeRoundBands(([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda]), 0.1)
+                .domain(self.dadosAnalisados[0].values.map(function(d) { return d.date;}));
 
-            escalaGrouped
-                .rangeBands([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda - self.margem.direita], 0.4, 0)
-                // Mapeia o dominio conforme a a data disponivel nos dados
-                .domain(d3.map(self.dadosAnalisados[0].values, function (d) { return d.date; }));
-
+            // Atualizar escala secundária
+            escalaSecundaria
+                .domain(listaSeries).rangeRoundBands([0, escalaOriginal.rangeBand()]);
+                
 
             // Caso o modo seja stacked ( Empilhado )
             if (self.modoVisualizacao === "stacked") {
+
+                // Cria lista de total de somas para cada Data
+                var soma = 0,
+                    listaTotal = [];
+
+                for (var indexValores = 0; indexValores < self.dadosAnalisados[0].values.length; indexValores++) {
+                    for (var index = 0; index < self.dadosAnalisados.length; index++) {
+                        soma += self.dadosAnalisados[index].values[indexValores].y;
+                    }
+                    listaTotal.push(soma);
+                    soma = 0;
+                }
+
+
                 // Atribui valores a Y conforme a sua escala
                 transformaY = d3.scale.linear()
-                    .domain([0, d3.max(self.dados, function (d) { return d.total; })])
+                    .domain([0, d3.max(listaTotal)])
                     .range([self.altura, 0]);
+
             }
+
             // Caso o modo seja grouped ( Agrupado )
             if (self.modoVisualizacao === "grouped") {
-                //// Verificar máximo de cada "state" (modificar state para genérico to-do)
-                //self.dados.forEach(function (item, curIndex) {
-                //    chave.push(d3.max(item.objecto, function (d) { return d.y1 - d.y0; }));
-                //})
-
                 // Atualiza o dominio
                 transformaY.domain([0, d3.max(self.chave)])
                 .range([self.altura, 0]);
+
             }
 
 
-
             // Atualização da escala dos Eixos
-            escalaX.scale(transformaX);
+            escalaX.scale(escalaOriginal);
             escalaY.scale(transformaY);
 
 
@@ -2010,9 +1929,8 @@
             self.OpcaoTooltip();
             self.OpcaoMostraDados();
 
-            // Liga o evento ao botão do widget
-            // TO-DO
-            //self.ModificaVisualizacao();
+            // Liga o evento de mudar o tipo de gráfico de barras ( stacked/grouepd)
+            self.OpcaoModificaVisualizacao();
 
             // Constroi a legenda do gráfico
             //self.ConstroiLegenda();
@@ -2046,7 +1964,7 @@
         /// </summary>
         GraficoBarras.prototype.ConstroiLegenda = function () {
             var self = this,
-                series = self.selecao.data()[0].objecto.length,
+                series = self.dadosAnalisados.length,
                 legenda;
 
             //color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
@@ -2062,7 +1980,7 @@
                 legenda.append("text")
                     .attr("x", 30)
                     .attr("y", ((15 + 20 * i) + 5))
-                    .text(self.selecao.data()[0].objecto[i].name);
+                    .text(self.dadosAnalisados[i].name);
 
             }
 
@@ -2100,12 +2018,11 @@
         /// <summary>
         /// Modifica entre os vários tipos de visualização
         /// </summary
-        GraficoBarras.prototype.ModificaVisualizacao = function () {
+        GraficoBarras.prototype.OpcaoModificaVisualizacao = function () {
             var self = this;
 
             // Cria botão para sinalizar o modo visualizacao
-            $("#" + self.id).find(".widget-navbar").append("<button type=\"button\"" + "class=\"update-widget\">" +
-                                                           "<i class=\"glyphicon glyphicon-refresh\">" + "</i>" + "</button");
+            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"update-widget\">" + "Modifica Visualizacao" + "</a></li>")
 
             // Ao pressionar o botão update-widget, troca entre visualizações
             $("#" + self.id).on("click", ".update-widget", function () {

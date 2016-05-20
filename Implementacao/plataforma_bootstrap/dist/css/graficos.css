@@ -51,7 +51,7 @@
 
         position: relative;
         right: 10%;
-        top: 10%;
+        top: 5%;
     }
 
 
@@ -104,6 +104,8 @@
     .carregar{
         background-color: #333 !important;
     }
+
+
 
     /*------------------
         GridStack
