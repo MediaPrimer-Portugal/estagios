@@ -161,6 +161,16 @@
     }
 
     /*
+        Widget Pie Chart, Wrapper
+    */
+    .pie > .wrapper{
+        margin: 0;
+
+        width:100%;
+    }
+
+
+    /*
         Estilo do widget
     */
 

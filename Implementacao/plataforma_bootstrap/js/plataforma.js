@@ -446,17 +446,22 @@
             if (self.dados.dados !== undefined) {
                 // caso tenha items para desenhar
                 if (self.dados.dados.Widgets[0].Items.length != 0) {
+                    if (self.widgetElemento === "GraficoPie") {
 
-                    // volta a desenhar o gráfico
-                    self.AtualizaDimensoes.call(this);
-                    self.ConstroiSVG.call(this, self.id, self);
-                    self.ConstroiEixos.call(this);
-                    self.InsereDados.call(this);
-                    self.InsereEixos.call(this);
-                    self.Atualiza.call(this);
+                        self.ConstroiSVG.call(this, self.id);
+                        self.InsereDados.call(this);
 
-                    self.ConstroiLegenda.call(this);
+                    } else {
+                        // volta a desenhar o gráfico
+                        self.AtualizaDimensoes.call(this);
+                        self.ConstroiSVG.call(this, self.id, self);
+                        self.ConstroiEixos.call(this);
+                        self.InsereDados.call(this);
+                        self.InsereEixos.call(this);
+                        self.Atualiza.call(this);
 
+                        self.ConstroiLegenda.call(this);
+                    }
 
                 } else {
                     self.svg.append("text")
@@ -2073,7 +2078,7 @@
             suavizarLinhas = "false",
             linhasConexao = "false",
             circulos = "false",
-            parseDate = d3.time.format("%y-%b-%d").parse;
+            parseDate = d3.time.format("%Y-%m-%dT%H:%M:%S").parse;
 
 
         /// <summary>
@@ -2090,6 +2095,10 @@
             this.objectoServidor["widgetElemento"] = "graficoLinhas";
             this.objectoServidor["contexto"] = [];
             this.objectoServidor["agregacoes"] = [];
+
+
+            // TODO
+            this.chave = [];
         };
 
 
@@ -2118,41 +2127,56 @@
 
             // Inicia controlo de cores padrão to-do
             // Controla as keys (Series) que vão estar contidas no gráfico
-            color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
+            color.domain(d3.values(self.dados.dados.Widgets[0].Items[0].Valores).map(function (d) { return d.Nome; }));
 
-
-            if (!(self.dados[0].date instanceof Date)) {
-                // Para cada objecto vamos analisar a data
-                self.dados.forEach(function (d) {
-                    // MELHORAR, modificar entre graficos
-                    d.date = parseDate(d.date);
-                });
-            }
+            // Modificar??
+            //if (!(self.dados[0].date instanceof Date)) {
+            //    // Para cada objecto vamos analisar a data
+            //    self.dados.forEach(function (d) {
+            //        // MELHORAR, modificar entre graficos
+            //        d.date = parseDate(d.date);
+            //    });
+            //}
 
             // Criar novo array de objectos para guardar a informação de forma fácil de utilizar
-            dadosNormal = color.domain().map(function (name) {
+            self.dadosNormal = color.domain().map(function (name) {
                 return {
                     // Atribuir nome da chave
                     name: name,
-                    // Atribuir valores
-                    values: self.dados.map(function (d) {
-                        // Data e valor a dividir por 100, pois escala está no padrão [0,1]
-                        return { name: name, date: d.date, y: +d[name] };
+                    // Mapear os valores
+                    values: self.dados.dados.Widgets[0].Items.map(function (d) {
+                        var arrayValores = [],
+                            arrayDatas = [],
+                            index;
+
+                        //Encontrar index do parametro atual
+                        index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
+
+
+                        // Devolve objecto
+                        return {
+                            name: name,
+                            y: +d.Valores[index].Valor,
+                            date: parseDate(d.Data)
+                        };
                     })
                 }
             });
 
 
             // Adquirir valor máximo de cada uma das chaves
-            dadosNormal.forEach(function (item, i) {
-                chave.push(d3.max(item.values, function (d) { return d.y; }));
+            self.dadosNormal.forEach(function (item, i) {
+                self.chave.push(d3.max(item.values, function (d) { return d.y; }));
             });
+
+
+            // Definir dominios
 
 
             // Seleciona todas as series
             series = self.svg.selectAll(".series")
                // Liga os elementos aos dados dataNest
-              .data(dadosNormal)
+              .data(self.dadosNormal)
             // Acrescenta séries, caso não hajam suficientes para representar dataNest
             .enter().append("g")
               .attr("class", "series");
@@ -2185,7 +2209,6 @@
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
                 .range([0, self.largura])
                 // Mapeia o dominio conforme a a data disponivel nos dad
-                .domain(d3.extent(self.dados, function (d) { return d.date; }));
 
             // Construtor do Eixo dos X
             escalaX = d3.svg.axis()
@@ -2219,12 +2242,12 @@
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
                 .range([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda - self.margem.direita])
                 // Mapeia o dominio conforme a a data disponivel nos dad
-                .domain(d3.extent(self.dados, function (d) { return d.date; }));
+                .domain(d3.extent(self.dadosNormal[0].values, function (d) { return d.date; }));
 
 
             // Atribui valores a Y conforme a sua escala
             transformaY = d3.scale.linear()
-                .domain([0, d3.max(chave)])
+                .domain([0, d3.max(self.chave)])
                 .range([self.altura, 0]);
 
             // Atualização da escala dos Eixos
@@ -2239,10 +2262,11 @@
                 // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
                 .y(function (d) { return transformaY(d.y); });
 
+            // TODO
             // Atualizar coordenadas do Eixo do X de acordo com o tamanho do widget
-            d3.select("#" + self.id).select(".nomeEixoX")
-                .attr("x", self.largura - 8)
-                .attr("y", self.altura + self.margem.cima);
+            //d3.select("#" + self.id).select(".nomeEixoX")
+            //    .attr("x", self.largura - self.margem.esquerda - self.margem.direita - 50)
+            //    .attr("y", self.altura + self.margem.cima);
 
             // Se a altura do widget for menor
             if (self.altura <= 250) {
@@ -2315,14 +2339,15 @@
                 .attr("dy", ".5em")
                 .attr("transform", "rotate(-35)");
 
+            // TODO
             // Insere nome do eixo do X
-            self.svg.append("g")
-              .append("text")
-                .attr("class", "nomeEixoX")
-                .attr("x", self.largura)
-                .attr("y", self.altura + self.margem.cima)
-                .attr("dx", ".71em")
-                  .text(nomeEixoX);
+            //self.svg.append("g")
+            //  .append("text")
+            //    .attr("class", "nomeEixoX")
+            //    .attr("x", )
+            //    .attr("y", self.altura + self.margem.cima)
+            //    .attr("dx", ".71em")
+            //      .text(nomeEixoX);
 
             // Acrescentar no g a escala Y e o seu nome to-do
             self.svg.append("g")
@@ -2408,8 +2433,9 @@
 
             self.Renderiza();
 
+
             // Seleciona todos os elementos da class .line e liga-os aos dados
-            self.svg.selectAll(".linha").data(dadosNormal)
+            self.svg.selectAll(".linha")
                 // Para cada d, é calculado um novo path através da variável "linha"
                 .attr("d", function (d) { return linha(d.values); })
 
@@ -2441,6 +2467,14 @@
             }
 
             self.Atualiza();
+        }
+
+
+        /// <summary>
+        ///
+        /// </summary>
+        GraficoLinhas.prototype.ConstroiLegenda = function () {
+
         }
 
 
@@ -3232,7 +3266,7 @@
             this.widgetTipo = "dados";
             this.widgetElemento = "GraficoPie";
             // Inicializar o raio
-            self.raio = Math.min(self.largura, self.altura) / 2;
+
             // Inicializar modo donut a false
             self.donut = donut;
 
@@ -3261,7 +3295,7 @@
             // Seleciona o wrapper para inserir o svg
             self.svg = d3.select("#" + id).select(".wrapper").insert("svg")
                 // 80% para deixar algum espaço para as tooltip/legenda
-                .attr("width", "80%")
+                .attr("width", "100%")
                 .attr("height", "100%")
                 // Atribuida uma viewBox de acordo com o valor minimo de entro a sua altura ou largura
                 .attr('viewBox', '0 0 ' + (Math.min(self.largura, self.altura)) + ' ' + (Math.min(self.largura, self.altura)))
@@ -3269,7 +3303,7 @@
                 .attr("preserveAspectRatio", "xMidYMid")
               .append("g")
                 // Translação do raio minimo para estar dentro do svg de forma adequada
-                .attr("transform", "translate(" + (Math.min(self.largura, self.altura) / 2) + "," + (Math.min(self.largura, self.altura) / 2) + ")");
+                .attr("transform", "translate(" + (Math.min(self.largura, self.altura) / 2 ) + "," + (Math.min(self.largura, self.altura) / 2) + ")");
         }
 
 
@@ -3282,40 +3316,45 @@
                 soma = 0,
                 somaAtual = 0,
                 dadosPie = [0],
-                percentagemSlice = [0];
-
-            // to-do id?
-            // Soma de todos os IDs
-
-            // Agrupa os dados conforme a key selecionada
-            dataNest = d3.nest()
-                // Seleciona key para agrupar
-                .key(function (d) { return d.date; })
-                // Escolhe onde vai buscar os dados a agrupar
-                .entries(self.dados);
+                percentagemSlice = [0],
+                color = d3.scale.category10(),
+                parseDate = d3.time.format("%Y-%m-%dT%H:%M:%S").parse;
 
 
-            color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
+            // Controla as keys (Series) que vão estar contidas no gráfico
+            color.domain(d3.values(self.dados.dados.Widgets[0].Items[0].Valores).map(function (d) { return d.Nome; }));
 
+            // Criar novo array de objectos para guardar a informação de uma forma mais fácil de utilizar
+            self.dadosAnalisados = color.domain().map(function (name, curIndex) {
+                return {
+                    // Atribuir nome a chave (Serie)
+                    name: name,
+                    // Mapear os valores
+                    values: self.dados.dados.Widgets[0].Items.map(function (d) {
+                        var arrayvalores = [],
+                            arrayDatas = [],
+                            index;
 
-            // Mapear dados através de d.ages (to-do)
-            self.dados.forEach(function (d) {
+                        // Encontrar index do parametro atual
+                        index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
 
-                d.date = parseDate(d.date);
-                d.objecto = color.domain().map(function (name) { return { name: name, y: +d[name] }; });
-                d.total = d.objecto[0].y + d.objecto[1].y;
-
+                        return {
+                            name: name,
+                            y: +d.Valores[index].Valor,
+                            date: parseDate(d.Data)
+                        };
+                    })
+                }
             });
 
-
-            // Ciclo para descobrir a soma de todos os valores de uma "chave"
-            // Para cada "chave"
+            // Ciclo para descobrir a soma de todos os valores de uma "Serie"
+            // Para cada "Serie"
             color.domain().forEach(function (nome, curIndex) {
                 // Definir cada entrada no array a zero
                 ArraySoma[curIndex] = 0;
-                // Fazer soma para essa "chave"
-                self.dados.forEach(function (item) {
-                    ArraySoma[curIndex] += item[nome];
+                // Fazer soma para essa "Serie"
+                self.dadosAnalisados[curIndex].values.forEach(function (valor) {
+                        ArraySoma[curIndex] += valor.y;
                 })
             });
 
@@ -3332,11 +3371,15 @@
                 percentagemSlice[curIndex] = (valorSlice / soma) * 100;
             });
 
+
             // Método d3 que constroi uma função pie
             pie = d3.layout.pie()
                 // Inserimos os valores de percentagem para proceder a construção
-                .value(function (d, i) { return percentagemSlice[i]; })
+                .value(function (d, curIndex) { return percentagemSlice[curIndex]; })
                 .sort(null);
+
+            self.raio = Math.min(self.largura, self.altura) / 2;
+
 
             // Método d3 que constroi um arco
             self.arc = d3.svg.arc()
@@ -3345,16 +3388,11 @@
                 // Raio exterior
                 .outerRadius(self.raio);
 
-            // Método d3 para definir as cores
-            color = d3.scale.category10()
-                // atribuimos a cada "key" uma cor
-                .domain(d3.keys(self.dados[0]).filter(function (key) { return key === "id"; }));
-
 
             // Seleciona todos os path
             self.path = self.svg.selectAll("path")
                 // utilizamos o pie para calcular os angulos e atribuimos a data
-                .data(pie(self.dados))
+                .data(pie(self.dadosAnalisados))
               // Caso não hajam suficientes elementos para ligar aos dados são adicionados mais
               .enter().append("path")
                 // Atribuido id a cada "fatia"
@@ -3367,7 +3405,80 @@
                 .attr("d", self.arc);
 
             // Caso legendas esteja a true
-            self.InsereLegenda(percentagemSlice);
+            //self.InsereLegenda(percentagemSlice);
+
+            // ----------------------------------
+
+            //// Mapear dados através de d.ages (to-do)
+            //self.dados.forEach(function (d) {
+
+            //    d.date = parseDate(d.date);
+            //    d.objecto = color.domain().map(function (name) { return { name: name, y: +d[name] }; });
+            //    d.total = d.objecto[0].y + d.objecto[1].y;
+
+            //});
+
+
+            //// Ciclo para descobrir a soma de todos os valores de uma "chave"
+            //// Para cada "chave"
+            //color.domain().forEach(function (nome, curIndex) {
+            //    // Definir cada entrada no array a zero
+            //    ArraySoma[curIndex] = 0;
+            //    // Fazer soma para essa "chave"
+            //    self.dados.forEach(function (item) {
+            //        ArraySoma[curIndex] += item[nome];
+            //    })
+            //});
+
+
+            //// Soma total de elementos
+            //ArraySoma.forEach(function (item) {
+            //    soma += item;
+            //});
+
+
+            //// Para cada uma da soma dos conjuntos
+            //ArraySoma.forEach(function (valorSlice, curIndex) {
+            //    // Calculamos a percentagem e guardamos
+            //    percentagemSlice[curIndex] = (valorSlice / soma) * 100;
+            //});
+
+            //// Método d3 que constroi uma função pie
+            //pie = d3.layout.pie()
+            //    // Inserimos os valores de percentagem para proceder a construção
+            //    .value(function (d, i) { return percentagemSlice[i]; })
+            //    .sort(null);
+
+            //// Método d3 que constroi um arco
+            //self.arc = d3.svg.arc()
+            //    // Raio interior ( 0 = circunferência completa )
+            //    .innerRadius(0)
+            //    // Raio exterior
+            //    .outerRadius(self.raio);
+
+            //// Método d3 para definir as cores
+            //color = d3.scale.category10()
+            //    // atribuimos a cada "key" uma cor
+            //    .domain(d3.keys(self.dados[0]).filter(function (key) { return key === "id"; }));
+
+
+            //// Seleciona todos os path
+            //self.path = self.svg.selectAll("path")
+            //    // utilizamos o pie para calcular os angulos e atribuimos a data
+            //    .data(pie(self.dados))
+            //  // Caso não hajam suficientes elementos para ligar aos dados são adicionados mais
+            //  .enter().append("path")
+            //    // Atribuido id a cada "fatia"
+            //    .attr("id", function (d, i) { return "path" + i; })
+            //    // Atribuida class slice ao elemento
+            //    .attr("class", "slice")
+            //    // Atribuida cor através do método color
+            //    .attr("fill", function (d, i) { return color(i); })
+            //    // É criado o path utilizando o método arc do d3
+            //    .attr("d", self.arc);
+
+            //// Caso legendas esteja a true
+            //self.InsereLegenda(percentagemSlice);
 
         }
 
@@ -3472,8 +3583,7 @@
             //self.InsereDados();
 
             // Insere botões
-            // TO-DO
-            //self.ModificaVisualizacao();
+            self.OpcaoModificaVisualizacao();
             self.OpcaoMostraDados();
 
         }
@@ -3487,7 +3597,7 @@
             var self = this;
 
             //to-do
-            var atualizaPath = d3.select("#" + self.id).selectAll(".slices").data(pie(dataNest));
+            var atualizaPath = d3.select("#" + self.id).selectAll(".slices").data(pie(self.dadosAnalisados));
 
             // Update de elementos
             self.path
@@ -3531,12 +3641,13 @@
         /// <summary>
         /// Modifica entre os vários tipos de visualização
         /// </summary
-        PieChart.prototype.ModificaVisualizacao = function () {
+        PieChart.prototype.OpcaoModificaVisualizacao = function () {
             var self = this;
 
-            // Ligamos um botão para a "navbar" do widget
-            $("#" + self.id).find(".widget-navbar").append("<button type=\"button\"" + "class=\"update-widget\">" +
-                                                           "<i class=\"glyphicon glyphicon-refresh\">" + "</i>" + "</button");
+
+            // Cria botão para sinalizar o modo visualizacao
+            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"update-widget\">" + "Modifica Visualizacao" + "</a></li>")
+
 
             // Ao pressionar o botão update-widget, troca entre visualizações
             $("#" + self.id).on("click", ".update-widget", function () {
