@@ -442,9 +442,11 @@
          *   criados na dashboard, pois se o minimo for 0, a gridstack não tem height, e é impossivel arrastar
          *   para lá widgets
          *
+         *      Alterar? Modificar o valor "" dependendo do tipo de grid ( principal ou secundaria )
          */
 
-        return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 10);
+
+        return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 2);
 
         /*----------------------------------------------------------------------------------------------*/
     };

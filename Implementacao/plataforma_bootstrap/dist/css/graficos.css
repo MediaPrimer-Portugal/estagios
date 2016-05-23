@@ -9,15 +9,102 @@
 
     td{
         padding: 10px;
+
     }
 
     .input-group {
         width:100%;
+
     }
 
     /* Remove espaço da UL na sidebar dos wdgets*/
     .widgets-sidebar {
         padding:0;
+
+    }
+    
+    .divisor-cor{
+        height:5px;
+
+        background-color:red;
+    }
+
+    .nav-utilizador{
+        max-height: 45px;
+        width: 100%;
+        position: relative;
+        float:right !important;
+
+        padding: 10px;
+
+        background-color: #767676;
+
+        z-index: 2;
+
+    }
+
+
+    /* Para se manter afastado dos navegadores em cima*/
+    .sidebar{
+        margin-top: 98px !important;
+    }
+
+    /*---*/
+
+    .dashboard-coluna{
+        padding-right: 15px;
+        padding-left: 0 !important;
+
+    }
+
+    #page-wrapper{
+        padding-right: 0 !important;
+
+    }
+
+    .row {
+        margin-right: 0;
+
+    }
+
+
+    
+    /*------------------
+        CSS Property Grid
+    ------------------*/
+
+    .propriedades-sidebar{
+        padding:0;
+
+        height:100%;
+        box-shadow: -3px 0 5px 3px #d5d5d5;
+    }
+
+    .listaPropriedades-sidebar{
+        text-align: center;
+
+        margin-bottom: 0;
+        padding: 15px;    
+        
+        
+        background-color: #333333;
+
+    }
+
+    .listaPropriedades-sidebar > ul{
+        margin: 0;
+    }
+
+    .listaPropriedades-sidebar > li{
+        list-style: none;
+    }
+
+    .listaPropriedades-sidebar  a{
+        text-decoration: none;
+        text-align: center;
+        font-size:larger;
+
+        color:white;
     }
 
     /*Remove espaços desnecessários na propertygrid*/
@@ -27,17 +114,84 @@
         margin: 0;
         padding: 0 !important;
 
+        background-color: #161616;
+
+    }
+
+    /* Opcoes da área que cobre o selector entre propriedades gerais e propriedades aparência */
+    .opcoes-propertyGrid{
+        padding:20px;
+        text-align: center;
+        
+        background-color: #161616;
+
+    }
+
+
+    /* "Icons" que definem as propriedades gerais ou de aparência */
+    .box-propriedades{
+        display: inline-block;
+        
+        padding: 10px;
+        margin: 5px;
+
+        height:50px;
+        width:50px;
+
+        border: 1px solid white;
     }
 
     /* Property Grid ocupa 100% da largura do seu espaço*/
     .pgTable{
         width: 100% !important;
+
+        border:none !important;
+
+    }
+
+    .pgGroupCell{
+        text-decoration: none !important;
+        font-weight: normal;
+        font-size: larger;
+
+        padding: 15px !important;
+
+        color:white;
+    }
+
+    .pgGroupRow{
+        background-color:#333333 !important;
+
+    }
+
+    /* Definições de cada célula na property Grid*/
+    .pgCell{
+        border:none !important;
+        padding: 16px 8px 16px 8px !important;
+
+        color:white;
+
+    }
+
+    /* Cor do texto dentro das dropdownlist */
+    .pgCell > select{
+
+        color: black;
+
+    }
+
+    .pgRow{
+        padding:20px !important;
+
     }
 
     /* Todas as dropdowns dentro de uma tablea de property ocupa 100% do espaço*/
     .pgCell > select {
         width: 100% !important;
+
     }
+
+
 
     /*------------------
         Legenda

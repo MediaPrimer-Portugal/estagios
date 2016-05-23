@@ -1509,6 +1509,8 @@
 
             self.AtualizaEixos();
 
+            console.log(self.dadosAnalisados);
+
 
             self.dadosAnalisados.forEach(function (item, curIndex) {
                 // Para todas as barras com numero curIndex
@@ -1622,7 +1624,8 @@
             // Caso seja modo Stacked (Empilhado)
             if (self.modoVisualizacao === "stacked") {
 
-
+                // Para cada "serie" criar as barras necessárias para complementar o atributo data
+                // desse elemento
                 self.dadosAnalisados.forEach(function ( item, curIndex) {
                     // Adicionar "barras" ao gráfico
                     self.selecao.selectAll("rect")
@@ -1680,6 +1683,9 @@
 
             // Caso esteja em modo Stacked ( Empilhado )
             if (self.modoVisualizacao === "stacked") {
+                //TODO
+                console.log("OI??")
+
                 // Muda de modo
                 self.Empilha();
 
@@ -4319,12 +4325,16 @@
     var Grid = (function () {
 
         var grid,
+            tipoGrid,
             id,
             identificador,
             opcoes,
             listaWidgets = [],
-            widgets = ["area", "barras", "linhas", "gauge", "kpi", "tabela", "pie",
-                "filtros", "data"];
+            // Definição de cada Menu Widget
+            widgetsGrafico = ["area", "barras", "linhas", "pie"],
+            widgetsLabel = [],
+            widgetsOutros = ["gauge", "kpi", "tabela"],
+            widgetsFiltros = ["data", "filtros"];
 
 
         /// <summary>
@@ -4332,11 +4342,12 @@
         /// </summary>
         /// <param name="id"> Identificador da grid </param>
         /// <param name="opcoes"> Objecto com as opcoes para a inicializacao da grid </param>
-        function Grid(id, opcoes) {
+        function Grid(id, opcoes, tipoGrid) {
             var self = this;
 
             self.id = id;
             self.opcoes = opcoes;
+            self.tipoGrid = tipoGrid;
 
 
             self.Inicializa();
@@ -4373,12 +4384,27 @@
             // Modifica titulo e remove widget à "grid"
             self.RemoveWidget();
 
+
+            // Caso se trata de uma barra secundária
+            if (self.tipoGrid === "barraSecundaria") {
+
+                console.log($("#" + self.id).parent().parent());
+
+                // Ao pressionar no elemento com a class especifica da grid
+                $("#"+ self.id).parent().parent().click(function () {
+                    // Preencher barra
+                    self.PreencheBarraLateral();
+
+                });
+            }
+
             // Guarda informação no Widget sempre que um é modificado
             //self.GuardaInformacao();
 
             // Liga o evento ao botão cria dados e ao clickar no botão uma tabela é criada
             // com os dados desse widget
             self.MostraDados();
+
         }
 
 
@@ -4485,17 +4511,21 @@
             // apenas é obrigatório o atributo el
             self.grid.data("gridstack").addWidget(el, $coordenadaX, $coordenadaY, width, height, autoPosition, minWidth, maxWidth, minHeight, maxHeight, id);
 
+
             // Define tamanho da listaWidgets
             ultimo = self.listaWidgets.length;
+
 
             // Adiciona o widget criado ao dashboard
             self.AdicionaWidgetLista(tipoWidget, "widget" + idUnico, dados);
 
+            
             // Atribui ao widget a sua class
             self.listaWidgets[ultimo].setWidgetClass(tipoWidget);
 
+
             // Caso o dashboard não seja o sidebar
-            if (self.id !== "sidebar-gridstack") {
+            if (self.id === "main-gridstack") {
                 // Constroi Gráfico no Widget
                 self.listaWidgets[ultimo].ConstroiGrafico(self.listaWidgets[ultimo].id);
             } else {
@@ -4804,13 +4834,18 @@
         /// Preenche a barra lateral com todos os widgets possiveis
         /// </summary>
         Grid.prototype.PreencheBarraLateral = function () {
-            var self = this;
+            var self = this,
+                tipo = self.getWidgetsGrid();
+
 
             // Caso tenha a class
-            if (!$(".adicionarWidget-sidebar").parent().hasClass("active"))
+            if ($("#"+self.id).closest("li").hasClass("active"))
             {
+                // Apaga todos os elementos anteriores
+                $("#" + self.id).data("gridstack").removeAll();
+
                 // Para cada widget adiciona
-                widgets.forEach(function (item) {
+                tipo.forEach(function (item) {
                     self.AdicionaWidget(item, item, undefined, 12, 1);
                 });
             } else {
@@ -4820,10 +4855,64 @@
         }
 
 
+        /// <summary>
+        /// Método que obtém os widgets para a grid especifica
+        /// </summary>
+        /// <returns> Retorna um array com os nomes dos widgets a serem adicionados </returns>
+        Grid.prototype.getWidgetsGrid = function () {
+            var self = this;
+
+            switch (self.id) {
+                case "sidebarGraficos-gridstack":
+                    return widgetsGrafico;
+                    break;
+                case "sidebarLabels-gridstack":
+                    return widgetsLabel;
+                    break;
+                case "sidebarOutros-gridstack":
+                    return widgetsOutros;
+                    break;
+                case "sidebarFiltros-gridstack":
+                    return widgetsFiltros;
+                    break;
+                default:
+                    return "Erro";
+                    break;
+
+            }
+
+        }
+
+
+        /// <summary>
+        /// Evento para remover as handles extra antes de mudar de grid
+        /// </summary>
+        Grid.prototype.RemoveHandle = function () {
+            var self = this;
+
+            // Remover handles dos widgets que não estão resizable
+            $("#" + self.id).on("mousedown", ".grid-stack-item", function () {
+                $("#"+self.id+" .grid-stack-item").children(":hidden").remove();
+            });
+
+        }
+
+
         return Grid;
 
     })();
 
+
+
+
+    /// <summary>
+    ///
+    /// </summary>
+    var Eventos = (function () {
+
+        return Eventos;
+
+    })();
 
     // Opções da gridstack
     options = {
@@ -4851,13 +4940,23 @@
         disableResize: true
     }
 
+
     // Criação da grid principal
-    gridPrincipal = new Grid("main-gridstack", options);
+    gridPrincipal = new Grid("main-gridstack", options, "barraPrincipal");
     // Evento que mostra a informação de todos os widgets disponiveis ao clickar um botão
     gridPrincipal.MostraInformacaoWidgets();
 
     // Criação da grid secundária
-    gridSecundaria = new Grid("sidebar-gridstack", optionsBarraLateral);
+    gridGraficos = new Grid("sidebarGraficos-gridstack", optionsBarraLateral, "barraSecundaria");
+    gridLabels = new Grid("sidebarLabels-gridstack", optionsBarraLateral, "barraSecundaria");
+    gridOutros = new Grid("sidebarOutros-gridstack", optionsBarraLateral, "barraSecundaria");
+    gridFiltros = new Grid("sidebarFiltros-gridstack", optionsBarraLateral, "barraSecundaria");
+
+    // Remove handles extra que previnem que seja feito o resize ao mudar da sideGrid para a gridPrincipal
+    gridGraficos.RemoveHandle();
+    gridLabels.RemoveHandle();
+    gridOutros.RemoveHandle();
+    gridFiltros.RemoveHandle();
 
 
 
@@ -5054,21 +5153,6 @@
 
     // property Grid - TEST
     PropertyGrid.Inicializa();
-
-    // Ao pressionar no botão adicionar widget
-    $(".adicionarWidget-sidebar").click(function () {
-        gridSecundaria.PreencheBarraLateral();
-    });
-
-
-
-
-    // TESTE - Grid
-
-    // Remover handles dos widgets que não estão resizable
-    $("#sidebar-gridstack").on("mousedown", ".grid-stack-item", function () {
-        $("#sidebar-gridstack .grid-stack-item").children(":hidden").remove();
-    });
 
 
 
