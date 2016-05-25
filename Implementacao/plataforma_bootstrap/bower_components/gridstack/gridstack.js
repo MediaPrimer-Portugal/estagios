@@ -446,7 +446,7 @@
          */
 
 
-        return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 2);
+        return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 5);
 
         /*----------------------------------------------------------------------------------------------*/
     };
@@ -1228,16 +1228,16 @@
         });
 
         // Define widgets na PropertyGrid
-        this.opts.PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
+        //this.opts.PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
         // Constroi a PropertyGrid
-        this.opts.PropertyGrid.Constroi();
+        //this.opts.PropertyGrid.Constroi();
 
     }
 
 
     /**  Adicionado
     *
-    * Constroi o Widget ap]os este ser colocado na nova grid
+    * Constroi o Widget após este ser colocado na nova grid
     *
     */
     GridStack.prototype.ConstroiWidget = function () {
@@ -1256,6 +1256,7 @@
         grid.listaWidgets.forEach(function (item) {
             item.objectoServidor = item.AtualizaObjectoServidor();
             item.AtualizaObjectoWidget();
+
         });
 
     }

@@ -644,6 +644,66 @@
 
         }
 
+
+        /// <summary>
+        /// Método para adicionar class widget-ativo, para mostrar que o widget está em foco
+        /// </summary>
+        Widget.prototype.setAtivo = function () {
+            var self = this;
+
+            console.log(self.id);
+            
+            // Ao clickar no widget especifico
+            $("#" + self.id).click(function () {
+                console.log("está ativo");
+                console.log($(this).parent().parent().children(".widget-ativo"));
+
+                // Remove todos os que estão ativos anteriormente
+                $(this).parent().parent().children(".widget-ativo").removeClass(".widget-ativo");
+
+                // Adiciona a class ativo ao widget
+                $(this).addClass('widget-ativo');
+                
+                
+            });
+
+        }
+
+
+        /// <summary>
+        /// Método para adicionar class widget-aviso, para mostrar que está algo incorrecto com o widget
+        /// </summary>
+        Widget.prototype.setAviso = function () {
+            var self = this;
+
+            $("#" + self.id).addClass("widget-aviso");
+
+        }
+
+
+        /// <summary>
+        /// Remove class widget-ativo
+        /// </summary>
+        Widget.prototype.RemoveAtivo = function () {
+            var self = this;
+
+            //$("#" + self.id).not().click(function () {
+            //    $("#" + self.id).removeClass("widget-ativo");
+            //});
+
+        }
+
+
+        /// <summary>
+        /// Remove class widget-aviso
+        /// </summary>
+        Widget.prototype.RemoveAviso = function () {
+            var self = this;
+
+            $("#" + self.id).RemoveClass("widget-aviso");
+
+        }
+
         /// #Region ---------------------------------
 
 
@@ -1130,6 +1190,9 @@
 
             // Liga evento para modificar titulo
             self.ModificaTitulo();
+
+            self.setAtivo();
+            self.RemoveAtivo();
 
             //self.ConstroiLegenda();
         }
@@ -1943,6 +2006,9 @@
             // Liga o evento de mudar o tipo de gráfico de barras ( stacked/grouepd)
             self.OpcaoModificaVisualizacao();
 
+            self.setAtivo();
+            self.RemoveAtivo();
+
             // Constroi a legenda do gráfico
             //self.ConstroiLegenda();
         }
@@ -2402,6 +2468,9 @@
             self.OpcaoUpdate();
             self.OpcaoMostraDados();
 
+            self.setAtivo();
+            self.RemoveAtivo();
+
         }
 
 
@@ -2619,6 +2688,9 @@
 
             // to-do
             //self.MostraOpcoes();
+
+            self.setAtivo();
+            self.RemoveAtivo();
 
             // Constroi Gráfico Arco
             if (modoVisualizacao === "arco") {
@@ -3186,6 +3258,10 @@
             self.InsereDados();
             // Atualiza o valorLimite
             self.Atualiza();
+
+            self.setAtivo();
+            self.RemoveAtivo();
+
         }
 
 
@@ -3592,6 +3668,9 @@
             self.OpcaoModificaVisualizacao();
             self.OpcaoMostraDados();
 
+            self.setAtivo();
+            self.RemoveAtivo();
+
         }
 
 
@@ -3818,6 +3897,10 @@
             // Inserir dados na tabela
             //self.InsereDados(id);
             self.OpcaoMostraDados();
+
+            self.setAtivo();
+            self.RemoveAtivo();
+
         }
 
 
@@ -3952,6 +4035,8 @@
             self.ConstroiSVG();
             self.InsereDados();
 
+            self.setAtivo();
+            self.RemoveAtivo();
 
         }
 
@@ -4151,6 +4236,9 @@
             // Inserir dados na tabela
             self.ConstroiSVG();
 
+            self.setAtivo();
+            self.RemoveAtivo();
+
         }
 
 
@@ -4263,15 +4351,25 @@
     /// Module Pattern
     /// </summary>
     var PropertyGrid = (function(){
-        var PropertyGrid = {};
+        var PropertyGrid = {},
+            idSerie = 1,
+            Componente = [],
+            CampoSeries = ["Média", "Minimo", "Maximo", "ContagemUnica"],
+            FuncaoSeries = ["Somatorio", "Mediana", "Contagem", "Percentis"],
+            FixoPeriodo = ["Ano", "Dia", "Hora", "Mes", "Minuto", "Segundo", "Semana", "Trimestre"];
 
         function PropertyGrid() {
             this.PropertyGrid = {};
         }
 
         PropertyGrid.propriedades = {
-            WidgetDados: "Widget",
-            WidgetContexto: "Widget"
+            Nome: "Serie",
+            ComponenteSerie: "",
+            Campo: "Campo",
+            Funcao: "Funcao",
+            Fixo: "",
+            ComponentePeriodo: "",
+            Botao: ""
         }
 
         PropertyGrid.widgets = {};
@@ -4280,8 +4378,8 @@
         // Atribui as opções possiveis no menu da associação
         PropertyGrid.setWidgets = function (listaWidgetsDados, listaWidgetsContexto) {
             this.widgets = {
-                WidgetDados: { name: "Widget Dados", group: "Associação", type: "options", options: listaWidgetsDados, description: "Widgets que contêm os gráficos" },
-                WidgetContexto: { name: "Widget Contexto", group: "Associação", type: "options", options: listaWidgetsContexto, description: "Widget que contêm os dados/filtros" }
+                //WidgetDados: { name: "Widget Dados", group: "Associação", type: "options", options: listaWidgetsDados, description: "Widgets que contêm os gráficos" },
+                //WidgetContexto: { name: "Widget Contexto", group: "Associação", type: "options", options: listaWidgetsContexto, description: "Widget que contêm os dados/filtros" }
             };
         }
 
@@ -4294,23 +4392,111 @@
             return objecto.widgets.WidgetContexto;
         }
 
-        // Constroi a propertyGrid conforme as suas propriedades
-        PropertyGrid.Constroi = function () {
-            // Cria a grid com as suas propriedades
-            $('#propGrid').jqPropertyGrid(this.propriedades, this.widgets);
-        }
 
         // Inicialização da PropertyGrid
         PropertyGrid.Inicializa = function () {
+            var self = this;
 
-            inicializaWidgets = {
-                WidgetDados: { name: "Widget Dados", group: "Associação", type: "options", options: ["Dados"], description: "Widgets que contêm os gráficos" },
-                WidgetContexto: { name: "Widget Contexto", group: "Associação", type: "options", options: ["Contexto"], description: "Widget que contêm os dados/filtros" }
+            self.inicializa = {
+                Nome: { name:"Nome:", group: "Series", description: "Nome da série", showHelp: false},
+                ComponenteSerie: { name: "Componente Filtro:", group: "Series", type: "options", options: [""], description: "Widgets que contêm os gráficos", showHelp: false },
+                ////Componente: { name: "Widget Contexto", group: "Series", type: "options", options: ["Contexto"], description: "Widget que contêm os dados/filtros" },
+                Campo: { name: "Campo:", group: "Series", type: "options", options: CampoSeries, description: "Campos para ordenar os dados", showHelp: false },
+                Funcao: { name: "Função:", group: "Series", type: "options", options: FuncaoSeries, description: "Funções ordenar os dados", showHelp: false },
+                Botao: { name: " ", group: "Series", type: "button", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false },
+                Fixo: { name: "Fixo:", group: "Periodo", type: "options", options: FixoPeriodo, description: "Analisar numa data fixa", showHelp: false },
+                ComponentePeriodo: { name: "Componente Data", group: "Periodo", type: "options", options: [""], description: "Analisar através de um widget", showHelp: false }
             }
 
-            // Cria a grid
-            $('#propGrid').jqPropertyGrid(this.propriedades, inicializaWidgets);
+            self.ConstroiGrid();
         }
+
+
+        // Adiciona um  menu Series no property grid
+        PropertyGrid.AdicionaSerie = function () {
+            var self = this;
+
+            self.inicializa["Quebra" + idSerie] = { name: " ", type:"split", group: "Series", showHelp: false };
+            self.inicializa["Nome" + idSerie] = { name: "Nome:", group: "Series", description: "Nome da série", showHelp: false };
+            self.inicializa["ComponenteSerie" + idSerie] = { name: "Componente Filtro:", group: "Series", type: "options", options: [""], description: "Widgets que contêm os gráficos", showHelp: false };
+            self.inicializa["Campo" + idSerie] = { name: "Campo:", group: "Series", type: "options", options: CampoSeries, description: "Campos para ordenar os dados", showHelp: false };
+            self.inicializa["Funcao" + idSerie] = { name: "Função:", group: "Series", type: "options", options: FuncaoSeries, description: "Funções ordenar os dados", showHelp: false };
+
+
+            self.AdicionaPropriedades();
+
+            // Incrementa numero de série
+            idSerie++;
+
+        }
+
+
+        // Adiciona ao objecto das propriedades os novos elementos a mostrar
+        PropertyGrid.AdicionaPropriedades = function () {
+
+            PropertyGrid.propriedades["Quebra"+ idSerie] = "";
+            PropertyGrid.propriedades["Nome" + idSerie] = "Serie " + idSerie;
+            PropertyGrid.propriedades["ComponenteSerie" + idSerie] = "";
+            PropertyGrid.propriedades["Campo" + idSerie] = "Campo";
+            PropertyGrid.propriedades["Funcao" + idSerie] = "Funcao";
+
+            console.log(PropertyGrid.propriedades);
+
+        }
+
+
+        // Adiciona um botão à propertyGrid
+        PropertyGrid.AdicionaBotao = function(){
+            var self = this;
+
+            self.inicializa["Botao"] = { name: " ", group: "Series", type: "button", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false };
+            self.propriedades["Botao"] = "";
+
+        }
+
+
+        // Adiciona ao botão o evento para adicionar séries
+        PropertyGrid.AdicionaEventoBotao = function () {
+            var self = this;
+
+            // Evento ligado ao botão para adicionar uma nova série à grid
+            $(".adicionaSerie-propertyGrid").click(function () {
+                self.RemoveBotao();
+                self.AdicionaSerie();
+                self.AdicionaBotao();
+                self.ConstroiGrid();
+                self.AdicionaEventoBotao();
+
+            });
+        }
+
+
+        // Remove o botão da propertyGrid
+        PropertyGrid.RemoveBotao = function () {
+            var self = this,
+                object = self.inicializa;
+
+            delete PropertyGrid.propriedades["Botao"];
+            delete object["Botao"];
+        }
+
+
+        // Constroi a grid
+        PropertyGrid.ConstroiGrid = function () {
+            var self = this;
+
+            // Cria a grid
+            $('#propGrid').jqPropertyGrid(this.propriedades, self.inicializa);
+        }
+
+
+        // Mostra informação sobre a propertyGrid
+        PropertyGrid.showPropertyGrid = function () {
+            var self = this;
+
+            console.log(self.inicializa);
+        }
+
 
         return PropertyGrid;
 
@@ -4589,7 +4775,7 @@
             // Criação padrão do HTML do widget
             // Definimos um item da grid
 
-            var el = "<div class=\"grid-stack-item \">" +
+            var el = "<div class=\"grid-stack-item\">" +
                      // Div do conteudo do item da grid
                      "<div id=\"widget" + idUnico + "\" class=\"grid-stack-item-content box panel panel-default\">" +
                      // to-do idUnico melhor
@@ -4914,6 +5100,9 @@
 
     })();
 
+
+
+
     // Opções da gridstack
     options = {
         verticalMargin: 2,
@@ -4945,6 +5134,7 @@
     gridPrincipal = new Grid("main-gridstack", options, "barraPrincipal");
     // Evento que mostra a informação de todos os widgets disponiveis ao clickar um botão
     gridPrincipal.MostraInformacaoWidgets();
+
 
     // Criação da grid secundária
     gridGraficos = new Grid("sidebarGraficos-gridstack", optionsBarraLateral, "barraSecundaria");
@@ -4986,7 +5176,6 @@
 
     });
 
-
     // Botão de adicionar widget
     $(".adicionaWidget").click(function () {
         var valorX = $(".widgetCoordenadaX").val() || "0",
@@ -5001,75 +5190,87 @@
     });
 
 
-
     /// TESTE SIDEBAR - Gestão de elementos para a dropdownlist das "Propriedades"
     /// Método antigo
     /// Inserir estas funcoes na parte da grid
 
+    // property Grid - TEST
+    PropertyGrid.Inicializa();
+
+    // Adicionar uma nova serie
+    $(".adicionaSerie-propertyGrid").click(function () {
+        PropertyGrid.RemoveBotao();
+        PropertyGrid.AdicionaSerie();
+        PropertyGrid.AdicionaBotao();
+        PropertyGrid.ConstroiGrid();
+        PropertyGrid.AdicionaEventoBotao();
+
+    });
+
 
     // Ao remover um widget da dashboard
-    $(".grid-stack").on("removed", function (event, items) {
+    // Modificar
+    //$(".grid-stack").on("removed", function (event, items) {
 
-        var widgets,
-            listaWidgetsDados = ["Dados"],
-            listaWidgetsContexto = ["Contexto"];
+    //    var widgets,
+    //        listaWidgetsDados = ["Dados"],
+    //        listaWidgetsContexto = ["Contexto"];
 
-        setTimeout(function () {
-            //// Remove lista de widgets
-            //$(".associaWidget-lista").children().remove();
+    //    setTimeout(function () {
+    //        //// Remove lista de widgets
+    //        //$(".associaWidget-lista").children().remove();
 
-            // Para cada widget na Lista
-            gridPrincipal.listaWidgets.forEach(function (item) {
-                // Preenche a sidebar
+    //        // Para cada widget na Lista
+    //        gridPrincipal.listaWidgets.forEach(function (item) {
+    //            // Preenche a sidebar
 
-                // Adiciona ao array de objectos correcto
-                (item.widgeTipo === "contexto") ? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
+    //            // Adiciona ao array de objectos correcto
+    //            (item.widgeTipo === "contexto") ? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
 
-            });
+    //        });
 
-            // Define widgets na PropertyGrid
-            PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
-            // Constroi a PropertyGrid
-            PropertyGrid.Constroi();
+    //        // Define widgets na PropertyGrid
+    //        PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
+    //        // Constroi a PropertyGrid
+    //        PropertyGrid.Constroi();
 
-        }, 20)
+    //    }, 20)
 
-    });
+    //});
+
 
     // Ao adicionar um widget, é adicionado um valor ao sidebar
-    $("#main-gridstack").on("added", function (event, items) {
+    // Modificar
+    //$("#main-gridstack").on("added", function (event, items) {
 
-        var widgets,
-            listaWidgetsDados = ["Dados"],
-            listaWidgetsContexto = ["Contexto"];
+    //    var widgets,
+    //        listaWidgetsDados = ["Dados"],
+    //        listaWidgetsContexto = ["Contexto"];
 
-        setTimeout(function () {
+    //    setTimeout(function () {
 
-            // Remove lista de widgets
-            $(".associaWidget-lista").children().remove();
+    //        // Remove lista de widgets
+    //        $(".associaWidget-lista").children().remove();
 
-            // Para cada widget na Lista
-            gridPrincipal.listaWidgets.forEach(function (item) {
-                // Preenche a sidebar
-                $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
+    //        // Para cada widget na Lista
+    //        gridPrincipal.listaWidgets.forEach(function (item) {
+    //            // Preenche a sidebar
+    //            $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
 
-                // Adiciona ao array de objectos correcto
-                (item.widgetTipo === "contexto")? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
+    //            // Adiciona ao array de objectos correcto
+    //            (item.widgetTipo === "contexto")? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
 
-            });
+    //        });
 
-            // Define widgets na PropertyGrid
-            PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
-            // Constroi a PropertyGrid
-            PropertyGrid.Constroi();
+    //        // Define widgets na PropertyGrid
+    //        PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
+    //        // Constroi a PropertyGrid
+    //        PropertyGrid.Constroi();
 
-        }, 20)
-
-
-    });
+    //    }, 20)
 
 
-
+    //});
 
 
     /// TESTE - Propriedade menu (Sidebar)
@@ -5150,9 +5351,14 @@
 
     });
 
-
-    // property Grid - TEST
-    PropertyGrid.Inicializa();
+    
+    /// TESTES - PropertyGrid (Boxes de opção)
+    $(".box-propriedades").click(function () {
+        if(!$(this).hasClass("box-activo")) {
+            $(".opcoes-propertyGrid").find(".box-propriedades").removeClass("box-activo");
+            $(this).addClass("box-activo");
+        }
+    })
 
 
 

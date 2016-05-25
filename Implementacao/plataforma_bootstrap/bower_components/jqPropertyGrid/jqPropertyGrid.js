@@ -154,9 +154,32 @@
 					return $('#' + elemId).val();
 				};
 			}
-
+		    /*  
+             *  Adicionado
+             *      Módulo do tipo botão (Adicionar séries na property grid)
+             *      meta.description utilizada para "carregar" a imagem
+             */
+		} else if(type === "button"){
+		    valueHTML = '<button style="float:right;" type="submit" id="' + elemId + '" class="adicionaSerie-propertyGrid"><img src="'+ meta.description +'" /></button>';
+		    if (getValueFuncs) {
+		        getValueFuncs[name] = function () {
+		            return $("#" + elemId);
+		        }
+		    }
+		    /*
+             *  Adicionado
+             *  Módulo de quebra de linha, para separar várias secções dentro de um grupo
+             *
+            */
+		} else if (type === "split") {
+		    valueHTML = '<p></p>';
+		    if (getValueFuncs) {
+		        getValueFuncs[name] = function () {
+		            return $("#" + elemId);
+		        }
+		    }
 			// If number and a jqueryUI spinner is loaded use it
-		} else if (typeof $.fn.spinner === 'function' && (type === 'number' || (type === '' && typeof value === 'number'))) {
+	    } else if (typeof $.fn.spinner === 'function' && (type === 'number' || (type === '' && typeof value === 'number'))) {
 			valueHTML = '<input type="text" id="' + elemId + '" value="' + value + '" style="width:50px" />';
 			if (postCreateInitFuncs) {
 				postCreateInitFuncs.push(initSpinner(elemId, meta.options));

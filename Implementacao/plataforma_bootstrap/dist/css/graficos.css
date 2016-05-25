@@ -3,6 +3,20 @@
         height: 100%;
     }
 
+    body {
+        width: 100%;
+        height: 100%;
+    }
+
+    .nao-seleciona {
+        -webkit-touch-callout: none; /* iOS Safari */
+        -webkit-user-select: none;   /* Chrome/Safari/Opera */
+        -khtml-user-select: none;    /* Konqueror */
+        -moz-user-select: none;      /* Firefox */
+        -ms-user-select: none;       /* Internet Explorer/Edge */
+      
+    }
+
     /*------------------
         TESTES // APAGAR ( Tabela de coordenadas )
     ------------------*/
@@ -22,32 +36,33 @@
         padding:0;
 
     }
+
+    /* Brilho da box, widget "ativo" */
+    .widget-ativo {
+        -webkit-box-shadow: 0px 0px 10px 2px rgba(72,255,0,1);
+        -moz-box-shadow: 0px 0px 10px 2px rgba(72,255,0,1);
+        box-shadow: 0px 0px 10px 2px rgba(72,255,0,1);
+    }
+
+    .widget-aviso {
+        -webkit-box-shadow: 0px 0px 10px 2px rgba(250,3,3,1);
+        -moz-box-shadow: 0px 0px 10px 2px rgba(250,3,3,1);
+        box-shadow: 0px 0px 10px 2px rgba(250,3,3,1);
+    }
     
-    .divisor-cor{
-        height:5px;
-
-        background-color:red;
-    }
-
-    .nav-utilizador{
-        max-height: 45px;
-        width: 100%;
-        position: relative;
-        float:right !important;
-
-        padding: 10px;
-
-        background-color: #767676;
-
-        z-index: 2;
-
-    }
-
 
     /* Para se manter afastado dos navegadores em cima*/
     .sidebar{
-        margin-top: 98px !important;
+        margin-top: 131px !important;
     }
+
+
+    .adicionaSerie-propertyGrid {
+        border:none;
+        background: transparent;
+
+    }
+
 
     /*---*/
 
@@ -56,29 +71,115 @@
         padding-left: 0 !important;
 
     }
+    
+
+    #wrapper{
+        height:100%;
+        width:100%;
+    }
 
     #page-wrapper{
-        padding-right: 0 !important;
+        padding: 0 0 0 20px !important;
+                
+        background-color: #fff;
+        box-shadow: -5px 0 20px -5px #333333 inset;
 
     }
 
+
+@media(min-width:768px) {
+    #page-wrapper {
+        height: calc(100% - 131px) !important;
+        position: inherit;
+        margin: 0 0 0 200px;
+        padding: 0px;
+        /*border-left: 1px solid #e7e7e7;*/
+
+    }
+}
+
+
     .row {
-        margin-right: 0;
+        margin: 0;
+        height: 100%;
+    }
+
+
+
+    /*------------------
+        Barras de Navegação
+    ------------------*/
+
+    .nav-separador{
+        height:5px;
+
+        background-color:red;
+    }
+
+    .nav-utilizador{
+        min-height: 30px;
+        width: 100%;
+
+        padding-top: 5px;
+        padding-bottom: 5px;
+
+        background-color: #161616;
+        color: white;
+
+        z-index: 2;
+
+    }
+
+    .nav-utilizador img{
+        max-height: 20px; 
+        float:right; 
+        margin-right: 20px;
+    
+    }
+
+    .nav-dashboard{
+        height: 45px;
+        width: 100%;
+
+        padding: 10px;
+        margin: auto;
+
+        background-color: #333333;
+        color: white;
+
+        z-index: 2;
+
+    }
+
+    .nav-dashboard-titulo{
+        margin-left:60px;
+        
+        font-size: larger;
+
+    }
+
+    .nav-dashboard  .glyphicon {
+        font-size: 20px;
 
     }
 
 
     
-    /*------------------
+    /*--------------------
         CSS Property Grid
-    ------------------*/
+    ----------------------*/
 
     .propriedades-sidebar{
+        height: 100%;
+        
         padding:0;
+        box-shadow: -1px 0 10px -5px #333333;
 
-        height:100%;
-        box-shadow: -3px 0 5px 3px #d5d5d5;
-    }
+        background-color: #333333;
+   
+
+        overflow-x: scroll;
+        }
 
     .listaPropriedades-sidebar{
         text-align: center;
@@ -87,7 +188,7 @@
         padding: 15px;    
         
         
-        background-color: #333333;
+        background-color: #161616;
 
     }
 
@@ -103,8 +204,9 @@
         text-decoration: none;
         text-align: center;
         font-size:larger;
+        font-weight: bolder;
 
-        color:white;
+        color:#E0E0E0;
     }
 
     /*Remove espaços desnecessários na propertygrid*/
@@ -123,7 +225,7 @@
         padding:20px;
         text-align: center;
         
-        background-color: #161616;
+        background-color: #333333;
 
     }
 
@@ -132,13 +234,30 @@
     .box-propriedades{
         display: inline-block;
         
-        padding: 10px;
-        margin: 5px;
-
         height:50px;
         width:50px;
 
+        padding: 5px;
+        margin: 5px;
+
+        font-size:30px;
+        font-weight: bolder;
+
         border: 1px solid white;
+        color: white;
+
+        cursor: pointer;
+
+    }
+
+    .box-activo{
+        border: 1px solid #00B7AD;
+        background-color: #cecece;
+
+        color: #00B7AD;
+
+        cursor: pointer;
+
     }
 
     /* Property Grid ocupa 100% da largura do seu espaço*/
@@ -151,37 +270,39 @@
 
     .pgGroupCell{
         text-decoration: none !important;
-        font-weight: normal;
+        font-weight: bold;
         font-size: larger;
 
-        padding: 15px !important;
+        padding: 10px !important;
 
-        color:white;
+        color:#E0E0E0;
     }
 
     .pgGroupRow{
-        background-color:#333333 !important;
+        background-color:#161616 !important;
 
     }
 
     /* Definições de cada célula na property Grid*/
     .pgCell{
         border:none !important;
-        padding: 16px 8px 16px 8px !important;
+        padding: 16px 4px 16px 8px !important;
 
         color:white;
 
     }
 
-    /* Cor do texto dentro das dropdownlist */
-    .pgCell > select{
-
-        color: black;
-
+    /* Cor do texto dentro das dropdownlist,inputs e botões */
+    .pgCell > button,
+    .pgCell > select,
+    .pgCell > input {
+        color:black
     }
 
     .pgRow{
-        padding:20px !important;
+        padding:10px !important;
+
+        background-color: #333333;
 
     }
 
@@ -265,6 +386,11 @@
         GridStack
     ------------------*/
 
+    #main-gridstack{
+        background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAF0lEQVQYlWNgYGAwJhJDCGLAqELKFQIAbzEDyp/S1OkAAAAASUVORK5CYII=) 
+        repeat;
+    }
+
     /* Modificar margem lateral dos "Widgets"*/
     .grid-stack .grid-stack-item .grid-stack-item-content,
     .grid-stack .grid-stack-item .placeholder-content {
@@ -300,6 +426,7 @@
       margin-top:5px;
       margin-left:5px;
       margin-bottom:5px;
+
     }
 
     /*
