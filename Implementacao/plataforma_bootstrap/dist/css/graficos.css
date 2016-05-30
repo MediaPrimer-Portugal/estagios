@@ -56,7 +56,7 @@
         margin-top: 131px !important;
     }
 
-
+    /* */
     .adicionaSerie-propertyGrid {
         border:none;
         background: transparent;
@@ -87,16 +87,16 @@
     }
 
 
-@media(min-width:768px) {
-    #page-wrapper {
-        height: calc(100% - 131px) !important;
-        position: inherit;
-        margin: 0 0 0 200px;
-        padding: 0px;
-        /*border-left: 1px solid #e7e7e7;*/
+    @media(min-width:768px) {
+        #page-wrapper {
+            height: calc(100% - 131px) !important;
+            position: inherit;
+            margin: 0 0 0 200px;
+            padding: 0px;
+            /*border-left: 1px solid #e7e7e7;*/
 
+        }
     }
-}
 
 
     .row {
@@ -177,8 +177,8 @@
 
         background-color: #333333;
    
-
-        overflow-x: scroll;
+        /* Overflow da barra de propriedades */
+        /*overflow-x: scroll;*/
         }
 
     .listaPropriedades-sidebar{
@@ -221,11 +221,32 @@
     }
 
     /* Opcoes da área que cobre o selector entre propriedades gerais e propriedades aparência */
-    .opcoes-propertyGrid{
+    .opcoes-propertyGrid {
         padding:20px;
         text-align: center;
         
         background-color: #333333;
+
+    }
+
+    /* Opcoes da área da propertyGrid quando nada está selecionado */
+    .opcoes-semPropertyGrid {
+        font-size: large;
+        font-weight: 500;
+        padding: 180px 20px 180px 20px;
+        text-align: center;
+
+        color: #E0E0E0;
+
+    }
+
+
+    .nomeWidget-propertyGrid {
+        font-weight: 500;
+        padding:5px;
+        text-align: center;
+        
+        color: #E0E0E0;
 
     }
 
@@ -404,10 +425,10 @@
         background-image: none;
     }
 
-      /*  Esconder o overflow dentro dos widgets  */
-      .grid-stack-item-content{
-          overflow: hidden !important;
-      }
+    /*  Esconder o overflow dentro dos widgets  */
+    .grid-stack-item-content{
+        overflow: hidden !important;
+    }
 
     /*------------------
         Widgets
