@@ -163,18 +163,21 @@
                             <div class="opcoes-semPropertyGrid">
                                 <p>Nenhum widget/dashboard selecionado</p> 
                             </div>
-                            <div class="opcoes-propertyGrid">
+                            <div class="opcoes-propertyGrid" style="display:none;">
+                                    <div class="box-propriedades nao-seleciona" value="geral">G</div>
+                                    <div class="box-propriedades nao-seleciona" value="dados">D</div>
+                                    <div class="box-propriedades nao-seleciona" value="aparencia">A</div>
                                 <div class="nomeWidget-propertyGrid">
-
                                 </div>
                             </div>
                         </li>
                         <li>
-                            <div id="propGrid">
-                            
-                            </div>
+                            <div id="propGridGeral"></div>
+                            <div id="propGridDados"></div>
+                            <div id="propGridAparencia"></div>
                         </li>
                         <li style="float:right;">
+                            <button type="button" class="atualizaWidget-propertyGrid"> Atualiza </button>
                             <button type="button" class="adicionarAssociacao"> Adicionar </button>
                             <button type="button" class="removerAssociacao"> Remover </button>
                         </li>

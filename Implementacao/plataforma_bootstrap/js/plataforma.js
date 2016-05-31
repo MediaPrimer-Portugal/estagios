@@ -144,6 +144,7 @@
             ultimaAtualizacao,
             dados,
             spinner,
+            descricao,
             TamanhoLimite = 350,
             margem = { cima: 20, baixo: 50, esquerda: 30, direita: 50 };
 
@@ -429,6 +430,7 @@
 
         }
 
+
         /// <summary>
         /// Redesenha completamente o gráfico
         /// </summary>
@@ -529,6 +531,21 @@
 
             self.mostraLegenda = !self.mostraLegenda;
 
+        }
+
+
+        /// <summary>
+        /// Gets e Sets para a Descricao
+        /// </summary>
+        Widget.prototype.setDescricao = function (descricao) {
+            var self = this;
+            
+            self.descricao = descricao;
+        }
+        Widget.prototype.getDescricao = function() {
+            var self = this;
+
+            return self.descricao;
         }
 
         /// <summary>
@@ -665,10 +682,18 @@
 
                 // Remove o aviso de não haver nenhum widget/dashboard selecionado
                 PropertyGrid.TogglePropertyGrid();
+
                 // Substitui o titulo na propertyGrid
-                PropertyGrid.SetTituloPropertyGrid(self.titulo);
-                // Adiciona ao Menu as escolhas conforme o tipo de widget/dashboard
-                PropertyGrid.AdicionaEscolhaMenu();
+                PropertyGrid.SetWidgetPropertyGrid(self.titulo, self.id, self.widgetElemento);
+
+                // Mostra a propertyGrid
+                PropertyGrid.MostraPropertyGrid(self.widgetElemento);
+
+                // Faz "Reset" a box de propriedades e mete o default a geral
+                //PropertyGrid.OpcaoPropriedades("geral");
+
+                // Inicializa a propertyGrid
+                //PropertyGrid.AdicionaGrid();
 
             });
 
@@ -695,8 +720,6 @@
             // Ao clickar no documento
             $(document).click(function (event) {
 
-                console.log(event.target);
-                console.log($(".propriedades-sidebar").find("*"));
 
                 if ($("#" + self.id).hasClass("widget-ativo")) {
                     // Se o target for diferente de qualquer elemento no widget
@@ -706,6 +729,10 @@
 
                         // Remove propertyGrid atual
                         PropertyGrid.RemoveGrid();
+
+                        // Faz "Reset" nas boxes de opção da propertyGrid
+                        $(".opcoes-propertyGrid").find(".box-propriedades").removeClass("box-ativo");
+                        $("[value='geral']").addClass("box-ativo");
 
                     }
                 }
@@ -4109,7 +4136,8 @@
     /// Module Pattern
     /// </summary>
     var Data = (function () {
-
+        var datainicial,
+            datafinal;
         // Opcoes de datas que vão ser utilizadas
         //var opcoes;
 
@@ -4120,6 +4148,9 @@
         function Data(titulo, widgetAltura, widgetLargura, widgetX, widgetY) {
             // Construtor de Widget é chamado
             Widget.call(this, titulo, widgetAltura, widgetLargura, widgetX, widgetY);
+
+            this.datainicial = "Data Inicial";
+            this.datafinal = "Data Final";
 
             this.contexto = [];
             this.opcoes = {
@@ -4157,7 +4188,7 @@
 
 
             // Acrescenta ao wrapper a primeira escolha
-            self.svg = $("#" + self.id).find(".wrapper").append("<span>Data Inicio</span>: <div class=\"container\">"
+            self.svg = $("#" + self.id).find(".wrapper").append("<span class='datainicial-" + self.id + " '>Data Inicial</span>: <div class=\"container\">"
                 + "<div class=\"row\">"
                 + " <div class=\"col-sm-4\">"
                 + " <div class=\"form-group\">"
@@ -4181,7 +4212,7 @@
 
 
             // Acrescenta ao wrapper a segunda escolha
-            self.svg = $("#" + self.id).find(".wrapper").append("<span>Data Fim</span>: <div class=\"container\">"
+            self.svg = $("#" + self.id).find(".wrapper").append("<span class='datafinal-"+self.id+" '>Data Final</span>: <div class=\"container\">"
                 + "<div class=\"row\">"
                 + " <div class=\"col-sm-4\">"
                 + " <div class=\"form-group\">"
@@ -4243,6 +4274,8 @@
         /// </summary>
         Data.prototype.Atualiza = function () {
             var self = this
+
+            self.AtualizaNomes();
 
             self.objectoServidor["opcoes"] = self.opcoes;
 
@@ -4365,6 +4398,41 @@
         }
 
 
+
+        /// <summary>
+        /// Getters e setters para os nomes das datas inicias e as data finais
+        /// </summary>
+        Data.prototype.getNomeDataInicial = function () {
+            var self = this;
+
+            return self.datainicial;
+        }
+        Data.prototype.getNomeDataFinal = function () {
+            var self = this;
+
+            return self.datafinal;
+        }
+        Data.prototype.setNomeDataInicial = function (datainicial) {
+            var self = this;
+
+            self.datainicial = datainicial;
+        }
+        Data.prototype.setNomeDataFinal = function (datafinal) {
+            var self = this;
+
+            self.datafinal = datafinal;
+        }
+
+
+        Data.prototype.AtualizaNomes = function () {
+            var self = this;
+
+            // Substitui datas com as datas guardadas no widget
+            $(".datainicial-" + self.id).text(self.datainicial);
+            $(".datafinal-" + self.id).text(self.datafinal);
+
+        }
+
         return Data;
 
     })();
@@ -4377,6 +4445,8 @@
     /// </summary>
     var PropertyGrid = (function(){
         var widget,
+            widgetID,
+            propriedades = {},
             idSerie = 1,
             Componente = [],
             CampoSeries = ["Média", "Minimo", "Maximo", "ContagemUnica"],
@@ -4385,16 +4455,6 @@
 
         function PropertyGrid() {
             this.PropertyGrid = {};
-        }
-
-        PropertyGrid.propriedades = {
-            Nome: "Serie",
-            ComponenteSerie: "",
-            Campo: "Campo",
-            Funcao: "Funcao",
-            Fixo: "",
-            ComponentePeriodo: "",
-            Botao: ""
         }
 
 
@@ -4423,49 +4483,53 @@
         PropertyGrid.Inicializa = function () {
             var self = this;
 
-            // Adiciona os menus que a grid necessita, de acordo com o widget escolhido
-            // todo
-            self.AdicionaEscolhaMenu();
+            // Inicializa todos os objectos necessários para criar as grids
 
-            self.inicializa = {
-                Nome: { name:"Nome:", group: "Series", description: "Nome da série", showHelp: false},
-                ComponenteSerie: { name: "Componente Filtro:", group: "Series", type: "options", options: [""], description: "Widgets que contêm os gráficos", showHelp: false },
-                ////Componente: { name: "Widget Contexto", group: "Series", type: "options", options: ["Contexto"], description: "Widget que contêm os dados/filtros" },
+            self.inicializaGeral = {
+                Nome: { name: "Nome:", group: "Geral", description: "Nome do widget", showHelp: false },
+                Descricao: { name: "Descrição:", group: "Geral", description: "Descrição do widget", showHelp: false}
+            };
+            self.inicializaDados = {
+                // Dados Widget DADOS
+                NomeDados: { name: "Nome:", group: "Series", description: "Nome da série", showHelp: false },
+                OcultarSerie: { name: "Mostrar/Ocultar:", group: "Series", type: "boolean", description: "Mostrar ou esconder a série no widget", showHelp: false },
+                Eliminar: { name: "Eliminar:", group: "Series", description: "Eliminar Série", showHelp: false },
+                Pesquisa: { name: "Pesquisa:", group: "Series", description: "Query de pesquisa para uma série", showHelp: false},
+                ComponenteSerie: { name: "<p></p>Componente Filtro:", group: "Series", type: "options", options: [""], description: "Widgets que contêm os gráficos", showHelp: false },
                 Campo: { name: "Campo:", group: "Series", type: "options", options: CampoSeries, description: "Campos para ordenar os dados", showHelp: false },
                 Funcao: { name: "Função:", group: "Series", type: "options", options: FuncaoSeries, description: "Funções ordenar os dados", showHelp: false },
                 Botao: { name: " ", group: "Series", type: "button", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false },
                 Fixo: { name: "Fixo:", group: "Periodo", type: "options", options: FixoPeriodo, description: "Analisar numa data fixa", showHelp: false },
-                ComponentePeriodo: { name: "Componente Data", group: "Periodo", type: "options", options: [""], description: "Analisar através de um widget", showHelp: false }
-            }
+                ComponentePeriodo: { name: "Componente Data", group: "Periodo", type: "options", options: [""], description: "Analisar através de um widget", showHelp: false },
 
-            self.ConstroiGrid();
+                //Dados Widget CONTEXTO (DATA)
+                DataInicial: { name: "Data Inicial:", group: "Dados Iniciais", description: "Data inicial", showHelp: false},
+                DataInicialDescricao: { name: "Descricao:", group: "Dados Iniciais", description: "Descricao da Data inicial", showHelp: false },
+                DataFinal: { name: "Data Final:", group: "Dados Finais", description: "Data final", showHelp: false },
+                DataFinalDescricao: { name: "Descricao:", group: "Dados Finais", description: "Descricao da Data final", showHelp: false },
+                ComponenteDados: { name: "Componente Dados", group: "Componentes", type: "options", options: [""], description: "Widgets a associar", showHelp: false }
+            };
+            self.inicializaAparencia = {
+                Margem: { name: "Margem:", group: "Aparencia", description: "Margem em volta do gráfico", showHelp: false },
+                MargemIgual: { name : "Aplicar Todos:", group: "Aparencia", description: "Aplicar a mesma margem a todos", showHelp: false },
+                MargemDiferente: { name: "Margens:", group: "Aparencia", description: "Aplicar diferentes margens", showHelp: false }
+            };
+
         }
 
 
-        // Adiciona os diferentes tipos de opção disponiveis no menu da propertyGrid, 
-        // para o utilizador selecionar
-        PropertyGrid.AdicionaEscolhaMenu = function () {
-            // Define os diferentes tipos de menu existentes
-            var el,
-                elParent,
-                geral = '<div class="box-propriedades nao-seleciona" value="Geral">G</div>',
-                dados = '<div class="box-propriedades nao-seleciona" value="Dados">D</div>',
-                aparencia = '<div class="box-propriedades nao-seleciona" value="Aparencia">A</div>';
+        // Mostra a propertyGrid
+        PropertyGrid.MostraPropertyGrid = function (tipoElemento) {
+            var self = this;
 
+            self.SetGrid("geral");
+            $(".opcoes-propertyGrid").css("display", "block");
 
-            // Guarda parent das opcoes
-            elParent = $(".opcoes-propertyGrid").parent();
-            // Tira do DOM o elemento
-            el = $(".opcoes-propertyGrid").detach();
-
-            // Remove os nodes dentro, excepto o que guarda o titulo do widget
-            el.children().not(".nomeWidget-propertyGrid").remove();
-
-
-            // Conforme o recebido é "acrescentado" ao div os botões diferentes
-            el.append(geral + " " + dados + " " + aparencia);
-            // Volta a acrescentar na DOM o novo elemento
-            el.appendTo(elParent);
+            if (tipoElemento === "datahora_simples") {
+                self.AdicionaGridData();
+            } else {
+                self.AdicionaGrid();
+            }
 
         }
 
@@ -4489,7 +4553,7 @@
         }
 
 
-        // Adiciona ao objecto das propriedades os novos elementos a mostrar
+        // Adiciona ao objecto das propriedades uma nova Série
         PropertyGrid.AdicionaPropriedades = function () {
 
             PropertyGrid.propriedades["Quebra"+ idSerie] = "";
@@ -4522,6 +4586,7 @@
                 self.RemoveBotao();
                 self.AdicionaSerie();
                 self.AdicionaBotao();
+                // EDITAR
                 self.ConstroiGrid();
                 self.AdicionaEventoBotao();
 
@@ -4539,16 +4604,30 @@
         }
 
 
-        // Remove propertyGrid atual
+        // Remove propertyGrid atual e a sua visualização
         PropertyGrid.RemoveGrid = function () {
+            var self = this;
+
+            // Remove a propertyGrid
+            self.EliminaPropertyGrid();
+
             // Volta a mostrar o aviso de não estar nenhum widget/dashboard selecionado
             $(".opcoes-semPropertyGrid").css("display", "block");
 
             // Limpa menus excepto titulo e mete titulo vazio
-            $(".opcoes-propertyGrid").children().not(".nomeWidget-propertyGrid").remove();
+            $(".opcoes-propertyGrid").css("display", "none");
             $(".nomeWidget-propertyGrid").text("");
 
         };
+
+
+        // Elimina da DOM as propertyGrids
+        PropertyGrid.EliminaPropertyGrid = function() {
+            $("#propGridGeral").children().remove();
+            $("#propGridDados").children().remove();
+            $("#propGridAparencia").children().remove();
+
+        }
 
 
         // Toggle do aviso que nenhum dashboard/widget estão ativos
@@ -4561,9 +4640,13 @@
 
         // Define o titulo do widget, vai ser mostrado na propertyGrid para indicar mais claramente
         // o widget escolhido pelo utilizador
-        PropertyGrid.SetTituloPropertyGrid = function (titulo) {
+        PropertyGrid.SetWidgetPropertyGrid = function (titulo, id, elemento) {
+            var self = this;
+
+            self.widgetID = id;
+
             // Dá um titulo conforme o widget selecionado
-            $(".nomeWidget-propertyGrid").text(titulo);
+            $(".nomeWidget-propertyGrid").text(titulo + " - " + elemento);
         };
 
 
@@ -4571,16 +4654,18 @@
         PropertyGrid.ConstroiGrid = function () {
             var self = this;
 
-            // Cria a grid
-            $('#propGrid').jqPropertyGrid(this.propriedades, self.inicializa);
-        }
+            self.EliminaPropertyGrid();
 
+            // Cria as diferentes Grids
+                $('#propGridGeral').jqPropertyGrid(self.propriedadesGeral, self.inicializaGeral);
+                $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
+                $('#propGridAparencia').jqPropertyGrid(self.propriedadesAparencia, self.inicializaAparencia);
 
-        // Mostra informação sobre a propertyGrid
-        PropertyGrid.showPropertyGrid = function () {
-            var self = this;
+            // Liga o evento de atualização ao botão
+            $(".atualizaWidget-propertyGrid").click(function () {
+                self.Atualiza();
+            })
 
-            console.log(self.inicializa);
         }
 
 
@@ -4588,6 +4673,171 @@
         PropertyGrid.getDados = function () {
             return $('#propGrid').jqPropertyGrid('get');
         }
+
+
+        // Modifica a propertyGrid para mostrar o tipo de box recebido como argumento
+        PropertyGrid.SetGrid = function (opcao) {
+            var self = this;
+
+            if (opcao === "geral" || opcao === "dados" || opcao === "aparencia") {
+                $(".opcoes-propertyGrid").find(".box-propriedades").removeClass("box-ativo");
+                $("[value='"+opcao+"']").addClass("box-ativo");
+            } else {
+                console.log("ERRO - Opcao não existente")
+            }
+
+        }
+
+
+        // Modifica a propetyGrid para mostrar o tipo de menu recebido como rgumento
+        PropertyGrid.SetPropertyGrid = function (opcao) {
+            if (opcao === "geral") {
+                $("#propGridGeral").css("display", "block");
+                $("#propGridDados").css("display", "none");
+                $("#propGridAparencia").css("display", "none");
+            } else if (opcao === "dados") {
+                $("#propGridGeral").css("display", "none");
+                $("#propGridDados").css("display", "block");
+                $("#propGridAparencia").css("display", "none");
+            } else {
+                $("#propGridGeral").css("display", "none");
+                $("#propGridDados").css("display", "none");
+                $("#propGridAparencia").css("display", "block");
+            }
+        }
+
+
+        // Atualizar widget com informação dentro da propertyGrid
+        PropertyGrid.Atualiza = function () {
+            var self = this,
+                objPropertyGridGeral = $("#propGridGeral").jqPropertyGrid("get"),
+                objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get"),
+                objPrpertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get");
+
+
+            // Atualiza o titulo do widget com o nome inserido na box da propertyGrid
+            // todo - Passar aos widgets esta responsabilidade
+            gridPrincipal.getWidget(self.widgetID).setTitulo(objPropertyGridGeral.Nome);
+            gridPrincipal.getWidget(self.widgetID).setDescricao(objPropertyGridGeral.Descricao);
+
+            // todo  ( Criar Método de update para todos os widgets? Gravar consoante o objecto devolvido pelo propertyGrid)
+            gridPrincipal.getWidget(self.widgetID).setNomeDataInicial(objPropertyGridDados.DataInicial);
+            gridPrincipal.getWidget(self.widgetID).setNomeDataFinal(objPropertyGridDados.DataFinal);
+            gridPrincipal.getWidget(self.widgetID).Atualiza();
+
+        }
+
+
+
+
+        //  #Region - Definições PropertyGrids
+
+        // PropertyGrid - Geral
+        PropertyGrid.AdicionaGrid = function() {
+            var self = this;
+
+            // Define as propertyGrids
+            self.Inicializa();
+
+            // Valores a inserir nas propertyGrids
+            self.propriedadesGeral = {
+                Nome: gridPrincipal.getWidget(self.widgetID).titulo,
+                Descricao: gridPrincipal.getWidget(self.widgetID).descricao,
+            };
+            self.propriedadesDados = {
+                NomeDados: "Serie",
+                ComponenteSerie: "",
+                Campo: "Campo",
+                Funcao: "Funcao",
+                Botao: "",
+                Fixo: "",
+                ComponentePeriodo: "",
+            };
+            self.propriedadesAparencia = {
+                Margem: "",
+                MargemIgual: "",
+                MargemDiferente: ""
+            }
+
+            self.ConstroiGrid();
+            self.SetGrid("geral");
+            self.SetPropertyGrid("geral");
+            self.EventoMostraGridAtual();
+
+        }
+
+        // PropertyGrid - Widget Data
+        PropertyGrid.AdicionaGridData = function () {
+            var self = this;
+
+            // Define as propertyGrids
+            self.Inicializa();
+
+            // Valores a inserir nas propertyGrids
+            self.propriedadesGeral = {
+                Nome: gridPrincipal.getWidget(self.widgetID).titulo,
+                Descricao: gridPrincipal.getWidget(self.widgetID).descricao,
+            };
+            self.propriedadesDados = {
+                DataInicial: "",
+                DataInicialDescricao: "",
+                DataFinal: "",
+                DataFinalDescricao: "",
+                ComponenteDados: ""
+
+            };
+            self.propriedadesAparencia = {
+                Margem: "",
+                MargemIgual: "",
+                MargemDiferente: ""
+            }
+
+            self.ConstroiGrid();
+            self.SetGrid("geral");
+            self.SetPropertyGrid("geral");
+
+            self.EventoAtualizaDatas();
+            self.EventoMostraGridAtual();
+        }
+
+        // #Region
+
+
+
+
+        // #Region - Eventos
+
+        // Mostra grid equivalente a box selecionada
+        PropertyGrid.EventoMostraGridAtual = function () {
+
+            $(".box-propriedades").click(function () {
+                if ($(this).attr("value") === "geral") {
+                    $("#propGridGeral").css("display", "block");
+                    $("#propGridDados").css("display", "none");
+                    $("#propGridAparencia").css("display", "none");
+                } else if ($(this).attr("value") === "dados") {
+                    $("#propGridGeral").css("display", "none");
+                    $("#propGridDados").css("display", "block");
+                    $("#propGridAparencia").css("display", "none");
+                } else {
+                    $("#propGridGeral").css("display", "none");
+                    $("#propGridDados").css("display", "none");
+                    $("#propGridAparencia").css("display", "block");
+                }
+
+            });
+        }
+
+        // Atualiza datas no widget de contexto Datas
+        PropertyGrid.EventoAtualizaDatas = function () {
+            var self = this;
+
+            gridPrincipal.getWidget(self.widgetID).AtualizaNomes();
+
+        }
+
+        // #Region
+
 
 
         return PropertyGrid;
@@ -5281,6 +5531,30 @@
     });
 
 
+
+
+    /// TESTE SIDEBAR - Gestão de elementos para a dropdownlist das "Propriedades"
+    /// Método antigo
+    /// Inserir estas funcoes na parte da grid
+
+    // property Grid - TEST
+    //PropertyGrid.Inicializa();
+
+    // Adicionar uma nova serie
+    $(".adicionaSerie-propertyGrid").click(function () {
+        PropertyGrid.RemoveBotao();
+        PropertyGrid.AdicionaSerie();
+        PropertyGrid.AdicionaBotao();
+        // EDITAR
+        PropertyGrid.ConstroiGrid();
+        PropertyGrid.AdicionaEventoBotao();
+
+    });
+
+
+
+
+
     // Mudanças da propertyGrid conforme a seleção do widget
     $(document).click(function () {
         var widget,
@@ -5298,37 +5572,16 @@
             widget = gridPrincipal.getWidget(widgetID);
 
             // Dá um titulo conforme o widget selecionado
-            $(".nomeWidget-propertyGrid").text(widget.titulo);
+            $(".nomeWidget-propertyGrid").text(widget.titulo + " - " + widget.widgetElemento);
 
             // Adiciona ao Menu as escolhas conforme o tipo de widget/dashboard
-            PropertyGrid.AdicionaEscolhaMenu();
+            //PropertyGrid.MostraPropertyGrid();
 
         }
 
     });
 
 
-    /// TESTE SIDEBAR - Gestão de elementos para a dropdownlist das "Propriedades"
-    /// Método antigo
-    /// Inserir estas funcoes na parte da grid
-
-    // property Grid - TEST
-    //PropertyGrid.Inicializa();
-
-    // Adicionar uma nova serie
-    $(".adicionaSerie-propertyGrid").click(function () {
-        PropertyGrid.RemoveBotao();
-        PropertyGrid.AdicionaSerie();
-        PropertyGrid.AdicionaBotao();
-        PropertyGrid.ConstroiGrid();
-        PropertyGrid.AdicionaEventoBotao();
-
-    });
-
-
-
-
-    /// TESTE - Propriedade menu (Sidebar)
 
     // Ao pressionar adicionar
     $(".adicionarAssociacao").click(function () {
@@ -5407,15 +5660,13 @@
     });
 
     
-    /// TESTES - PropertyGrid (Boxes de opção)
+    // PropertyGrid (Boxes de opção)
     $(".box-propriedades").click(function () {
-        if(!$(this).hasClass("box-activo")) {
-            $(".opcoes-propertyGrid").find(".box-propriedades").removeClass("box-activo");
-            $(this).addClass("box-activo");
+        if(!$(this).hasClass("box-ativo")) {
+            $(".opcoes-propertyGrid").find(".box-propriedades").removeClass("box-ativo");
+            $(this).addClass("box-ativo");
         }
     })
-
-
 
 
     ///TESTES - Comunicação
