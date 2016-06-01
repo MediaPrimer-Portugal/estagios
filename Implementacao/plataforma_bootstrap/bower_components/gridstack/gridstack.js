@@ -1207,8 +1207,8 @@
 
         var widgets,
             grid = this.opts.gridObject,
-            listaWidgetsDados = ["Dados"],
-            listaWidgetsContexto = ["Contexto"],
+            listaWidgetsDados = [" Sem componente "],
+            listaWidgetsContexto = [" Sem componente "],
             // Adquire ultima class do widget ( Class que identifica o tipo de widget )
             tipoWidget = node.children().attr('class').split(' ').pop(),
             // Adquire ID do widget
@@ -1223,12 +1223,12 @@
             $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
 
             // Adiciona ao array de objectos correcto
-            (item.widgetTipo === "contexto") ? listaWidgetsContexto.push({ text: item.id, value: item.id }) : listaWidgetsDados.push({ text: item.id, value: item.id })
+            (item.widgetTipo === "contexto") ? listaWidgetsContexto.push(item.id) : listaWidgetsDados.push(item.id)
 
         });
 
         // Define widgets na PropertyGrid
-        //this.opts.PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
+        this.opts.PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
         // Constroi a PropertyGrid
         //this.opts.PropertyGrid.Constroi();
 

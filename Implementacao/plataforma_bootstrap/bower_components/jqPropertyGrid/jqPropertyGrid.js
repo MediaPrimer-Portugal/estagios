@@ -160,7 +160,7 @@
              *      meta.description utilizada para "carregar" a imagem
              */
 		} else if(type === "button"){
-		    valueHTML = '<button style="float:right;" type="submit" id="' + elemId + '" class="adicionaSerie-propertyGrid"><img src="'+ meta.description +'" /></button>';
+		    valueHTML = '<button style="float:right;" type="submit" id="' + "pgButton" + '" class="adicionaSerie-propertyGrid"><img src="'+ meta.description +'" /></button>';
 		    if (getValueFuncs) {
 		        getValueFuncs[name] = function () {
 		            return $("#" + elemId);
