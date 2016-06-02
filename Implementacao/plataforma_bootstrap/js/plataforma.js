@@ -1,5 +1,10 @@
 ﻿$("document").ready(function () {
 
+    /// Constantes
+    /// Valor que simboliza a data no objecto de dados recebido do servidor
+    var ValorData = "Data";
+
+
     /// Métodos Auxiliares ----------------------------------------------------------------------------------------------------
 
     var idUnico = 0;
@@ -176,8 +181,9 @@
 
 
             // Inicialização dos dados default
-            this.mostraLegenda = true,
-            this.mostraToolTip = true,
+            this.mostraLegenda = true;
+            this.mostraToolTip = true;
+            this.estadoTabela = false;
             this.ultimaAtualizacao = $.datepicker.formatDate('yy/mm/dd', new Date());
             this.margem = margem;
             this.TamanhoLimite = TamanhoLimite;
@@ -433,11 +439,26 @@
 
 
         /// <summary>
+        /// Apaga o conteudo do widget e desenha uma tabela com os dados que o widget contém
+        /// </summary>
+        Widget.prototype.TransformaWidgetTabela = function () {
+            var self = this,
+                construtorTabela = new Tabela("", "Tabela", self.dados);
+
+            // Remove todos os elementos excepto a navbar
+            $("#" + self.id).children().not(".widget-navbar").children().remove();
+
+            // Constroi tabela dentro do Widget selecionado
+            construtorTabela.InsereDadosAlternativo.call(this, self.id, construtorTabela);
+
+        }
+
+
+        /// <summary>
         /// Redesenha completamente o gráfico
         /// </summary>
         Widget.prototype.RedesenhaGrafico = function () {
             var self = this;
-
 
             // TODO
 
@@ -458,7 +479,7 @@
                         // volta a desenhar o gráfico
                         self.AtualizaDimensoes.call(this);
 
-                        if (!self.widgetElemento === "Tabela") {
+                        if (!(self.widgetElemento === "Tabela")) {
                             self.ConstroiSVG.call(this, self.id, self);
                             self.ConstroiEixos.call(this);
                             self.InsereDados.call(this);
@@ -541,6 +562,15 @@
 
             self.mostraLegenda = !self.mostraLegenda;
 
+        }
+
+        /// <summary>
+        /// Atualiza o estado do widget em termos da Tabela
+        /// </summary>
+        Widget.prototype.setEstadoTabela = function () {
+            var self = this;
+
+            self.estadoTabela = !self.estadoTabela;
         }
 
 
@@ -3847,7 +3877,7 @@
                     "sLast": "Último"
                 }
             },
-            parseDate = d3.time.format("%y-%b-%d").parse;
+            parseDate = d3.time.format("%Y-%m-%dT%H:%M:%S").parse;
 
         /// <summary>
         /// Método construtor para a classe Tabela, chama o construtor do Widget
@@ -3877,7 +3907,10 @@
         /// Adapta os dados e acrescenta-os ao plugin das dataTables
         /// </summary>
         Tabela.prototype.InsereDados = function (id) {
-            var self = this;
+            var objectoValores,
+                self = this,
+                dadosAnalisados = [],
+                opcoesData = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
             // Passar tudo para opcoes de estilo? to-do
             opcoesEstilo.columnDefs.push({
@@ -3885,12 +3918,108 @@
                 className: "dt-body-center"
             });
 
+
+            // Para cada valor marcado
+            self.dados.dados.Widgets[0].Items.forEach(function (item) {
+                // Limpar o objecto
+                objectoValores = {}
+
+                // Para cada "serie", chave
+                item.Valores.forEach(function (valor) {
+                    var nomeVerificado = valor.Nome.replace(/\./g, '_');
+
+                    //// Guarda valor da "serie" no objecto
+                    objectoValores[nomeVerificado] = valor.Valor.toFixed(3);
+                });
+
+                // Manipular data com o moment
+                //console.log(moment(item.Data).format("YYYY-M-D"));
+
+                // Insere o valor recebido "Chave" (Unix timestamp) e através do moment 
+                // formata para o resultado desejado
+                objectoValores[ValorData] = parseDate(item.Data).toLocaleDateString(getLinguagem());
+
+                // Guardar objecto no array
+                dadosAnalisados.push(objectoValores);
+
+            });
+
             // Selecionado o id da table
             self.tabela = $("#" + self.id).find(".widget-table").DataTable({
                 // Apontar para onde estão os dados
-                data: self.dados,
+                data: dadosAnalisados,
                 // Especificar as colunas to-do
                 columns: self.ConstroiColuna(),
+                order: [[ 3, "desc" ]],
+                "language": linguagem,
+                // Menu que escolhe o numero de elementos a mostrar
+                "aLengthMenu": [[5, 10, 15, -1], [5, 10, 15, "Todos"]],
+                // Elementos a mostrar na página inicial
+                "pageLength": 5,
+                // Método para ligar as definições aqui to-do
+                columnDefs: opcoesEstilo.columnDefs
+            });
+
+            self.OpcaoMostraDados();
+
+        }
+
+
+        /// <summary>
+        /// Método InsereDados alternativo para o caso de ser um widget diferente a mostrar uma tabela
+        /// </summary>
+        Tabela.prototype.InsereDadosAlternativo = function (id, widgetTabela) {
+            var objectoValores,
+                self = this,
+                dadosAnalisados = [],
+                opcoesData = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+
+            // Passar tudo para opcoes de estilo? to-do
+            opcoesEstilo.columnDefs.push({
+                targets: [1, 2],
+                className: "dt-body-center"
+            });
+
+
+            // Adiciona uma tabela base para aplicar as dataTables
+            $("#" + self.id).find(".wrapper").append("<table " + "class=\"display widget-table\">" + "</table>")
+
+            console.log(self.id);
+            console.log(self);
+
+            // Para cada valor marcado
+            self.dados.dados.Widgets[0].Items.forEach(function (item) {
+                // Limpar o objecto
+                objectoValores = {}
+
+                // Para cada "serie", chave
+                item.Valores.forEach(function (valor) {
+                    var nomeVerificado = valor.Nome.replace(/\./g, '_');
+
+                    //// Guarda valor da "serie" no objecto
+                    objectoValores[nomeVerificado] = valor.Valor.toFixed(3);
+                });
+
+                // Manipular data com o moment
+                //console.log(moment(item.Data).format("YYYY-M-D"));
+
+                // Insere o valor recebido "Chave" (Unix timestamp) e através do moment 
+                // formata para o resultado desejado
+                objectoValores[ValorData] = parseDate(item.Data).toLocaleDateString(getLinguagem());
+
+                // Guardar objecto no array
+                dadosAnalisados.push(objectoValores);
+
+            });
+
+
+            // Selecionado o id da table
+            self.tabela = $("#" + self.id).find(".widget-table").DataTable({
+                // Apontar para onde estão os dados
+                data: dadosAnalisados,
+                // Especificar as colunas to-do
+                columns: widgetTabela.ConstroiColuna(),
+                order: [[3, "desc"]],
                 "language": linguagem,
                 // Menu que escolhe o numero de elementos a mostrar
                 "aLengthMenu": [[5, 10, 15, -1], [5, 10, 15, "Todos"]],
@@ -3912,16 +4041,22 @@
                 // Guarda a informação que vai ser enviada
                 colunasTabela = [];
 
-
             // Para cada "serie"/chave de dados
             d3.values(self.dados.dados.Widgets[0].Items[0].Valores).forEach(function (valorColuna, curIndex) {
+
+                var nomeVerificado = valorColuna.Nome.replace(/\./g, '_');
+
                 // Adicionar ao array
                 colunasTabela.push({
                     // O valor da key e o titulo a dar
-                    data: valorColuna.Nome, title: valorColuna.Nome
+                    data: nomeVerificado, title: valorColuna.Nome
                 })
             })
 
+            // Nome do parametro que contem a data dentro do objecto dados (constante Data)
+            colunasTabela.push({
+                data: ValorData, title: "Data"
+            })
 
             return colunasTabela;
         }
@@ -4773,9 +4908,6 @@
             // Define as propertyGrids
             //self.Inicializa();
 
-            console.log(gridPrincipal.getWidget(self.widgetID));
-
-
             // Valores a inserir nas propertyGrids
             self.propriedadesGeral = {
                 Nome: gridPrincipal.getWidget(self.widgetID).titulo,
@@ -5102,9 +5234,11 @@
             // Guarda informação no Widget sempre que um é modificado
             //self.GuardaInformacao();
 
-            // Liga o evento ao botão cria dados e ao clickar no botão uma tabela é criada
-            // com os dados desse widget
-            self.MostraDados();
+            if (self.id === "main-gridstack") {
+                // Liga o evento ao botão cria dados e ao clickar no botão uma tabela é criada
+                // com os dados desse widget
+                self.MostraDados();
+            }
 
         }
 
@@ -5398,7 +5532,7 @@
             var self = this;
 
             // getQuery? Query? Para ir buscar os mesmos dados que o widget
-            $(document).on("click", ".mostraDados-widget", function () {
+            $("#main-gridstack").on("click", ".mostraDados-widget", function () {
 
                 // Definir o widget
                 var widget = $(this).closest(".grid-stack-item-content"),
@@ -5409,9 +5543,10 @@
                 // Procura na lista de widgets pelo widget com o id equivalente
                 index = _.findIndex(self.listaWidgets, function (item) { return item.id === widget.attr("id"); });
 
-                dados = self.listaWidgets[index].dados
+                console.log(self);
 
-                self.AdicionaWidget("tabela", "Dados de " + self.listaWidgets[index].titulo, dados);
+                self.listaWidgets[index].setEstadoTabela();
+                (self.listaWidgets[index].estadoTabela)? self.listaWidgets[index].TransformaWidgetTabela() : self.listaWidgets[index].RedesenhaGrafico(); 
 
             });
 
