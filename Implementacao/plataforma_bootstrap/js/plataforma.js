@@ -122,6 +122,45 @@
     }
 
 
+    /// <summary>
+    /// Fabrica de classes de widgets
+    /// </summary>
+    /// <param name="tipoClasse"> Tipo de classe a ser criada </param>
+    /// <returns> Retorna um objecto da nova classe </returns>
+    var FabricaClasses = function (id, tipoClasse, dados) {
+
+        // todo Factory de classes
+        switch (tipoClasse) {
+            case "GraficoArea":
+                return(new GraficoArea(id, "GraficoArea"));
+                break;
+            case "GraficoBarras":
+                return (new GraficoBarras(id, "GraficoBarras"));
+                break;
+            case "GraficoLinhas":
+                return (new GraficoLinhas(id, "GraficoLinhas"));
+                break;
+            case "Gauge":
+                return (new Gauge(id, "Gauge"));
+                break;
+            case "KPI":
+                return (new KPI(id, "KPI"));
+                break;
+            case "Tabela":
+                return(new Tabela(id, "Tabela", dados));
+                break;
+            case "PieChart":
+                return (new PieChart(id, "PieChart"));
+                break;
+            case "Filtros":
+                return (new Filtros(id, "Filtros"));
+                break;
+            case "Data":
+                return (new Data(id, "Data"));
+                break;
+        }
+
+    }
 
     /// Classes ----------------------------------------------------------------------------------------------------
 
@@ -151,7 +190,7 @@
             spinner,
             descricao,
             TamanhoLimite = 350,
-            margem = { cima: 20, baixo: 50, esquerda: 30, direita: 50 };
+            margem = { cima: 20, baixo: 50, esquerda: 40, direita: 40 };
 
         /// <summary>
         /// Construtor da class Widget
@@ -228,7 +267,9 @@
                 .attr("width", self.largura + margem.esquerda + margem.direita)
                 .attr("height", self.altura + margem.cima + margem.baixo)
               .append("g")
-                .attr("transform", "translate(" + self.margem.esquerda + ",0)");
+                .attr("transform", "translate(" + self.margem.esquerda + "," + self.margem.cima/2 + ")");
+
+            console.log(self.svg);
 
             self.svg.call(tip);
 
@@ -365,7 +406,7 @@
                 // Dados passam a 0
                 self.dados = {};
                 // Apaga gráfico, pois não tem nenhuma fonte de dados
-                self.RedesenhaGrafico();
+                self.RedesenhaGrafico(self.id);
             }
 
             // Caso o tamanho do contexto seja diferente que o inicial foi desassociado
@@ -455,10 +496,61 @@
 
 
         /// <summary>
+        /// Expande o widget para ocupar o ecra inteiro
+        /// </summary>
+        Widget.prototype.ExpandirWidget = function () {
+            var self = this,
+                widgetExpandido;
+
+            // Cria novo div para dispor o widget ampliado
+            $("body").prepend("<div id='ecraExpandido-widget'> <span style='float:right; margin-right: 10px;' class='glyphicon glyphicon-remove removeExpandir' aria-hidden='true'></span> <div class='wrapper'></div> <div class='legenda'></div> </div>")
+            $("body").prepend("<div id='ecraFadeout-widget'></div>");
+
+
+            // Adicionar o tamanho conforme o tamanho da main-gridstack mais a diferença das barras de navegação
+            $("#ecraFadeout-widget").css("height", gridPrincipal.AlturaMaxima());
+
+            // Evento para o botão de rmemoção
+            self.RemoveExpandir();
+
+            // Cria um objecto para construir o widget em formato ampliado
+            widgetExpandido = FabricaClasses("ecraExpandido-widget", self.widgetElemento);
+
+            // Copia os dados do original para objecto criado
+            widgetExpandido.dados = self.dados;
+
+            // Desenha o gráfico no widget criado
+            widgetExpandido.RedesenhaGrafico("ecraExpandido-widget");
+
+            // Reposiciona o gráfico para se adequar a posição da scrollbar
+            $("#ecraExpandido-widget").css("position", "absolute").animate({
+                top: $(window).scrollTop()
+            });
+
+        }
+
+
+        /// <summary>
+        /// Evento para o botão de remoção da versão expandida de um widget
+        /// </summary>
+        Widget.prototype.RemoveExpandir = function () {
+            var self = this;
+
+            $(".removeExpandir").click(function () {
+                $("#ecraFadeout-widget").remove();
+                $("#ecraExpandido-widget").remove();
+
+            })
+
+        }
+
+
+        /// <summary>
         /// Redesenha completamente o gráfico
         /// </summary>
-        Widget.prototype.RedesenhaGrafico = function () {
+        Widget.prototype.RedesenhaGrafico = function (id) {
             var self = this;
+
 
             // TODO
 
@@ -470,9 +562,10 @@
             if (self.dados.dados !== undefined) {
                 // caso tenha items para desenhar
                 if (self.dados.dados.Widgets[0].Items.length != 0) {
+
                     if (self.widgetElemento === "GraficoPie") {
 
-                        self.ConstroiSVG.call(this, self.id);
+                        self.ConstroiSVG.call(this, id);
                         self.InsereDados.call(this);
 
                     } else {
@@ -480,7 +573,7 @@
                         self.AtualizaDimensoes.call(this);
 
                         if (!(self.widgetElemento === "Tabela")) {
-                            self.ConstroiSVG.call(this, self.id, self);
+                            self.ConstroiSVG.call(this, id, self);
                             self.ConstroiEixos.call(this);
                             self.InsereDados.call(this);
                             self.InsereEixos.call(this);
@@ -488,12 +581,14 @@
                             self.ConstroiLegenda.call(this);
 
                         } else {
-                            self.ConstroiGrafico.call(this, self.id);
+                            self.ConstroiGrafico.call(this, id);
                             self.InsereDados.call(this);
                             self.Atualiza.call(this);
-                        }
+                        }   
+                    }
 
-                        
+                    if ($("#" + self.id).find(".expandir-widget").length === 0) {
+                        self.OpcaoExpandir();
                     }
 
                 } else {
@@ -519,6 +614,7 @@
         /// <summary>
         /// Manda o pedido para atribuir os dados ao widget
         /// </summary>
+        /// <param name="opcoes"> "Query" enviada ao servidor para pedir os dados</param>
         Widget.prototype.setDados = function (opcoes) {
             var self = this;
 
@@ -544,6 +640,7 @@
 
         }
 
+
         /// <summary>
         /// Atualiza o estado das tooltips
         /// </summary>
@@ -563,6 +660,7 @@
             self.mostraLegenda = !self.mostraLegenda;
 
         }
+
 
         /// <summary>
         /// Atualiza o estado do widget em termos da Tabela
@@ -640,7 +738,7 @@
             var self = this;
 
             // Criar botão para simbolizar o update
-            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"mostraDados-widget\">"+"Mostra dados"+"</a></li>")
+            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"verTabela-widget\">"+"Ver Tabela"+"</a></li>")
         }
 
         /// <summary>
@@ -665,7 +763,35 @@
             var self = this;
 
             // Criar botão para simbolizar o "toggle" das legendas
-            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"legenda-widget\">" + "Ativar Legenda" + "</a></li>")
+            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"legenda-widget\">" + "Ativar Legenda" + "</a></li>");
+
+            // Cria evento para alternar entre legendas visiveis e invisiveis
+            $("#" + self.id).find(".legenda-widget").on("click", function () {
+
+                // Define o widget
+                var $widget = $("#" + self.id);
+
+
+                // Atualiza o estado das legendas
+                self.setLegendas();
+
+                // Caso esteja visivel
+                if ($widget.find(".legenda").is(":visible")) {
+                    // Esconder
+                    $widget.find(".legenda").hide();
+                    // Aumentar o conteudo gráfico
+                    $widget.find(".wrapper").css("width", "100%");
+                    self.Atualiza();
+                    // Caso esteja escondida
+                } else {
+                    // Mostra
+                    $widget.find(".legenda").show();
+                    // Diminui a largura
+                    $widget.find(".wrapper").css("width", "80%");
+                    self.Atualiza();
+                }
+
+            });
         }
 
         /// <summary>
@@ -675,7 +801,7 @@
             var self = this;
 
             // Criar botão para simbolizar o "toggle" das legendas
-            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"tooltip-widget\">" + "Ativar tooltip" + "</a></li>")
+            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"tooltip-widget\">" + "Ativar tooltip" + "</a></li>");
 
             $("#" + self.id).find(".dropdown-menu").on("click", ".tooltip-widget", function () {
                 self.setTooltip();
@@ -684,11 +810,27 @@
         }
 
 
+        /// <summary>
+        /// Cria o botao para "expandir" o widget para ecra inteiro
+        /// </summary>
+        Widget.prototype.OpcaoExpandir = function () {
+            var self = this;
+
+            // Criar botão para simbolizar o "toggle" das legendas
+            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"expandir-widget\">" + "Expandir" + "</a></li>");
+
+            $("#" + self.id).find(".dropdown-menu").on("click", ".expandir-widget", function () {
+                self.ExpandirWidget();
+            });
+
+        }
+
         /// #Region ---------------------------------
 
 
 
         /// #Region -  Eventos
+
 
         /// <summary>
         /// Evento que vai modifica ro nome caso o utilizador o queira
@@ -1540,7 +1682,7 @@
                 if (self.modoVisualizacao !== "normal") {
                     self.modoVisualizacao = "normal";
 
-                    self.RedesenhaGrafico();
+                    self.RedesenhaGrafico(self.id);
 
                 }
                     // Caso esteja em modo stacked ( Empilhado )
@@ -1548,7 +1690,7 @@
                     if (self.modoVisualizacao !== "stacked") {
                         self.modoVisualizacao = "stacked";
 
-                        self.RedesenhaGrafico();
+                        self.RedesenhaGrafico(self.id);
 
                     }
                 }
@@ -2451,10 +2593,10 @@
                 escalaY.ticks(10);
             }
             if (self.altura <= self.TamanhoLimite) {
-                escalaY.ticks(5);
+                escalaY.ticks(6);
             }
             if (self.altura <= (self.TamanhoLimite - 100)) {
-                escalaY.ticks(2);
+                escalaY.ticks(4);
             }
 
             // Se largura for maior ou igual ao tamanho limite a escala X vai dispor todos os valores do dominio X
@@ -2538,17 +2680,6 @@
         GraficoLinhas.prototype.ConstroiGrafico = function (id) {
             var self = this;
 
-            // to-do
-            // nome?
-            // teste1?
-
-            // to-do Query? Get Query?
-            //self.setDados($.parseJSON(getDados(self, "age")));
-
-            // Adiciona classe do gráfico ao widget
-            //$("#" + self.id).addClass("linhas");
-
-
             //self.AtualizaDimensoes()
             //self.ConstroiSVG(id, self);
             //self.ConstroiEixos();
@@ -2560,6 +2691,7 @@
             // Insere botões na navbar
             self.OpcaoUpdate();
             self.OpcaoMostraDados();
+            self.OpcaoLegenda();
 
             // Liga evento para modificar titulo
             self.ModificaTitulo();
@@ -2645,7 +2777,26 @@
         ///
         /// </summary>
         GraficoLinhas.prototype.ConstroiLegenda = function () {
+            var self = this,
+                series = $("#" + self.id).find(".wrapper").find(".series").length,
+                legenda;
 
+
+            legenda = d3.select("#" + self.id).select(".legenda").insert("svg");
+
+            for (var i = 0; i < series; i++) {
+                legenda.append("circle")
+                    .attr("r", 5)
+                    .attr("cx", 15)
+                    .attr("cy", 15 + 20 * i)
+                    .style("fill", color(color.domain()[i]));
+
+                legenda.append("text")
+                    .attr("x", 30)
+                    .attr("y", ((15 + 20 * i) + 5))
+                    .text(color.domain()[i]);
+
+            }
         }
 
 
@@ -5237,7 +5388,7 @@
             if (self.id === "main-gridstack") {
                 // Liga o evento ao botão cria dados e ao clickar no botão uma tabela é criada
                 // com os dados desse widget
-                self.MostraDados();
+                self.VerTabela();
             }
 
         }
@@ -5383,7 +5534,7 @@
         Grid.prototype.AdicionaWidgetLista = function (tipoWidget, id, dados) {
             var self = this;
 
-            // to-do Factory de classes
+            // todo Factory de classes
             switch (tipoWidget) {
                 case "area":
                     self.listaWidgets.push(new GraficoArea(id, "GraficoArea"));
@@ -5450,6 +5601,25 @@
                      "</div>" + "</div> " + "</div>";
 
             return el;
+        }
+
+
+        /// <summary>
+        /// Método que devolve o tamanho "total" da página, devido à altura ser dada dinamicamente
+        /// </summary>
+        /// <returns> Inteiro com a altura máxima da página </returns>
+        Grid.prototype.AlturaMaxima = function () {
+            var self = this;
+
+            // Compara o tamanho da row e da main gridstack 
+            if ($(".row").height() < $("#main-gridstack").height()) {
+                // Caso a grid seja maior que o atributo "row"
+                return ($("#main-gridstack").height()+157);
+            } else {
+                // Caso a row seja maior que a grid
+                return ($(".row").height() + 190);
+            }
+
         }
 
 
@@ -5528,11 +5698,11 @@
         /// <summary>
         /// Cria tabela com os dados de um certo widget escolhido pelo utilizador
         /// </summary>
-        Grid.prototype.MostraDados = function () {
+        Grid.prototype.VerTabela = function () {
             var self = this;
 
             // getQuery? Query? Para ir buscar os mesmos dados que o widget
-            $("#main-gridstack").on("click", ".mostraDados-widget", function () {
+            $("#main-gridstack").on("click", ".verTabela-widget", function () {
 
                 // Definir o widget
                 var widget = $(this).closest(".grid-stack-item-content"),
@@ -5546,7 +5716,7 @@
                 console.log(self);
 
                 self.listaWidgets[index].setEstadoTabela();
-                (self.listaWidgets[index].estadoTabela)? self.listaWidgets[index].TransformaWidgetTabela() : self.listaWidgets[index].RedesenhaGrafico(); 
+                (self.listaWidgets[index].estadoTabela)? self.listaWidgets[index].TransformaWidgetTabela() : self.listaWidgets[index].RedesenhaGrafico(self.id); 
 
             });
 
