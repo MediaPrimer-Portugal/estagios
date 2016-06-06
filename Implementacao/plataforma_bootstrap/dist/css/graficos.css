@@ -370,6 +370,10 @@ td {
     ------------------*/
 
 #main-gridstack {
+    /*background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAF0lEQVQYlWNgYGAwJhJDCGLAqELKFQIAbzEDyp/S1OkAAAAASUVORK5CYII=) repeat;*/
+}
+
+.gridstack-background{
     background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAF0lEQVQYlWNgYGAwJhJDCGLAqELKFQIAbzEDyp/S1OkAAAAASUVORK5CYII=) repeat;
 }
 
@@ -529,7 +533,6 @@ td {
     ----------------------*/
 
 .area {
-    fill: rgb(207, 37, 0);
 }
 
 /*--------------------
