@@ -148,18 +148,34 @@
 
 			// If options create drop-down list
 		} else if (type === 'options' && Array.isArray(meta.options)) {
-			valueHTML = getSelectOptionHtml(elemId, value, meta.options);
-			if (getValueFuncs) {
-				getValueFuncs[name] = function() {
-					return $('#' + elemId).val();
-				};
-			}
+		    valueHTML = getSelectOptionHtml(elemId, value, meta.options);
+		    if (getValueFuncs) {
+		        getValueFuncs[name] = function() {
+		            return $('#' + elemId).val();
+		        };
+		    }
+
+		    /*
+             *  Adicionado
+             *  Módulo do tipo Label, com duas input box, que aceita um nome e o tipo de dados a adquirir
+             *
+            */
+		} else if (type === "filtro") {
+		    console.log(meta);
+
+            displayName = "<input class="+ elemId +" type='text' value=" + meta.description + ">";
+		    valueHTML = "<input type='text' class='valor"+ elemId +"' value="+ value +" >";
+		    if (getValueFuncs) {
+		        getValueFuncs[name] = function () {
+		            return { label: $("." + elemId).val(), valor: $(".valor" + elemId).val() };
+		        }
+		    }
 		    /*  
              *  Adicionado
              *      Módulo do tipo botão (Adicionar séries na property grid)
              *      meta.description utilizada para "carregar" a imagem
              */
-		} else if(type === "button"){
+		} else if (type === "botao") {
 		    valueHTML = '<button style="float:right;" type="submit" id="' + "pgButton" + '" class="adicionaSerie-propertyGrid"><img src="'+ meta.description +'" /></button>';
 		    if (getValueFuncs) {
 		        getValueFuncs[name] = function () {
@@ -173,6 +189,30 @@
             */
 		} else if (type === "split") {
 		    valueHTML = '<p></p>';
+		    if (getValueFuncs) {
+		        getValueFuncs[name] = function () {
+		            return $("#" + elemId);
+		        }
+		    }
+		    /*
+             *  Adicionado
+             *  Módulo div, que vai ser transformado num painel com checkboxes que representam os widgets de dados
+             *  que podem ser ligados oa widget em questão
+            */
+		} else if (type === "checkboxContexto") {
+		    valueHTML = '<div id='+elemId+' class="checkboxContexto"></div>';
+		    if (getValueFuncs) {
+		        getValueFuncs[name] = function () {
+		            return $("#" + elemId);
+		        }
+		    }
+		    /*
+             *  Adicionado
+             *  Módulo do tipo botão (Adiciona novas opcoes na dropdownlist da property grid para widget dropdown)
+             *  
+            */
+		} else if (type === "botaoFiltro") {
+		    valueHTML = '<button style="float:right;" type="submit" id="' + "pgButton" + '" class="adicionaOpcao-propertyGrid"><img src="' + meta.description + '" /></button>';
 		    if (getValueFuncs) {
 		        getValueFuncs[name] = function () {
 		            return $("#" + elemId);

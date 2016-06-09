@@ -79,12 +79,6 @@ td {
     margin-top: 131px !important;
 }
 
-/* */
-.adicionaSerie-propertyGrid {
-    border: none;
-    background: transparent;
-}
-
 
 /*---*/
 
@@ -201,89 +195,98 @@ td {
     .listaPropriedades-sidebar a {
         text-decoration: none;
         text-align: center;
-        font-size: larger;
-        font-weight: bolder;
+            font-size: larger;
+            font-weight: bolder;
+            color: #E0E0E0;
+        }
+
+    /*Remove espaços desnecessários na propertygrid*/
+    .propertyGrid {
+        list-style: none;
+        margin: 0;
+        padding: 0 !important;
+        background-color: #161616;
+    }
+
+    /* Opcoes da área que cobre o selector entre propriedades gerais e propriedades aparência */
+    .opcoes-propertyGrid {
+        padding: 20px;
+        text-align: center;
+        background-color: #333333;
+    }
+
+    /* Opcoes da área da propertyGrid quando nada está selecionado */
+    .opcoes-semPropertyGrid {
+        font-size: large;
+        font-weight: 500;
+        padding: 180px 20px 180px 20px;
+        text-align: center;
         color: #E0E0E0;
     }
 
-/*Remove espaços desnecessários na propertygrid*/
-.propertyGrid {
-    list-style: none;
-    margin: 0;
-    padding: 0 !important;
-    background-color: #161616;
-}
 
-/* Opcoes da área que cobre o selector entre propriedades gerais e propriedades aparência */
-.opcoes-propertyGrid {
-    padding: 20px;
-    text-align: center;
-    background-color: #333333;
-}
-
-/* Opcoes da área da propertyGrid quando nada está selecionado */
-.opcoes-semPropertyGrid {
-    font-size: large;
-    font-weight: 500;
-    padding: 180px 20px 180px 20px;
-    text-align: center;
-    color: #E0E0E0;
-}
+    .nomeWidget-propertyGrid {
+        font-weight: 500;
+        padding: 5px;
+        text-align: center;
+        color: #E0E0E0;
+    }
 
 
-.nomeWidget-propertyGrid {
-    font-weight: 500;
-    padding: 5px;
-    text-align: center;
-    color: #E0E0E0;
-}
+    /* "Icons" que definem as propriedades gerais ou de aparência */
+    .box-propriedades {
+        display: inline-block;
+        height: 50px;
+        width: 50px;
+        padding: 5px;
+        margin: 5px;
+        font-size: 30px;
+        font-weight: bolder;
+        border: 1px solid white;
+        color: white;
+        cursor: pointer;
+    }
 
+    .box-ativo {
+        border: 1px solid #00B7AD;
+        background-color: #cecece;
+        color: #00B7AD;
+        cursor: pointer;
+    }
 
-/* "Icons" que definem as propriedades gerais ou de aparência */
-.box-propriedades {
-    display: inline-block;
-    height: 50px;
-    width: 50px;
-    padding: 5px;
-    margin: 5px;
-    font-size: 30px;
-    font-weight: bolder;
-    border: 1px solid white;
-    color: white;
-    cursor: pointer;
-}
+    /* Property Grid ocupa 100% da largura do seu espaço*/
+    .pgTable {
+        width: 100% !important;
+        border: none !important;
+    }
 
-.box-ativo {
-    border: 1px solid #00B7AD;
-    background-color: #cecece;
-    color: #00B7AD;
-    cursor: pointer;
-}
+    .pgGroupCell {
+        text-decoration: none !important;
+        font-weight: bold;
+        font-size: larger;
+        padding: 10px !important;
+        color: #E0E0E0;
+    }
 
-/* Property Grid ocupa 100% da largura do seu espaço*/
-.pgTable {
-    width: 100% !important;
-    border: none !important;
-}
+    .pgGroupRow {
+        background-color: #161616 !important;
+    }
 
-.pgGroupCell {
-    text-decoration: none !important;
-    font-weight: bold;
-    font-size: larger;
-    padding: 10px !important;
-    color: #E0E0E0;
-}
+    /* Definições de cada célula na property Grid*/
+    .pgCell {
+        border: none !important;
+        padding: 16px 4px 16px 8px !important;
+        color: white;
+    }
 
-.pgGroupRow {
-    background-color: #161616 !important;
-}
+    .pgCell > input {
+        width: 100%;
+    }
 
-/* Definições de cada célula na property Grid*/
-.pgCell {
-    border: none !important;
-    padding: 16px 4px 16px 8px !important;
-    color: white;
-}
+    /* Todas as dropdowns dentro de uma tablea de property ocupa 100% do espaço*/
+    .pgCell > select {
+        width: 100% !important;
+    }
 
     /* Cor do texto dentro das dropdownlist,inputs e botões */
     .pgCell > button,
@@ -292,16 +295,22 @@ td {
         color: black;
     }
 
-.pgRow {
-    padding: 10px !important;
-    background-color: #333333;
-}
+    .pgRow {
+        padding: 10px !important;
+        background-color: #333333;
+    }
 
-/* Todas as dropdowns dentro de uma tablea de property ocupa 100% do espaço*/
-.pgCell > select {
-    width: 100% !important;
-}
+    /* Botões property Grid */
+    /* */
+    .adicionaSerie-propertyGrid {
+        border: none;
+        background: transparent;
+    }
 
+    .adicionaOpcao-propertyGrid {
+        border: none;
+        background: transparent;
+    }
 
 
 /*------------------
