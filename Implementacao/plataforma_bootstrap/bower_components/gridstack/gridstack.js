@@ -1229,8 +1229,7 @@
 
         // Define widgets na PropertyGrid
         this.opts.PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
-        // Constroi a PropertyGrid
-        //this.opts.PropertyGrid.Constroi();
+        this.opts.PropertyGrid.AdicionaCheckboxMenu();
 
     }
 
@@ -1241,23 +1240,9 @@
     *
     */
     GridStack.prototype.ConstroiWidget = function () {
-        var grid = this.opts.gridObject;    
-
-        // Remove o bloqueio de resize posto na sidebar anterior
-        $("#"+grid.id).data("gridstack").resizable($("#"+grid.listaWidgets[grid.listaWidgets.length - 1].id).closest(".grid-stack-item"), true);
-
-        // Escolhe o widget e remove a imagem ( Sidebar )
-        $("#"+grid.listaWidgets[grid.listaWidgets.length - 1].id).find(".imagem-widget").remove();
-
-        // Escolhe o ultimo widget adicionado e constroi, conforme a sua class
-        grid.listaWidgets[grid.listaWidgets.length - 1].ConstroiGrafico(grid.listaWidgets[grid.listaWidgets.length - 1].id);
-
-        // Para cada widget atualizar a sua estrutura de dados
-        grid.listaWidgets.forEach(function (item) {
-            item.objectoServidor = item.AtualizaObjectoServidor();
-            item.AtualizaObjectoWidget();
-
-        });
+        var grid = this.opts.gridObject;
+        
+        grid.ReconstroiWidget();
 
     }
 
@@ -1513,7 +1498,7 @@
         return this;
     };
 
-    GridStack.prototype.minWidth = function(el, val) {
+    GridStack.prototype.minWidth = function (el, val) {
         el = $(el);
         el.each(function(index, el) {
             el = $(el);

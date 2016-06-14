@@ -161,8 +161,6 @@
              *
             */
 		} else if (type === "filtro") {
-		    console.log(meta);
-
             displayName = "<input class="+ elemId +" type='text' value=" + meta.description + ">";
 		    valueHTML = "<input type='text' class='valor"+ elemId +"' value="+ value +" >";
 		    if (getValueFuncs) {

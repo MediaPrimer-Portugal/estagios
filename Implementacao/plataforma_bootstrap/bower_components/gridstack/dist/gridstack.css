@@ -16,7 +16,7 @@
 }
 
 .grid-stack .grid-stack-placeholder > .placeholder-content {
-  border: 3px dashed lightgray;
+  border: 3px dashed black;
   margin: 0;
   position: absolute;
   top: 0;
