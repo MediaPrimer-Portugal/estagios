@@ -1220,10 +1220,10 @@
         // Para cada item
         grid.listaWidgets.forEach(function (item) {
             // Preenche a sidebar
-            $(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
+            //$(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
 
             // Adiciona ao array de objectos correcto
-            (item.widgetTipo === "contexto") ? listaWidgetsContexto.push(item.id) : listaWidgetsDados.push(item.id)
+            (item.widgetTipo === "contexto") ? listaWidgetsContexto.push({ text: item.titulo, value: item.id }) : listaWidgetsDados.push({ text: item.titulo, value: item.id });
 
         });
 

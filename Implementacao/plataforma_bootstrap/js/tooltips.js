@@ -256,6 +256,8 @@
         }
 
         function getSVGNode(el) {
+            console.log(el);
+
             el = el.node()
             if (el.tagName.toLowerCase() === 'svg')
                 return el

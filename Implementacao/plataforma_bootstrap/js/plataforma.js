@@ -1,4 +1,32 @@
-﻿$("document").ready(function ()  {
+﻿//UTIL = {
+
+
+//    loadEvents: function () {
+
+//        var bodyID = document.body.id;
+
+//        UTIL.fire()
+//    }
+//}
+
+//plataforma = {
+//    widgets: {
+
+//    },
+//    grid: {
+
+//    },
+//    propertyGrid: {
+
+//    },
+//    conteudo: {
+
+//    }
+//}
+
+
+
+$("document").ready(function () {
 
     /// Constantes
     /// Valor que simboliza a data no objecto de dados recebido do servidor
@@ -106,6 +134,21 @@
     /// <returns> Retorna uma string que equivale a linguagem a ser usada pelo utilizador no browser </returns>
     var getLinguagem = function () {
         return userLang = navigator.language || navigator.userLanguage;
+    }
+
+   
+
+    /// <summary>
+    /// Cria e devolve um GUID
+    /// </summary>
+    /// <returns> GUID </returns>
+    var getGUID = function () {
+        var uuid;
+
+        uuid = UUID.genV4().urn;
+
+        return uuid;
+
     }
 
 
@@ -269,12 +312,14 @@
         /// </summary>
         /// <param name="id"> Id do widget, utilizado para selecção do mesmo </param>
         Widget.prototype.ConstroiSVG = function (id, self) {
+            var selector;
 
-            self.svg = d3.select("#" + id).select(".wrapper").insert("svg")
+            self.svg = d3.select("#"+id).select(".wrapper").insert("svg")
                 .attr("width", self.largura + margem.esquerda + margem.direita)
                 .attr("height", self.altura + margem.cima + margem.baixo)
               .append("g")
                 .attr("transform", "translate(" + self.margem.esquerda + "," + self.margem.cima/2 + ")");
+
 
             self.svg.call(tip);
 
@@ -566,7 +611,6 @@
         Widget.prototype.RedesenhaGrafico = function (id) {
             var self = this;
 
-
             // TODO
 
             // Remove todos os elementos excepto a navbar
@@ -627,16 +671,14 @@
 
 
         /// <summary>
-        /// Manda o pedido para atribuir os dados ao widget
+        /// Método que adquire a informação da base de dados
         /// </summary>
         /// <param name="opcoes"> "Query" enviada ao servidor para pedir os dados</param>
         Widget.prototype.setDados = function (opcoes) {
             var self = this;
 
-            self.dados = ((primerCORE.DashboardDevolveWidget(self, opcoes)));
+            self.dados = ((primerCORE.DashboardDevolveWidget(self, opcoes, gridPrincipal.idUnico, Utilizador.idUtilizador)));
             self.dados = $.parseJSON(self.dados);
-
-            console.log(self.dados);
 
         }
 
@@ -736,7 +778,6 @@
             return self.agregacoes;
         }
 
-
         /// <summary>
         /// Adicionar uma série
         /// </summary>
@@ -766,7 +807,6 @@
             return self.seriesUtilizadas;
         }
         
-
         /// <summary>
         /// Atualiza  tooltip de descrição de um widget
         /// </summary>
@@ -4616,14 +4656,30 @@
 
         /// <summary>
         /// Atualiza as informações de acordo com a propertyGrid
+        /// Também atualiza o checkboxMenu
         /// </summary>
-        Filtros.prototype.AtualizaOpcoesProperty = function (geral, dados, aparencia) {
+        /// <param name="geral"> Objecto devolvido pela PropertyGridGeral </param>
+        /// <param name="dados"> Objecto devolvido pela PropertyGridDados </param>
+        /// <param name="aparencia"> Objecto devolvido pela PropertyGridAparencia </param>
+        Filtros.prototype.AtualizaOpcoesPropertyGeral = function (geral) {
             var self = this;
 
             self.setTitulo(geral.Nome);
             self.setDescricao(geral.Descricao);
 
+            
+
+        }
+        Filtros.prototype.AtualizaOpcoesPropertyDados = function (dados) {
+            var self = this;
+
             self.GuardaFiltros(dados);
+
+        }
+        Filtros.prototype.AtualizaOpcoesPropertyAparencia = function (aparencia) {
+            var self = this;
+
+            //todo
 
         }
 
@@ -4844,7 +4900,7 @@
 
         /// <summary>
         /// Guarda a data Inicial dos "pickers" no próprio widget
-        /// </summary>
+        /// </summary
         Data.prototype.GuardaDataFinal = function () {
             var self = this,
                 mes;
@@ -4976,11 +5032,15 @@
         /// <param name="geral"> Objecto devolvido pela PropertyGridGeral </param>
         /// <param name="dados"> Objecto devolvido pela PropertyGridDados </param>
         /// <param name="aparencia"> Objecto devolvido pela PropertyGridAparencia </param>
-        Data.prototype.AtualizaOpcoesProperty = function (geral, dados, aparencia) {
+        Data.prototype.AtualizaOpcoesPropertyGeral = function (geral) {
             var self = this;
 
             self.setTitulo(geral.Nome);
             self.setDescricao(geral.Descricao);
+            
+        }
+        Data.prototype.AtualizaOpcoesPropertyDados = function (dados) {
+            var self = this;
 
             self.setNomeDataInicial(dados.DataInicial);
             self.setNomeDataFinal(dados.DataFinal);
@@ -4988,6 +5048,10 @@
             self.setDataFinalDescricao(dados.DataFinalDescricao);
 
             self.AtualizaNomes();
+
+        }
+        Data.prototype.AtualizaOpcoesPropertyAparencia = function (aparencia) {
+            var self = this;
 
         }
 
@@ -5004,7 +5068,10 @@
 
         }
 
+
+
         return Data;
+
 
     })();
 
@@ -5312,6 +5379,7 @@
                 Botao: { name: " ", group: "Series", type: "botao", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false },
                 Fixo: { name: "Fixo:", group: "Periodo", type: "options", options: FixoPeriodo, description: "Analisar numa data fixa", showHelp: false },
                 ComponenteContexto: { name: "Componente Data", group: "Periodo", type: "options", options: [""], description: "Analisar através de um widget", showHelp: false },
+                Quebra: { name: " ", group: "Series", type: "split", showHelp: false }, 
 
                 // CONTEXTO
                 CheckboxContexto: { name: " ", group: "Widgets Ligados", type: "checkboxContexto", description: "Grupo de widgets", showHelp: false },
@@ -5361,6 +5429,7 @@
             gridPrincipal.getWidget($(".widget-ativo").attr("id")).seriesUtilizadas.forEach(function (item) {
 
                 self.inicializaDados["Nome-" + idSerie] = { name: "Nome:", group: "Series", description: "Nome da série", showHelp: false };
+                self.inicializaDados["Pesquisa-" + idSerie] = { name: "Pesquisa", group: "Series", description: "Query", showHelp: false };
                 self.inicializaDados["ComponenteSerie-" + idSerie] = { name: "Indicador:", group: "Series", type: "options", options: self.getIndicadores($(".widget-ativo").attr("id")), description: "Widgets que contêm os gráficos", showHelp: false };
                 self.inicializaDados["Campo-" + idSerie] = { name: "Campo:", group: "Series", type: "options", options: CampoSeries, description: "Campos para ordenar os dados", showHelp: false };
                 self.inicializaDados["Funcao-" + idSerie] = { name: "Função:", group: "Series", type: "options", options: FuncaoSeries, description: "Funções ordenar os dados", showHelp: false };
@@ -5403,21 +5472,23 @@
         // Popula a propertyGrid com valores defeito, adquiridos pelo Widget
         // to-do
         PropertyGrid.PreencheValores = function () {
-            var self = this;
+            var self = this,
+                widgetID = $(".widget-ativo").attr("id");
 
             if (self.propertyGridElemento === "dados") {
                 var valorInicial = "";
+                    
 
                 // Encontra valor do componente de dados ques e encontra ligado
-                gridPrincipal.getWidget(self.widgetID).contexto.forEach(function (valor) {
+                gridPrincipal.getWidget(widgetID).contexto.forEach(function (valor) {
                     if (gridPrincipal.getWidget(valor).widgetElemento === "datahora_simples") {
                         valorInicial = gridPrincipal.getWidget(valor).id;
                     }
                 })
 
                 // Valores a inserir nas propertyGrids
-                self.propriedadesGeral["Nome"] = gridPrincipal.getWidget(self.widgetID).titulo;
-                self.propriedadesGeral["Descricao"] = gridPrincipal.getWidget(self.widgetID).descricao;
+                self.propriedadesGeral["Nome"] = gridPrincipal.getWidget(widgetID).titulo;
+                self.propriedadesGeral["Descricao"] = gridPrincipal.getWidget(widgetID).descricao;
 
                 //self.propriedadesDados["Fixo"] = (gridPrincipal.getWidget(self.widgetID).fixo === undefined) ? "" : gridPrincipal.getWidget(self.widgetID).fixo;
                 self.propriedadesDados["ComponenteContexto"] = (valorInicial === "") ? "" : valorInicial;
@@ -5440,10 +5511,10 @@
                     }
                 })
 
-                self.propriedadesDados["DataInicial"] = gridPrincipal.getWidget(self.widgetID).getNomeDataInicial();
-                self.propriedadesDados["DataInicialDescricao"] = gridPrincipal.getWidget(self.widgetID).getDataInicialDescricao();
-                self.propriedadesDados["DataFinal"] = gridPrincipal.getWidget(self.widgetID).getNomeDataFinal();
-                self.propriedadesDados["DataFinalDescricao"] = gridPrincipal.getWidget(self.widgetID).getDataFinalDescricao();
+                self.propriedadesDados["DataInicial"] = gridPrincipal.getWidget(widgetID).getNomeDataInicial();
+                self.propriedadesDados["DataInicialDescricao"] = gridPrincipal.getWidget(widgetID).getDataInicialDescricao();
+                self.propriedadesDados["DataFinal"] = gridPrincipal.getWidget(widgetID).getNomeDataFinal();
+                self.propriedadesDados["DataFinalDescricao"] = gridPrincipal.getWidget(widgetID).getDataFinalDescricao();
                 
             }
 
@@ -5469,12 +5540,14 @@
 
             gridPrincipal.getWidget($(".widget-ativo").attr("id")).seriesUtilizadas.forEach(function (serie) {
                 self.propriedadesDados["Nome-" + index] = serie.Nome;
+                self.propriedadesDados["Pesquisa-" + index] = serie.Pesquisa;
                 self.propriedadesDados["ComponenteSerie-" + index] = serie.ComponenteSerie;
                 self.propriedadesDados["Campo-" + index] = serie.Campo;
                 self.propriedadesDados["Funcao-" + index] = serie.Funcao;
-                self.propriedadesDados["Quebra-" + index] = "";
+                self.propriedadesDados["Quebra-" + index] = " ";
 
                 index++;
+
             });
 
 
@@ -5539,7 +5612,7 @@
             // Valor do widget contexto que está ligado ao widget (Data)
             gridPrincipal.getWidget(self.widgetID).contexto.forEach(function (valor) {
                 if (gridPrincipal.getWidget(valor).widgetElemento === "datahora_simples") {
-                    valorInicial = gridPrincipal.getWidget(valor).id;
+                    valorInicial = gridPrincipal.getWidget(valor).titulo;
                 }
             })
 
@@ -5550,7 +5623,7 @@
                 Descricao: gridPrincipal.getWidget(self.widgetID).descricao,
             };
 
-
+            
             //// Caso tenha series utilizadas inicia sem botão
             //if(gridPrincipal.getWidget($(".widget-ativo").attr("id")).seriesUtilizadas.length > 0 ){
             //    self.propriedadesDados = {
@@ -5635,6 +5708,9 @@
 
             self.EventoAtualizaDatas();
             self.EventoMostraGridAtual();
+
+            self.AtualizaWidgetData();
+
         }
 
         // PropertyGrid - Widget Filtro
@@ -5699,35 +5775,29 @@
         // widget Dados
         PropertyGrid.AtualizaWidget = function () {
             var self = this,
+                widget1,
+                objectoSeries = [],
                 objPropertyGridGeral = $("#propGridGeral").jqPropertyGrid("get"),
                 objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get"),
-                objPrpertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get"),
-                objectoSeries = [],
-                index = 0;
+                objPropertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get");
+
+            // ID do widget contexto
+            widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+            gridPrincipal.getWidget(widget1.id).setTitulo(objPropertyGridGeral.Nome);
+            gridPrincipal.getWidget(widget1.id).setDescricao(objPropertyGridGeral.Descricao);
 
 
-            // Atualiza o titulo do widget com o nome inserido na box da propertyGrid
-            // todo - Passar aos widgets esta responsabilidade
-            gridPrincipal.getWidget(self.widgetID).setTitulo(objPropertyGridGeral.Nome);
-            gridPrincipal.getWidget(self.widgetID).setDescricao(objPropertyGridGeral.Descricao);
-
-           
             objectoSeries = self.GuardaSeries();
 
-
             // Atualiza Widget (to-do atualizar dados? // Alerta)
-            if (gridPrincipal.getWidget(self.widgetID).dados !== undefined) {
+            if (gridPrincipal.getWidget(widget1.id).dados !== undefined) {
 
                 // Adiciona as opcoes das séries ao objecto principal
-                gridPrincipal.getWidget(self.widgetID).AdicionaSerieUtilizada(objectoSeries);
+                gridPrincipal.getWidget(widget1.id).AdicionaSerieUtilizada(objectoSeries);
 
+                gridPrincipal.getWidget(widget1.id).Atualiza();
 
-
-                alert("Widget Atualizado");
-                gridPrincipal.getWidget(self.widgetID).Atualiza();
-
-            } else {
-                //alert(self.widgetID + " não tem contexto");
             }
 
             // Chamar método para atualizar objecto servidor no widget
@@ -5739,26 +5809,74 @@
 
         // widget Data
         PropertyGrid.AtualizaWidgetData = function () {
-            var self = this,
-                objPropertyGridGeral = $("#propGridGeral").jqPropertyGrid("get"),
-                objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get"),
-                objPrpertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get"),
-                // Widgets a serem associados
-                widget1;
+            var self = this;
+
+            //$("#propGridGeral").change(function () {
+            //    var widget1,
+            //        objPropertyGridGeral = $("#propGridGeral").jqPropertyGrid("get");
+                    
+            //    // ID do widget contexto
+            //    widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+               
+            //    gridPrincipal.getWidget(widget1.id).AtualizaOpcoesPropertyGeral(objPropertyGridGeral);
+            //    gridPrincipal.getWidget(widget1.id).Atualiza();
+
+            //    gridPrincipal.getWidget(widget1.id)
+
+            //});
+
+            //$("#propGridDados").change(function () {
+            //    var widget1,
+            //        objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get");
+
+            //    // ID do widget contexto
+            //    widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+            //    // Trata das associações das checkboxes
+            //    self.AssociaCheckBox(widget1);
+            //    self.DesassociaCheckBox(widget1);
+
+            //    // Chama função para filtrar e desenhar os dados
+            //    gridPrincipal.FiltraContexto();
+
+            //    gridPrincipal.getWidget(widget1.id).AtualizaOpcoesPropertyDados(objPropertyGridDados);
+            //    gridPrincipal.getWidget(widget1.id).Atualiza();
+
+            //    gridPrincipal.getWidget(widget1.id)
+
+            //});
+
+            //$("#propGridAparencia").change(function () {
+            //    var widget1,
+            //        objPrpertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get");
+
+            //    // todo
+
+            //});
+
+            //var self = this,
+            //    objPropertyGridGeral = $("#propGridGeral").jqPropertyGrid("get"),
+            //    objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get"),
+            //    objPrpertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get"),
+            //    // Widgets a serem associados
+            //    widget1;
 
 
-            // ID do widget contexto
-            widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
 
-            // Trata das associações das checkboxes
-            self.AssociaCheckBox(widget1);
-            self.DesassociaCheckBox(widget1);
 
-            // Chama função para filtrar e desenhar os dados
-            gridPrincipal.FiltraContexto();
+            //// ID do widget contexto
+            //widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
 
-            gridPrincipal.getWidget(self.widgetID).AtualizaOpcoesProperty(objPropertyGridGeral, objPropertyGridDados, objPrpertyGridAparencia);
-            gridPrincipal.getWidget(self.widgetID).Atualiza();
+            //// Trata das associações das checkboxes
+            //self.AssociaCheckBox(widget1);
+            //self.DesassociaCheckBox(widget1);
+
+            //// Chama função para filtrar e desenhar os dados
+            //gridPrincipal.FiltraContexto();
+
+            //gridPrincipal.getWidget(self.widgetID).AtualizaOpcoesProperty(objPropertyGridGeral, objPropertyGridDados, objPrpertyGridAparencia);
+            //gridPrincipal.getWidget(self.widgetID).Atualiza();
+
 
         }
 
@@ -5774,7 +5892,6 @@
 
             // ID do widget contexto
             widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
-
 
             // Trata das associações das checkboxes
             self.AssociaCheckBox(widget1);
@@ -5810,8 +5927,6 @@
 
                 if ((_.findIndex(widget1.contexto, function (contexto) { return gridPrincipal.getWidget(contexto).widgetTipo === "contexto" })) === -1) {
 
-                    console.log("Loop");
-
                     // Associa o widget a cada um
                     verifica1 = widget1.AssociaWidget(widget2.id);;
                     verifica2 = widget2.AssociaWidget(widget1.id);
@@ -5820,7 +5935,7 @@
                     // Caso os 2 tenham associado com sucesso
                     if (verifica1 === true & verifica2 === true) {
                         // Apresentar aviso
-                        alert($(".widget-ativo").attr("id") + " foi associado com sucesso a " + widget2.id);
+                        alert(widget1.titulo + " foi associado com sucesso a " + widget2.titulo);
                     }
 
 
@@ -5828,7 +5943,7 @@
                     (widget1.widgetTipo === "contexto") ? self.setIndicadores(widget2.id) : self.setIndicadores(widget1.id);
 
                 } else {
-                    alert("O " + $(".widget-ativo").attr("id") + " já tem um widget contexto associado");
+                    alert("O " + widget1.titulo + " já tem um widget contexto associado");
                 }
 
             });
@@ -5855,14 +5970,14 @@
                 // Caso os 2 tenham desassociado com sucesso
                 if (verifica1 === true & verifica2 === true) {
                     // Apresentar aviso
-                    alert($(".widget-ativo").attr("id") + " foi desassociado com sucesso a " + widget2.id);
+                    alert(widget1.titulo + " foi desassociado com sucesso a " + widget1.titulo);
 
                     self.EventoAtualizaIndicadores(widget2.id);
                     console.log(self.getIndicadores(widget2.id));
 
                 } else {
                     // Apresentar aviso
-                    alert($(".widget-ativo").attr("id") + " não está associado com " + widget2.id);
+                    //alert(widget1.titulo + " não está associado com " + widget2.titulo);
 
                 }
 
@@ -5983,6 +6098,8 @@
                     // Adquire valores da caixa de propriedades em formato Objecto
                     valores = jQuery.parseJSON(JSON.stringify($('#propGridDados').jqPropertyGrid('get'), null, '\t'));
 
+                console.log(valores);
+
                 // Adapta conforme o tipo de componente/propertyGrid 
                 if (_.has(valores, "ComponenteContexto")) {
                     tipoComponente = valores.ComponenteContexto;
@@ -5991,6 +6108,8 @@
                 } else {
                     alert("Erro no tipoComponente");
                 }
+
+
 
                 // Caso sejam 2 valores diferentes do "default"
                 if (valores.WidgetDados !== "Sem componente" && tipoComponente !== "Sem componente") {
@@ -6015,7 +6134,7 @@
                         // Caso os 2 tenham associado com sucesso
                         if (verifica1 === true & verifica2 === true) {
                             // Apresentar aviso
-                            alert($(".widget-ativo").attr("id") + " foi associado com sucesso a " + tipoComponente);
+                            alert(widget2.titulo + " foi associado com sucesso a " + tipoComponente);
                         }
 
                         // Chama função para filtrar e desenhar os dados
@@ -6027,7 +6146,7 @@
                         self.ConstroiGrid();
 
                     } else {
-                        alert("O " + $(".widget-ativo").attr("id") + " já tem um widget contexto associado");
+                        alert("O " + widget2.titulo + " já tem um widget contexto associado");
                     }
                 }
 
@@ -6144,11 +6263,9 @@
 
             gridPrincipal.listaWidgets.forEach(function (item) {
                 if (item.widgetTipo === "dados") {
-                    if (_.findIndex(item.contexto, function (item) { console.log(item); return item === self.widgetID }) !== -1) {
-                        console.log("checked");
+                    if (_.findIndex(item.contexto, function (item) { return item === self.widgetID }) !== -1) {
                         $(".checkboxContexto").append("<input type='checkbox' value="+ item.id +" checked>  <span>"+ item.titulo + "</span><br>");
                     } else {
-                        console.log("not checked");
                         $(".checkboxContexto").append("<input type='checkbox' value=" + item.id + ">  <span>" + item.titulo + "</span><br>");
                     }
                 }
@@ -6184,6 +6301,7 @@
 
             // Inicializa os componentes de uma nova série
             self.inicializaDados["Nome-" + idSerie] = { name: "Nome:", group: "Series", description: "Nome da série", showHelp: false };
+            self.inicializaDados["Pesquisa-" + idSerie] = { name: "Pesquisa:", group: "Series", description: "Query de pesquisa", showHelp: false};
             self.inicializaDados["ComponenteSerie-" + idSerie] = { name: "Indicador:", group: "Series", type: "options", options: self.getIndicadores($(".widget-ativo").attr("id")), description: "Widgets que contêm os gráficos", showHelp: false };
             self.inicializaDados["Campo-" + idSerie] = { name: "Campo:", group: "Series", type: "options", options: CampoSeries, description: "Campos para ordenar os dados", showHelp: false };
             self.inicializaDados["Funcao-" + idSerie] = { name: "Função:", group: "Series", type: "options", options: FuncaoSeries, description: "Funções ordenar os dados", showHelp: false };
@@ -6211,6 +6329,7 @@
             var self = this;
 
             self.propriedadesDados["Nome-" + idSerie] = "Serie" + idSerie;
+            self.propriedadesDados["Pesquisa-" + idSerie] = "";
             self.propriedadesDados["ComponenteSerie-" + idSerie] = "";
             self.propriedadesDados["Campo-" + idSerie] = "Campo";
             self.propriedadesDados["Funcao-" + idSerie] = "Funcao";
@@ -6322,7 +6441,7 @@
             tipoGrid,
             id,
             // to-do IMPORTANTE
-            identificador = 0,
+            idUnico = 0,
             opcoes,
             listaWidgets = [],
             // Definição de cada Menu Widget
@@ -6340,13 +6459,15 @@
         function Grid(id, opcoes, tipoGrid) {
             var self = this;
 
+            console.log(opcoes);
+
             self.id = id;
             self.opcoes = opcoes;
             self.tipoGrid = tipoGrid;
 
             self.nome = "Dashboard";
             self.descricao = "Dashboard de indicadores";
-            self.identificador = identificador++;
+            self.idUnico = idUnico++;
 
             self.Inicializa();
         }
@@ -6416,6 +6537,8 @@
                 id = $("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id).attr("id")[$("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id).attr("id").length - 1],
                 widget = $("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id);
 
+            console.log(grid.listaWidgets);
+
             // Remove o bloqueio de resize posto na sidebar anterior
             $("#" + grid.id).data("gridstack").resizable($("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id).closest(".grid-stack-item"), true);
 
@@ -6465,9 +6588,6 @@
             var self = this,
                 widget;
 
-            widget = gridPrincipal.getWidget(id);
-
-            console.log(widget);
 
             // para cada item na lista de widgets
             // adicionaWidget
@@ -6475,8 +6595,116 @@
             // Redesenhar widget
             // loop
 
-            //to-do
-            self.AdicionaWidget(widget.widgetElemento, widget.titulo, null, widget.widgetLargura, widget.widgetAltura, widget.widgetX, widget.widgetY, true);
+            widget1 = '{"largura":192,"altura":184,"titulo":"Data","widgetAltura":"3","widgetLargura":"3","widgetX":"0","widgetY":"0","id":"19a3ceee-9491-4d21-9159-dbba8188625d","descricao":"Descricao do widget","mostraLegenda":true,"mostraToolTip":true,"estadoTabela":false,"ultimaAtualizacao":"2016/06/15","margem":{"cima":20,"baixo":50,"esquerda":40,"direita":40},"TamanhoLimite":350,"visivel":true,"objectoServidor":{"widgetLargura":"3","widgetAltura":"3","widgetX":"0","widgetY":"0","widgetTipo":"contexto","widgetElemento":"datahora_simples","id":"19a3ceee-9491-4d21-9159-dbba8188625d","visivel":true,"mostraLegenda":true,"mostraToolTip":true,"titulo":"Data","ultimaAtualizacao":"2016/06/15","contexto":["b0219e41-5a7f-48d3-af38-b6b2f8c7b724"],"opcoes":{"dataInicio":"2015-01-01","dataFim":"2015-01-20"}},"contexto":["b0219e41-5a7f-48d3-af38-b6b2f8c7b724"],"agregacoes":[],"seriesUtilizadas":[],"datainicial":"Inicio","datafinal":"Fim","opcoes":{"dataInicio":"2015-01-01","dataFim":"2015-01-20"},"widgetTipo":"contexto","widgetElemento":"datahora_simples","dataDescricao":{"dataInicio":"Data de inicio","dataFim":"Data do fim"},"svg":{"0":{},"length":1,"prevObject":{"0":{"jQuery111204561703890876043":227},"length":1,"context":{"location":{"href":"http://localhost:63450/pages/db_edicao.html#","origin":"http://localhost:63450","protocol":"http:","host":"localhost:63450","hostname":"localhost","port":"63450","pathname":"/pages/db_edicao.html","search":"","hash":""},"jQuery111204561703890876043":1},"selector":"#19a3ceee-9491-4d21-9159-dbba8188625d"},"context":{"location":{"href":"http://localhost:63450/pages/db_edicao.html#","origin":"http://localhost:63450","protocol":"http:","host":"localhost:63450","hostname":"localhost","port":"63450","pathname":"/pages/db_edicao.html","search":"","hash":""},"jQuery111204561703890876043":1},"selector":"#19a3ceee-9491-4d21-9159-dbba8188625d .wrapper"}}';
+            widget2 = '{"largura":320,"altura":246,"titulo":"GraficoLinhas","widgetAltura":"4","widgetLargura":"5","widgetX":"3","widgetY":"0","id":"b0219e41-5a7f-48d3-af38-b6b2f8c7b724","descricao":"Descricao do widget","mostraLegenda":true,"mostraToolTip":true,"estadoTabela":false,"ultimaAtualizacao":"2016/06/15","margem":{"cima":20,"baixo":50,"esquerda":40,"direita":40},"TamanhoLimite":350,"visivel":true,"objectoServidor":{"widgetLargura":"5","widgetAltura":"4","widgetX":"3","widgetY":"0","widgetTipo":"dados","widgetElemento":"GraficoLinhas","id":"b0219e41-5a7f-48d3-af38-b6b2f8c7b724","descricao":"Descricao do widget","modoVisualizacao":"normal","visivel":true,"mostraLegenda":true,"mostraToolTip":true,"titulo":"GraficoLinhas","ultimaAtualizacao":"2016/06/15","contexto":["19a3ceee-9491-4d21-9159-dbba8188625d"],"agregacoes":[],"seriesUtilizadas":[{"Nome":"Min","ComponenteSerie":"valor.valorMin","Campo":"Vazio","Funcao":"Vazio","Quebra":{"context":{"location":{"href":"http://localhost:63450/pages/db_edicao.html#","origin":"http://localhost:63450","protocol":"http:","host":"localhost:63450","hostname":"localhost","port":"63450","pathname":"/pages/db_edicao.html","search":"","hash":""},"jQuery111204561703890876043":1},"selector":"#pg22Quebra-1"}},{"Nome":"Max","ComponenteSerie":"valor.valorMax","Campo":"Vazio","Funcao":"Vazio","Quebra":{"context":{"location":{"href":"http://localhost:63450/pages/db_edicao.html#","origin":"http://localhost:63450","protocol":"http:","host":"localhost:63450","hostname":"localhost","port":"63450","pathname":"/pages/db_edicao.html","search":"","hash":""},"jQuery111204561703890876043":1},"selector":"#pg22Quebra-2"}}]},"contexto":["19a3ceee-9491-4d21-9159-dbba8188625d"],"agregacoes":[],"seriesUtilizadas":[{"Nome":"Min","ComponenteSerie":"valor.valorMin","Campo":"Vazio","Funcao":"Vazio","Quebra":{"context":{"location":{"href":"http://localhost:63450/pages/db_edicao.html#","origin":"http://localhost:63450","protocol":"http:","host":"localhost:63450","hostname":"localhost","port":"63450","pathname":"/pages/db_edicao.html","search":"","hash":""},"jQuery111204561703890876043":1},"selector":"#pg22Quebra-1"}},{"Nome":"Max","ComponenteSerie":"valor.valorMax","Campo":"Vazio","Funcao":"Vazio","Quebra":{"context":{"location":{"href":"http://localhost:63450/pages/db_edicao.html#","origin":"http://localhost:63450","protocol":"http:","host":"localhost:63450","hostname":"localhost","port":"63450","pathname":"/pages/db_edicao.html","search":"","hash":""},"jQuery111204561703890876043":1},"selector":"#pg22Quebra-2"}}],"modoVisualizacao":"normal","widgetTipo":"dados","widgetElemento":"GraficoLinhas","chave":[7.05,6.32083333333333,6.7142263986014,7.05,6.32083333333333,6.7142263986014],"spinner":{"opts":{"lines":14,"length":0,"width":20,"radius":46,"scale":0.75,"corners":1,"rotate":81,"direction":1,"color":"#fff","speed":1,"trail":47,"opacity":0,"shadow":false,"hwaccel":false,"className":"spinner","zIndex":2000000000,"top":"50%","left":"50%","fps":20,"position":"absolute"}},"dados":{"resultado":{"Dados":true,"Sucesso":true},"dados":{"DashboardID":8,"TempoResposta":112,"Erro":false,"Widgets":[{"WidgetID":"b0219e41-5a7f-48d3-af38-b6b2f8c7b724","TotalItems":19,"Resultado":null,"Items":[{"ChaveTexto":"01-01-2015 00:00:00","Data":"2015-01-01T00:00:00","Chave":"1420070400000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":6.57083333333333},{"Nome":"valor.valorMin","Valor":5.94166666666667},{"Nome":"valor.valorMed","Valor":6.34071759259259}]},{"ChaveTexto":"02-01-2015 00:00:00","Data":"2015-01-02T00:00:00","Chave":"1420156800000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":5.47083333333333},{"Nome":"valor.valorMin","Valor":5.3125},{"Nome":"valor.valorMed","Valor":5.39606481481481}]},{"ChaveTexto":"03-01-2015 00:00:00","Data":"2015-01-03T00:00:00","Chave":"1420243200000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":6.57083333333333},{"Nome":"valor.valorMin","Valor":5.8625},{"Nome":"valor.valorMed","Valor":6.24503367003367}]},{"ChaveTexto":"04-01-2015 00:00:00","Data":"2015-01-04T00:00:00","Chave":"1420329600000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":7.05},{"Nome":"valor.valorMin","Valor":6.32083333333333},{"Nome":"valor.valorMed","Valor":6.7142263986014}]},{"ChaveTexto":"05-01-2015 00:00:00","Data":"2015-01-05T00:00:00","Chave":"1420416000000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":6.50416666666667},{"Nome":"valor.valorMin","Valor":5.62083333333333},{"Nome":"valor.valorMed","Valor":6.05561747280497}]},{"ChaveTexto":"06-01-2015 00:00:00","Data":"2015-01-06T00:00:00","Chave":"1420502400000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":5.20416666666667},{"Nome":"valor.valorMin","Valor":5.06666666666667},{"Nome":"valor.valorMed","Valor":5.14337121212121}]},{"ChaveTexto":"07-01-2015 00:00:00","Data":"2015-01-07T00:00:00","Chave":"1420588800000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.44583333333333},{"Nome":"valor.valorMin","Valor":3.05},{"Nome":"valor.valorMed","Valor":3.25969065656566}]},{"ChaveTexto":"08-01-2015 00:00:00","Data":"2015-01-08T00:00:00","Chave":"1420675200000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.47916666666667},{"Nome":"valor.valorMin","Valor":3.15416666666667},{"Nome":"valor.valorMed","Valor":3.28661616161616}]},{"ChaveTexto":"09-01-2015 00:00:00","Data":"2015-01-09T00:00:00","Chave":"1420761600000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.50833333333333},{"Nome":"valor.valorMin","Valor":3.39166666666667},{"Nome":"valor.valorMed","Valor":3.43857323232323}]},{"ChaveTexto":"10-01-2015 00:00:00","Data":"2015-01-10T00:00:00","Chave":"1420848000000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.41666666666667},{"Nome":"valor.valorMin","Valor":3.33333333333333},{"Nome":"valor.valorMed","Valor":3.37607323232323}]},{"ChaveTexto":"11-01-2015 00:00:00","Data":"2015-01-11T00:00:00","Chave":"1420934400000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.79166666666667},{"Nome":"valor.valorMin","Valor":3.3875},{"Nome":"valor.valorMed","Valor":3.61229797979798}]},{"ChaveTexto":"12-01-2015 00:00:00","Data":"2015-01-12T00:00:00","Chave":"1421020800000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":4.1375},{"Nome":"valor.valorMin","Valor":3.65833333333333},{"Nome":"valor.valorMed","Valor":3.89128787878788}]},{"ChaveTexto":"13-01-2015 00:00:00","Data":"2015-01-13T00:00:00","Chave":"1421107200000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.34166666666667},{"Nome":"valor.valorMin","Valor":3.09583333333333},{"Nome":"valor.valorMed","Valor":3.21657196969697}]},{"ChaveTexto":"14-01-2015 00:00:00","Data":"2015-01-14T00:00:00","Chave":"1421193600000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.52916666666667},{"Nome":"valor.valorMin","Valor":3.4},{"Nome":"valor.valorMed","Valor":3.44742213804714}]},{"ChaveTexto":"15-01-2015 00:00:00","Data":"2015-01-15T00:00:00","Chave":"1421280000000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":4.15},{"Nome":"valor.valorMin","Valor":3.7875},{"Nome":"valor.valorMed","Valor":4.01097853535353}]},{"ChaveTexto":"16-01-2015 00:00:00","Data":"2015-01-16T00:00:00","Chave":"1421366400000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.14583333333333},{"Nome":"valor.valorMin","Valor":2.92083333333333},{"Nome":"valor.valorMed","Valor":3.0479797979798}]},{"ChaveTexto":"17-01-2015 00:00:00","Data":"2015-01-17T00:00:00","Chave":"1421452800000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.59166666666667},{"Nome":"valor.valorMin","Valor":3.45416666666667},{"Nome":"valor.valorMed","Valor":3.53544823232323}]},{"ChaveTexto":"18-01-2015 00:00:00","Data":"2015-01-18T00:00:00","Chave":"1421539200000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":4.38333333333333},{"Nome":"valor.valorMin","Valor":4.24583333333333},{"Nome":"valor.valorMed","Valor":4.30149410774411}]},{"ChaveTexto":"19-01-2015 00:00:00","Data":"2015-01-19T00:00:00","Chave":"1421625600000","NumDocumentos":24,"Valores":[{"Nome":"valor.valorMax","Valor":3.09166666666667},{"Nome":"valor.valorMin","Valor":2.86666666666667},{"Nome":"valor.valorMed","Valor":2.97604797979798}]}]}]}},"svg":[[{}]],"dadosNormal":[{"name":"valor.valorMax","values":[{"name":"valor.valorMax","y":6.57083333333333,"date":"2015-01-01T00:00:00.000Z"},{"name":"valor.valorMax","y":5.47083333333333,"date":"2015-01-02T00:00:00.000Z"},{"name":"valor.valorMax","y":6.57083333333333,"date":"2015-01-03T00:00:00.000Z"},{"name":"valor.valorMax","y":7.05,"date":"2015-01-04T00:00:00.000Z"},{"name":"valor.valorMax","y":6.50416666666667,"date":"2015-01-05T00:00:00.000Z"},{"name":"valor.valorMax","y":5.20416666666667,"date":"2015-01-06T00:00:00.000Z"},{"name":"valor.valorMax","y":3.44583333333333,"date":"2015-01-07T00:00:00.000Z"},{"name":"valor.valorMax","y":3.47916666666667,"date":"2015-01-08T00:00:00.000Z"},{"name":"valor.valorMax","y":3.50833333333333,"date":"2015-01-09T00:00:00.000Z"},{"name":"valor.valorMax","y":3.41666666666667,"date":"2015-01-10T00:00:00.000Z"},{"name":"valor.valorMax","y":3.79166666666667,"date":"2015-01-11T00:00:00.000Z"},{"name":"valor.valorMax","y":4.1375,"date":"2015-01-12T00:00:00.000Z"},{"name":"valor.valorMax","y":3.34166666666667,"date":"2015-01-13T00:00:00.000Z"},{"name":"valor.valorMax","y":3.52916666666667,"date":"2015-01-14T00:00:00.000Z"},{"name":"valor.valorMax","y":4.15,"date":"2015-01-15T00:00:00.000Z"},{"name":"valor.valorMax","y":3.14583333333333,"date":"2015-01-16T00:00:00.000Z"},{"name":"valor.valorMax","y":3.59166666666667,"date":"2015-01-17T00:00:00.000Z"},{"name":"valor.valorMax","y":4.38333333333333,"date":"2015-01-18T00:00:00.000Z"},{"name":"valor.valorMax","y":3.09166666666667,"date":"2015-01-19T00:00:00.000Z"}],"Numero":1,"Nome":"Max"},{"name":"valor.valorMin","values":[{"name":"valor.valorMin","y":5.94166666666667,"date":"2015-01-01T00:00:00.000Z"},{"name":"valor.valorMin","y":5.3125,"date":"2015-01-02T00:00:00.000Z"},{"name":"valor.valorMin","y":5.8625,"date":"2015-01-03T00:00:00.000Z"},{"name":"valor.valorMin","y":6.32083333333333,"date":"2015-01-04T00:00:00.000Z"},{"name":"valor.valorMin","y":5.62083333333333,"date":"2015-01-05T00:00:00.000Z"},{"name":"valor.valorMin","y":5.06666666666667,"date":"2015-01-06T00:00:00.000Z"},{"name":"valor.valorMin","y":3.05,"date":"2015-01-07T00:00:00.000Z"},{"name":"valor.valorMin","y":3.15416666666667,"date":"2015-01-08T00:00:00.000Z"},{"name":"valor.valorMin","y":3.39166666666667,"date":"2015-01-09T00:00:00.000Z"},{"name":"valor.valorMin","y":3.33333333333333,"date":"2015-01-10T00:00:00.000Z"},{"name":"valor.valorMin","y":3.3875,"date":"2015-01-11T00:00:00.000Z"},{"name":"valor.valorMin","y":3.65833333333333,"date":"2015-01-12T00:00:00.000Z"},{"name":"valor.valorMin","y":3.09583333333333,"date":"2015-01-13T00:00:00.000Z"},{"name":"valor.valorMin","y":3.4,"date":"2015-01-14T00:00:00.000Z"},{"name":"valor.valorMin","y":3.7875,"date":"2015-01-15T00:00:00.000Z"},{"name":"valor.valorMin","y":2.92083333333333,"date":"2015-01-16T00:00:00.000Z"},{"name":"valor.valorMin","y":3.45416666666667,"date":"2015-01-17T00:00:00.000Z"},{"name":"valor.valorMin","y":4.24583333333333,"date":"2015-01-18T00:00:00.000Z"},{"name":"valor.valorMin","y":2.86666666666667,"date":"2015-01-19T00:00:00.000Z"}],"Numero":0,"Nome":"Min"},{"name":"valor.valorMed","values":[{"name":"valor.valorMed","y":6.34071759259259,"date":"2015-01-01T00:00:00.000Z"},{"name":"valor.valorMed","y":5.39606481481481,"date":"2015-01-02T00:00:00.000Z"},{"name":"valor.valorMed","y":6.24503367003367,"date":"2015-01-03T00:00:00.000Z"},{"name":"valor.valorMed","y":6.7142263986014,"date":"2015-01-04T00:00:00.000Z"},{"name":"valor.valorMed","y":6.05561747280497,"date":"2015-01-05T00:00:00.000Z"},{"name":"valor.valorMed","y":5.14337121212121,"date":"2015-01-06T00:00:00.000Z"},{"name":"valor.valorMed","y":3.25969065656566,"date":"2015-01-07T00:00:00.000Z"},{"name":"valor.valorMed","y":3.28661616161616,"date":"2015-01-08T00:00:00.000Z"},{"name":"valor.valorMed","y":3.43857323232323,"date":"2015-01-09T00:00:00.000Z"},{"name":"valor.valorMed","y":3.37607323232323,"date":"2015-01-10T00:00:00.000Z"},{"name":"valor.valorMed","y":3.61229797979798,"date":"2015-01-11T00:00:00.000Z"},{"name":"valor.valorMed","y":3.89128787878788,"date":"2015-01-12T00:00:00.000Z"},{"name":"valor.valorMed","y":3.21657196969697,"date":"2015-01-13T00:00:00.000Z"},{"name":"valor.valorMed","y":3.44742213804714,"date":"2015-01-14T00:00:00.000Z"},{"name":"valor.valorMed","y":4.01097853535353,"date":"2015-01-15T00:00:00.000Z"},{"name":"valor.valorMed","y":3.0479797979798,"date":"2015-01-16T00:00:00.000Z"},{"name":"valor.valorMed","y":3.53544823232323,"date":"2015-01-17T00:00:00.000Z"},{"name":"valor.valorMed","y":4.30149410774411,"date":"2015-01-18T00:00:00.000Z"},{"name":"valor.valorMed","y":2.97604797979798,"date":"2015-01-19T00:00:00.000Z"}]}]}';
+
+            widgets = [JSON.parse(widget1), JSON.parse(widget2)];
+
+            widgets.forEach(function (item) {
+                var widgetNovo,
+                    idOriginal;
+
+                idOriginal = item.id;
+
+                // Adicionar um novo widget na grid
+                self.AdicionaWidget(item.widgetElemento, item.titulo, null, item.widgetLargura, item.widgetAltura, item.widgetX, item.widgetY, true, idOriginal);
+
+                // WidgetNovo é o ultimo  a ser criado
+                widgetNovo = gridPrincipal.listaWidgets[gridPrincipal.listaWidgets.length - 1];
+
+
+                // Para cada propriedade no objecto
+                $.each(item.objectoServidor, function (chave, valor) {
+                    // Caso não seja função
+                    if (typeof valor !== "function") {
+                        widgetNovo[chave] = valor;
+                    }
+
+                });
+
+                
+                // Caso seja um widget do tipo dados
+                if (widgetNovo.widgetTipo === "dados") {
+                    //  Filtrar o widget e desenhar
+                    gridPrincipal.FiltraContexto();
+                    widgetNovo.RedesenhaGrafico(widgetNovo.id);
+                }
+
+
+                $("#" + gridPrincipal.id).data("gridstack").minWidth($("#" + widgetNovo.id).closest(".grid-stack-item"), 3);
+                $("#" + gridPrincipal.id).data("gridstack").minHeight($("#" + widgetNovo.id).closest(".grid-stack-item"), 3);
+
+
+            });
+
+            // Define widgets na PropertyGrid
+            self.CarregaListaComponentes();
+
+
+            //// Para cada item na lista de widgets
+            //gridPrincipal.listaWidgets.forEach(function (item) {
+            //    var widgetNovo,
+            //        idAntigo,
+            //        copia;
+
+
+
+            //    // Adiciona widget
+            //    self.AdicionaWidget(item.widgetElemento, item.titulo, null, item.widgetLargura, item.widgetAltura, item.widgetX, item.widgetY, true);
+
+            //    // WidgetNovo é o ultimo  a ser criado
+            //    widgetNovo = gridPrincipal.listaWidgets[gridPrincipal.listaWidgets.length - 1];
+
+            //    // REMOVER - apenas utilizar enquanto está a efetuar cópias
+            //    idAntigo = widgetNovo.id;
+
+            //    // Para cada propriedade no objecto
+            //    $.each(item.objectoServidor, function (chave, valor) {
+            //        // Caso não seja função
+            //        if(typeof valor !== "function"){
+            //            widgetNovo[chave] = valor;
+            //        }    
+            //    });
+
+            //    // Modificar, apenas usar idAntigo quando está a efetuar cópias
+            //    widgetNovo.id = idAntigo;
+
+            //    if (widgetNovo.widgetTipo === "dados") {
+            //        gridPrincipal.FiltraContexto();
+            //        widgetNovo.RedesenhaGrafico(idAntigo);
+            //    }
+
+            //});
+
+        }
+
+
+        /// <summary>
+        /// Carrega a lista de componentes para ligação depois de carregados os widgets
+        /// </summary>
+        Grid.prototype.CarregaListaComponentes = function () {
+            var self = this,
+                widgets,
+                listaWidgetsDados = [" Sem componente "],
+                listaWidgetsContexto = [" Sem componente "];
+                // Adquire ultima class do widget ( Class que identifica o tipo de widget )
+                //tipoWidget = node.children().attr('class').split(' ').pop(),
+                // Adquire ID do widget
+                //idWidget = node.children().attr("id");
+
+            // Para cada item
+            self.listaWidgets.forEach(function (item) {
+                // Preenche a sidebar
+                //$(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
+
+                // Adiciona ao array de objectos correcto
+                (item.widgetTipo === "contexto") ? listaWidgetsContexto.push({ text: item.titulo, value: item.id }) : listaWidgetsDados.push({ text: item.titulo, value: item.id });
+
+            });
+
+            // Define widgets na PropertyGrid
+            PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
+            PropertyGrid.AdicionaCheckboxMenu();
 
         }
 
@@ -6602,10 +6830,11 @@
         /// </summary>
         /// <param name="tipoWidget"> Tipo de widget a ser adicionado a grid </param>
         /// <param name
-        Grid.prototype.AdicionaWidget = function (tipoWidget, titulo, dados, width, height, x, y, novo) {
+        Grid.prototype.AdicionaWidget = function (tipoWidget, titulo, dados, width, height, x, y, novo, idAlternativo) {
             var self = this,
                 coordenadaX = x || "0",
                 coordenadaY = y || "0",
+                GUID = (idAlternativo !== undefined)? GUID = idAlternativo : getGUID(),
                 el,
                 width,
                 height,
@@ -6624,14 +6853,17 @@
 
 
             if (novo === true) {
-                el = self.CriaElementInicial(idUnico, titulo);
+                el = self.CriaElementInicial(GUID, titulo);
+
             } else
             if (self.id === "main-gridstack") {
                 el = self.CriaElemento(idUnico, titulo);
                 (minWidth === undefined)? minWidth = 3 : minWidth = minWidth;
                 (minHeight === undefined) ? minHeight = 3 : minHeight = minHeight;
+
             } else {
-                el = self.CriaElementoSecundario(idUnico, titulo, tipoWidget);
+                el = self.CriaElementoSecundario(GUID, titulo, tipoWidget);
+
             }
 
             // Atributo opcional, define uma posição automática para o widget
@@ -6655,21 +6887,21 @@
                 coordenadaY = 50;
             }
 
-            console.log(el);
-            console.log(width);
-            console.log(height);
 
             // Adiciona widget, biblioteca gridstack
             // apenas é obrigatório o atributo el
             self.grid.data("gridstack").addWidget(el, coordenadaX, coordenadaY, width, height, autoPosition, minWidth, maxWidth, minHeight, maxHeight, id);
 
+            console.log(self);
+            console.log(GUID);
+            console.log($("#" + GUID));
 
             // Define tamanho da listaWidgets
             ultimo = self.listaWidgets.length;
 
 
             // Adiciona o widget criado ao dashboard
-            self.AdicionaWidgetLista(tipoWidget, "widget" + idUnico, dados);
+            self.AdicionaWidgetLista(tipoWidget, GUID, dados);
 
             
             // Atribui ao widget a sua class
@@ -6736,11 +6968,13 @@
         /// <summary>
         /// Cria um elemento HTM base, para um widget que ainda não esteja criado, por exemplo a carregar widgets
         /// </summary>
-        Grid.prototype.CriaElementInicial = function(idUnico, titulo){
+        Grid.prototype.CriaElementInicial = function (id, titulo) {
+
+            //id=\"widget" + idUnico + "\"
 
             var el = "<div class=\"grid-stack-item nao-seleciona\">" +
                      // Div do conteudo do item da grid
-                     "<div id=\"widget" + idUnico + "\" class=\"grid-stack-item-content box panel panel-default\">" +
+                     "<div id=" + id + " class=\"grid-stack-item-content box panel panel-default\">" +
                      // to-do idUnico melhor
                      // Navbar da widget
                      "<div class=\"widget-navbar panel-heading\">" +
@@ -6771,9 +7005,7 @@
         /// Método que cria o elemento HTML para um widget já criado
         /// </summary>
         /// <returns> Retorna uma fundação base HTML para o widget </returns>
-        Grid.prototype.CriaElemento = function (idUnico, titulo) {
-            // Criação padrão do HTML do widget
-            // Definimos um item da grid
+        Grid.prototype.CriaElemento = function (id, titulo) {
 
             var el = "<div class=\"widget-navbar panel-heading\">" +
                         // Titulo do widget
@@ -6829,13 +7061,17 @@
         /// Método que cria o elemento HTML base para o widget, BARRA SECUNDÁRIA
         /// </summary>
         /// <returns> Retorna uma fundação base HTML para o widget </returns>
-        Grid.prototype.CriaElementoSecundario = function (idUnico, titulo, tipoWidget) {
+        Grid.prototype.CriaElementoSecundario = function (id, titulo, tipoWidget) {
             // Criação padrão do HTML do widget
             // Definimos um item da grid
 
+            //id=\"widget" + idUnico + "\"
+
+            console.log(id);
+
             var el = "<div class=\"grid-stack-item nao-seleciona widget-barraSecundaria\">" +
                      // Div do conteudo do item da grid
-                     "<div id=\"widget" + idUnico + "\" class=\"grid-stack-item-content\">" +
+                     "<div id="+ id +"  class=\"grid-stack-item-content\">" +
                      "<div class=\"wrapper\">" +
                      // Conteudo do widget
                      "<div class=\"widget-conteudo\"> " + "<span style='text-align:center;'>"+ tipoWidget +"</span>" + 
@@ -6883,7 +7119,7 @@
                             // Procura index do widget no contexto
                             index = _.findIndex(self.listaWidgets, function (d) { return widget === d.id });
 
-                        // Adquire os dados filtrados
+                        // Adquire os dados filtrados (apagar paraemtro widget?)
                         item.FiltraDados(self.listaWidgets[index], widget);
 
                         // Redeseha os dados de acordo com os dados adquiridos
@@ -6994,6 +7230,7 @@
                 self.listaWidgets.forEach(function (item, curIndex) {
                     console.log("Widget " + (curIndex + 1) + " - ID: " + item.id);
                     console.log(item);
+                    console.log(JSON.stringify(item.objectoServidor));
                 });
 
                 console.log("Lista de Widgets - Formato Array:")
@@ -7247,10 +7484,24 @@
         /// Adiciona um dashboard à lista
         /// </summary>
         /// <param name ="dashboard"> Envia um objecto do tipo "Grid" para ser adicionado a lista </param>
-        Conteudo.prototype.AdicionaDashboard = function (dashboard, nome) {
-            var self = this;
+        Conteudo.prototype.AdicionaDashboard = function (objectoDashboard, nome) {
+            var self = this,
+                dashboard = {},
+                listaWidgets = [];
 
-            dashboard.setNome(nome);
+            objectoDashboard.listaWidgets.forEach(function (widget) {
+                listaWidgets.push(widget.objectoServidor);
+            });
+
+            console.log(listaWidgets);
+
+            //dashboard.setNome(nome);
+            dashboard["nome"] = objectoDashboard.nome;
+            dashboard["descricao"] = objectoDashboard.descricao;
+            dashboard["id"] = objectoDashboard.id;
+            dashboard["idUnico"] = objectoDashboard.idUnico;
+            dashboard["listaWidgets"] = listaWidgets;
+            dashboard["opcoesAparencia"] = " ";
 
             self.listaDashboards.push({Dashboard: dashboard});
         }
@@ -7267,8 +7518,8 @@
             // Encontra index da dashboard na lista
             index = _.findIndex(self.listaDashboards, function (objecto) { return objecto.Dashboard.nome === gridPrincipal.nome; });
 
-            if(index !== -1){
-                self.listaDashboards[index].Dashboard = gridPrincipal;
+            if (index !== -1) {
+                self.listaDashboards[index].Dashboard = gridPrincipal.objectoServidor;
             } else {
                 alert ("DASHBOARD - Tentativa de guardar sem estar criada");
             }
@@ -7279,7 +7530,7 @@
         /// <summary>
         /// Carrega dashboard para a aplicação
         /// </summary>
-        Conteudo.prototype.CarregaDashboard = function(identificador){
+        Conteudo.prototype.CarregaDashboard = function(idUnico){
             var self = this;
 
             // to-do IMPORTANTE
@@ -7343,12 +7594,12 @@
             return self.dashboardAtual;
 
         }
-        Conteudo.prototype.setDashboardAtual = function (identificador) {
+        Conteudo.prototype.setDashboardAtual = function (idUnico) {
             var self = this;
 
-            self.CarregaDashboard(identificador);
+            self.CarregaDashboard(idUnico);
 
-            self.dashboardAtual = identificador;
+            self.dashboardAtual = idUnico;
 
         }
 
@@ -7567,6 +7818,8 @@
     $(".dashboard-informa").click(function () {
         console.log(Utilizador);
         console.log(Utilizador.getDashboards());
+        console.log(JSON.stringify(Utilizador.getDashboards()))
+
     });
 
 
@@ -7590,6 +7843,7 @@
     
     $(".adicionaTeste").click(function () {
         gridPrincipal.CarregaWidgets(prompt());
+        gridPrincipal.listaWidgets;
     });
 
 })

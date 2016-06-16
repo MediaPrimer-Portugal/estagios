@@ -442,7 +442,8 @@ primerCORE = (function () {
     /// <param name="widget"> Widget que está a pedir dados </param>
     /// <param name="opcoes"> Opcoes para filtrar o pedido (data inicio, fim) </param>
     /// <returns> Devolve um objecto com a informação do  widget  </returns>
-    objecto.DashboardDevolveWidget = function (widget, opcoes) {
+    objecto.DashboardDevolveWidget = function (widget, opcoes, dashboardID, utilizadorID) {
+        // substituir campos na query, funcao e campo????
 
         var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/valores?sessaoID=sessaoDebug";
 

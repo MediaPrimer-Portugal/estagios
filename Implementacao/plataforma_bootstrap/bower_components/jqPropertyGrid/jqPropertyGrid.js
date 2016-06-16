@@ -189,7 +189,7 @@
 		    valueHTML = '<p></p>';
 		    if (getValueFuncs) {
 		        getValueFuncs[name] = function () {
-		            return $("#" + elemId);
+		            return "quebra";
 		        }
 		    }
 		    /*

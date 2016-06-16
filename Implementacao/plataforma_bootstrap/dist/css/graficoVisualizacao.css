@@ -106,7 +106,6 @@
     }
 
     #page-wrapper {
-        margin: 0 0 0 0 !important;
         padding: 0 0 0 20px !important;
         background-color: #fff;
         box-shadow: 3px 0 15px -5px #333333 inset;
@@ -117,7 +116,7 @@
         #page-wrapper {
             height: calc(100% - 131px) !important;
             position: inherit;
-            margin: 0 0 0 200px;
+            margin: 0 0 0 0 !important;
             padding: 0px;
             /*border-left: 1px solid #e7e7e7;*/
         }
@@ -347,14 +346,18 @@
         Legenda
     ------------------*/
 
-.legenda {
-    float: right;
-    width: 10%;
-    height: 5%;
-    position: relative;
-    right: 8%;
-    top: 5%;
-}
+    .legenda {
+        height: 5%;
+        width: 90px;
+        position: absolute;
+        right: 0;
+        top: 50px;
+        overflow-wrap: break-word;
+    }
+
+    .legenda > svg{
+        width:100%;
+    }
 
 
 /*------------------
@@ -394,49 +397,50 @@
     }
 
 
-/*------------------
+    /*------------------
         Spinner
     ------------------*/
 
-.carregar {
-    background-color: #333 !important;
-}
+    .carregar {
+        background-color: #333 !important;
+    }
 
 
 
-/*------------------
+    /*------------------
         GridStack (Main Gridstack)
     ------------------*/
 
-#main-gridstack {
-    /*background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAF0lEQVQYlWNgYGAwJhJDCGLAqELKFQIAbzEDyp/S1OkAAAAASUVORK5CYII=) repeat;*/
-}
+    #main-gridstack {
+        /*background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAF0lEQVQYlWNgYGAwJhJDCGLAqELKFQIAbzEDyp/S1OkAAAAASUVORK5CYII=) repeat;*/
+    }
 
-.gridstack-background{
-    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAF0lEQVQYlWNgYGAwJhJDCGLAqELKFQIAbzEDyp/S1OkAAAAASUVORK5CYII=) repeat;
-}
+    .gridstack-background{
+        background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAF0lEQVQYlWNgYGAwJhJDCGLAqELKFQIAbzEDyp/S1OkAAAAASUVORK5CYII=) repeat;
+    }
 
-/* Modificar margem lateral dos "Widgets"*/
-.grid-stack .grid-stack-item .grid-stack-item-content,
-.grid-stack .grid-stack-item .placeholder-content {
-    left: 2px !important;
-    right: 2px !important;
-}
+    /* Modificar margem lateral dos "Widgets"*/
+    .grid-stack .grid-stack-item .grid-stack-item-content,
+    .grid-stack .grid-stack-item .placeholder-content {
+        left: 2px !important;
+        right: 2px !important;
+    }
 
-/* "Retira" imagem da handle de resize: ; */
-.grid-stack > .grid-stack-item > .ui-resizable-se,
-.grid-stack > .grid-stack-item > .ui-resizable-sw {
-    background-image: none;
-}
+    /* "Retira" imagem da handle de resize: ; */
+    .grid-stack > .grid-stack-item > .ui-resizable-se,
+    .grid-stack > .grid-stack-item > .ui-resizable-sw {
+        background-image: none;
+    }
 
-/*  Esconder o overflow dentro dos widgets  */
-.grid-stack-item-content {
-    overflow: visible !important;
-}
+    /*  Esconder o overflow dentro dos widgets  */
+    .grid-stack-item-content {
+        overflow: visible !important;
+        /*overflow-y: hidden !important;*/
+    }
 
 
 
-/*--------------------
+        /*--------------------
         Gridstack (Barra Secundária)
     ----------------------*/
 
@@ -518,41 +522,53 @@
         /*background-color: azure;*/
         /*border: 1px solid #000;*/
     }
+    
+    
+    /*--------------------
+        Widget Dropdown Options
+    ----------------------*/
+
+    .dropdown-menu{
+        overflow: visible !important;
+        top: 0% !important;
+        left: 100% !important;
+    }
 
 
-/*--------------------
+
+    /*--------------------
         Widget Navbar
     ----------------------*/
 
-/*
+    /*
         "Navbar" do widget com as opções
     */
-.widget-navbar {
-    /*width: 100%;
-      height:5%;
-      min-height: 20px;*/
-    text-align: center;
-    /*background-color: cadetblue;
-      border-bottom: 1px solid #000;*/
-    cursor: move;
-}
+    .widget-navbar {
+        /*width: 100%;
+          height:5%;
+          min-height: 20px;*/
+        text-align: center;
+        /*background-color: cadetblue;
+          border-bottom: 1px solid #000;*/
+        cursor: move;
+    }
 
-.widget-accoes {
-    width: 50px;
-}
+    .widget-accoes {
+        width: 50px;
+    }
 
-.widget-navbar > button:hover {
-    border: 1px solid white;
-}
+    .widget-navbar > button:hover {
+        border: 1px solid white;
+    }
 
-.widget-accoes {
-    float: right;
-    height: 100%;
-}
+    .widget-accoes {
+        float: right;
+        height: 100%;
+    }
 
-.dropdown-menu > li {
-    cursor: pointer;
-}
+    .dropdown-menu > li {
+        cursor: pointer;
+    }
 
 
 /* Botões ordenados */
@@ -594,119 +610,120 @@
 
 
 
-/*--------------------
+    /*--------------------
         CSS dos Eixos
     ----------------------*/
 
-.axis path,
-.axis line {
-    fill: none;
-    stroke: #000;
-    shape-rendering: crispEdges;
-}
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+    }
 
-/*--------------------
+    /*--------------------
         Gráfico Area
     ----------------------*/
 
-.area {
-}
+    .area {
+    }
 
-/*--------------------
+    /*--------------------
         Gráfico Barras
     --------------------*/
 
-.bar {
-    fill: red;
-}
+    .bar {
+        fill: red;
+    }
 
     .bar:hover {
         fill: blue;
     }
 
-/*--------------------
+    /*--------------------
         Gráfico Barras
     --------------------*/
 
-.bar {
-    fill: red;
-}
+    .bar {
+        fill: red;
+    }
 
     .bar:hover {
         fill: blue;
     }
 
-/*--------------------
+    /*--------------------
         Pie Chart
     --------------------*/
 
-/*
+    /*
         Puxa o wrapper para a esquerda, para que as legendas
         possam estar do lado do wrapper
     */
-.pieChart > .wrapper {
-    float: left;
-}
+    .pieChart > .wrapper {
+        float: left;
+    }
 
 
-.piechart-donut {
-    background-color: lightyellow;
-    border: none;
-}
+    .piechart-donut {
+        background-color: lightyellow;
+        border: none;
+    }
 
-/* Hover - Fatias do Pie Chart*/
-svg .slice:hover {
-    opacity: 0.5;
-}
+    /* Hover - Fatias do Pie Chart*/
+    svg .slice:hover {
+        opacity: 0.5;
+    }
 
-/*--------------------
+    /*--------------------
         Gauge
     --------------------*/
 
-.gauge > .wrapper {
-    width: 100% !important;
-    margin-left: 2.5% !important;
-}
+    .gauge > .wrapper {
+        width: 100% !important;
+        margin-left: 2.5% !important;
+    }
 
-.grafico-pintado {
-    fill: rgb(47, 74, 170);
-}
+    .grafico-pintado {
+        fill: rgb(47, 74, 170);
+    }
 
-.grafico-vazio {
-    fill: rgb(200, 200, 200);
-}
+    .grafico-vazio {
+        fill: rgb(200, 200, 200);
+    }
 
-/*--------------------
+    /*--------------------
         Tabela
     --------------------*/
 
-.tabela > .wrapper {
-    overflow: auto !important;
-    width: calc(100% - 5px) !important;
-    height: 90% !important;
-    margin-bottom: 5px;
-}
+    .tabela > .wrapper {
+        overflow: auto !important;
+        width: calc(100% - 5px) !important;
+        height: 90% !important;
+        margin-bottom: 5px;
+    }
 
-.widget-table {
-    width: 100% !important;
-}
+    .widget-table {
+        width: 100% !important;
+    }
 
 
-/*--------------------
+    /*--------------------
         KPI
     --------------------*/
 
-.KPI > .wrapper {
-    width: 100% !important;
-    margin: 0 !important;
-}
+    .KPI > .wrapper {
+        width: 100% !important;
+        margin: 0 !important;
+    }
 
-/*--------------------
+    /*--------------------
         Widget Data 
     --------------------*/
 
     .wrapper > .container{
         width: 100% !important;
+        height: 34px;
     }
 
     .wrapper-contexto > .container{

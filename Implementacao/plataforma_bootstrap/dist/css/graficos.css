@@ -10,6 +10,10 @@
     }
 
 
+    /*------------------
+        Utililidade
+    ------------------*/
+
     .showHelp{
         cursor: help;
     }
@@ -27,6 +31,13 @@
         -moz-user-select: none; /* Firefox */
         -ms-user-select: none; /* Internet Explorer/Edge */
     }
+
+
+
+    /*------------------
+        Ecrã Expandido        
+    ------------------*/
+
 
     #ecraExpandido-widget {
         position: absolute;
@@ -55,7 +66,11 @@
         z-index: 9999;
     }
 
-/*------------------
+
+
+
+
+    /*------------------
         TESTES // APAGAR ( Tabela de coordenadas )
     ------------------*/
 
@@ -72,19 +87,7 @@
         padding: 0;
     }
 
-    /* Brilho da box, widget "ativo" */
-    .widget-ativo {
-        -webkit-box-shadow: 0px 0px 10px 2px rgba(72,255,0,1);
-        -moz-box-shadow: 0px 0px 10px 2px rgba(72,255,0,1);
-        box-shadow: 0px 0px 10px 2px rgba(72,255,0,1);
-    }
-
-    .widget-aviso {
-        -webkit-box-shadow: 0px 0px 10px 2px rgba(250,3,3,1);
-        -moz-box-shadow: 0px 0px 10px 2px rgba(250,3,3,1);
-        box-shadow: 0px 0px 10px 2px rgba(250,3,3,1);
-    }
-
+    
 
     /* Para se manter afastado dos navegadores em cima*/
     .sidebar {
@@ -92,7 +95,10 @@
     }
 
 
-    /*---*/
+    /*------------------
+        LAYOUT estilo - maingridstack
+    ------------------*/
+
 
     .dashboard-coluna {
         padding-right: 15px;
@@ -104,6 +110,7 @@
         height: 100%;
         width: 100%;
     }
+
 
     #page-wrapper {
         padding: 0 0 0 20px !important;
@@ -134,49 +141,49 @@
         Barras de Navegação
     ------------------*/
 
-.nav-separador {
-    height: 5px;
-    background-color: red;
-}
-
-.nav-utilizador {
-    min-height: 30px;
-    width: 100%;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    background-color: #161616;
-    color: white;
-    z-index: 2;
-}
-
-    .nav-utilizador img {
-        max-height: 20px;
-        float: right;
-        margin-right: 20px;
+    .nav-separador {
+        height: 5px;
+        background-color: red;
     }
 
-.nav-dashboard {
-    height: 45px;
-    width: 100%;
-    padding: 10px;
-    margin: auto;
-    background-color: #333333;
-    color: white;
-    z-index: 2;
-}
+    .nav-utilizador {
+        min-height: 30px;
+        width: 100%;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        background-color: #161616;
+        color: white;
+        z-index: 2;
+    }
 
-.nav-dashboard-titulo {
-    margin-left: 60px;
-    font-size: larger;
-}
+        .nav-utilizador img {
+            max-height: 20px;
+            float: right;
+            margin-right: 20px;
+        }
 
-.nav-dashboard .glyphicon {
-    font-size: 20px;
-}
+    .nav-dashboard {
+        height: 45px;
+        width: 100%;
+        padding: 10px;
+        margin: auto;
+        background-color: #333333;
+        color: white;
+        z-index: 2;
+    }
+
+    .nav-dashboard-titulo {
+        margin-left: 60px;
+        font-size: larger;
+    }
+
+    .nav-dashboard .glyphicon {
+        font-size: 20px;
+    }
 
 
 
-/*--------------------
+    /*--------------------
         CSS Property Grid
     ----------------------*/
 
@@ -342,35 +349,39 @@
     }
 
 
-/*------------------
+    /*------------------
         Legenda
     ------------------*/
 
-.legenda {
-    float: right;
-    width: 10%;
-    height: 5%;
-    position: relative;
-    right: 8%;
-    top: 5%;
-}
+    .legenda {
+        height: 5%;
+        width: 90px;
+        position: absolute;
+        right: 0;
+        top: 50px;
+        overflow-wrap: break-word;
+    }
+
+    .legenda > svg{
+        width:100%;
+    }
 
 
-/*------------------
+    /*------------------
         Tooltips
     ------------------*/
 
-/*Box da tooltip*/
-.d3-tip {
-    line-height: 1;
-    font-weight: bold;
-    font-size: 0.8em;
-    padding: 12px;
-    background: rgba(0, 0, 0, 0.8);
-    color: #fff;
-    border-radius: 2px;
-    z-index: 2;
-}
+    /*Box da tooltip*/
+    .d3-tip {
+        line-height: 1;
+        font-weight: bold;
+        font-size: 0.8em;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        border-radius: 2px;
+        z-index: 2;
+    }
 
     /* "seta" da tooltip */
     .d3-tip:after {
@@ -431,6 +442,7 @@
     /*  Esconder o overflow dentro dos widgets  */
     .grid-stack-item-content {
         overflow: visible !important;
+        /*overflow-y: hidden !important;*/
     }
 
 
@@ -466,7 +478,7 @@
     }
 
 
-/*------------------
+    /*------------------
         Widgets
     ------------------*/
 
@@ -509,21 +521,37 @@
     }
 
 
-    /*
-        Estilo do widget
-    */
-
     .box {
         /*background-color: azure;*/
         /*border: 1px solid #000;*/
     }
+
+    /*
+        Estilo do widget
+    */
+
+    /* Brilho da box, widget "ativo" */
+    .widget-ativo {
+        -webkit-box-shadow: 0px 0px 10px 2px rgba(72,255,0,1);
+        -moz-box-shadow: 0px 0px 10px 2px rgba(72,255,0,1);
+        box-shadow: 0px 0px 10px 2px rgba(72,255,0,1);
+    }
+
+    .widget-aviso {
+        -webkit-box-shadow: 0px 0px 10px 2px rgba(250,3,3,1);
+        -moz-box-shadow: 0px 0px 10px 2px rgba(250,3,3,1);
+        box-shadow: 0px 0px 10px 2px rgba(250,3,3,1);
+    }
+
     
     
+
     /*--------------------
         Widget Dropdown Options
     ----------------------*/
 
     .dropdown-menu{
+        overflow: visible !important;
         top: 0% !important;
         left: 100% !important;
     }
@@ -565,44 +593,6 @@
     }
 
 
-/* Botões ordenados */
-
-/*.remove-widget {
-        background-color: #dd1c1a;
-        border: none;
-    }
-
-    .edita-widget {
-        background-color: #335b7f;
-        border: none;
-    }
-
-    .legenda-widget {
-        background-color: #336c77;
-        border: none;
-    }
-
-    .tooltip-widget {
-        background-color: #55828b;
-        border: none;
-    }
-
-    .mostraDados-widget {
-        background-color: #87bba2;
-        border: none;
-    }
-
-    .update-widget {
-        background-color: #c9e4ca;
-        border: none;
-    }
-
-    .esconde-widget {
-        background-color: #64adbb;
-        border: none;
-    }*/
-
-
 
     /*--------------------
         CSS dos Eixos
@@ -615,12 +605,14 @@
         shape-rendering: crispEdges;
     }
 
+
     /*--------------------
         Gráfico Area
     ----------------------*/
 
     .area {
     }
+
 
     /*--------------------
         Gráfico Barras
@@ -633,6 +625,8 @@
     .bar:hover {
         fill: blue;
     }
+
+
 
     /*--------------------
         Gráfico Barras
@@ -717,6 +711,7 @@
 
     .wrapper > .container{
         width: 100% !important;
+        height: 34px;
     }
 
     .wrapper-contexto > .container{
