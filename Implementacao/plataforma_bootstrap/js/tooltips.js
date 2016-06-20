@@ -32,9 +32,6 @@
             target = null
 
         function tip(vis) {
-
-            console.log(vis);
-
             svg = getSVGNode(vis)
             point = svg.createSVGPoint()
             document.body.appendChild(node)
@@ -256,8 +253,6 @@
         }
 
         function getSVGNode(el) {
-            console.log(el);
-
             el = el.node()
             if (el.tagName.toLowerCase() === 'svg')
                 return el

@@ -39,7 +39,7 @@ primerCORE = (function () {
     /// ----- #DASHBOARD -----
 
     /// <summary>
-    /// Devolve todos os dashboards
+    /// Devolve todos os dashboards de todos os utilizadores
     /// </summary>
     /// <returns> Objecto com a informação de todos os dashboards </returns>
     objecto.DashboardsDevolveLista = function () {
@@ -84,7 +84,7 @@ primerCORE = (function () {
     };
 
     /// <summary>
-    /// Devolve um dashboard em especifico 
+    /// Devolve um dashboard em especifico (ID)
     /// </summary>
     /// <param name="id"> Id do dashboard a ser pedido </param>
     /// <returns> Devolve a dashboard indicada pelo ID do utilizador </returns>
@@ -122,16 +122,14 @@ primerCORE = (function () {
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 console.log(xhr);
-                alert(xhr.status);
-                alert(thrownError);
-                alert("O seu pedido sofreu um erro e não foi concretizado");
+                alert(xhr.status + " - " + thrownError);
             },
         }).responseText;
     };
 
 
     /// <summary>
-    /// Devolve os dados iniciais de um dashboard
+    /// Devolve os dados iniciais de um dashboard  ( Não funciona )
     /// </summary>
     /// <returns> Retorna um objecto com os dados de inicialização (dadomedido, indicadores, etc) </returns> 
     objecto.DashboardDadosIniciais = function () {
@@ -184,7 +182,7 @@ primerCORE = (function () {
     /// ----- #OPCOES DASHBOARD -----
 
     /// <summary>
-    /// Devolve os Dashboards ligados a um utilizador em especifico
+    /// Devolve os Dashboards ligados a um utilizador em especifico (ID)
     /// </summary>
     /// <param name="id"> Id do utilizador a pesquisar </param>
     /// <returns> Retorna todos os dashboards ligados ao ID do utilizador que foi enviado </returns>
@@ -193,7 +191,6 @@ primerCORE = (function () {
 
         return $.ajax({
             type: "GET",
-            data: query,
             async: false,
             cache: false,
             // Antes de enviar
@@ -233,12 +230,20 @@ primerCORE = (function () {
 
     // to-do
     /// <summary>
-    /// Cria um registo da dashboard
+    /// Cria um registo da dashboard (CRIA)
     /// </summary>
     /// <param name="query"> Objecto com os parametros necessários para registar o dashboard </param>
     /// <returns></returns>
-    objecto.DashboardCria = function (query) {
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/cria?sessaoID=sessaoDebug";
+    objecto.DashboardCria = function (idUtilizador, dashboard) {
+        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/cria?sessaoID=sessaoDebug",
+            query = {
+                "UtilizadorID": idUtilizador,
+                "Nome": dashboard.Nome,
+                "Descricao": dashboard.Descricao,
+                //"Configuracao":  dashboard. ,
+        //"{\"id\":\"widget0\",\"largura\":271,\"altura\":120,\"titulo\":\"ola\",\"widgetAltura\":20,\"widgetLargura\":20,\"widgetX\":400,\"widgetTipo\":\"dados\",\"widgetElemento\":\"graficoBarras|graficoLinhas|graficoPie|etiqueta|tabela\",\"mostraLegenda\":false,\"mostraToolTip\":false,\"visivel\":true,\"ultimaAtualizacao\":\"4/11/16\",\"contexto\":[\"widget1\",\"widget2\"],\"agregacoes\":[{\"funcao\":\"avg\",\"campo\":\"valor.valorMax\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMed\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMin\"}]}",
+                "Activo": false
+            };
 
         return $.ajax({
             type: "PUT",
@@ -285,13 +290,24 @@ primerCORE = (function () {
     /// </summary>
     /// <param name="id"> Id da dashboard a ser atualizada </param>
     /// <param name="objecto"> Objecto que é utilizado para utilizar o dashboard </param>
-    objecto.DashboardAtualiza = function (id, objecto) {
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/"+id+"?sessaoID=sessaoDebug";
+    objecto.DashboardAtualiza = function (idUtilizador, dashboard) {
+
+        console.log(dashboard);
+
+        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/" + dashboard.ID + "?sessaoID=sessaoDebug",
+            query = '{'
+                + '"Nome":' + "'" + dashboard.Nome + "'" + ',' 
+                + '"Descricao":' + "'" + dashboard.Descricao + "'" + ',' 
+                + '"Configuracao":' + "'"+dashboard.Configuracao+"'"
+            + '}';
+
+        console.log(url);
+        console.log(query);
 
         return $.ajax({
             type: "POST",
-            data: objecto,
-            async: false,
+            data: query,
+            async: true,
             cache: false,
             // Antes de enviar
             beforeSend: function () {
@@ -319,10 +335,8 @@ primerCORE = (function () {
                 console.log("Dados obtidos");
             },
             error: function (xhr, ajaxOptions, thrownError) {
-                console.log(xhr);
-                alert(xhr.status);
                 alert(thrownError);
-                alert("O seu pedido sofreu um erro e não foi concretizado");
+                alert(xhr);
             },
         }).responseText;
     };
@@ -451,6 +465,7 @@ primerCORE = (function () {
             '\", "tipo": \"' + widget.widgetTipo +
             '\", "elemento": \"' + widget.widgetElemento +
             '\", "contexto": [ "widget3", "widget8" ], "series": [ {"funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": ""}, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMin", "index": "indicadores", "type": "" } ], "buckets": [ {"tipo": "histogramadata", "campo": "data", "intervalo": "dia" } ]} ], "widgetsContexto": { "contextoPesquisa": [ { "id": "widget3", "tipo": "contexto",  "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "contexto", "filtro": "valor.tagID: 3073"} ],  "contextoData": [  {  "id": "widget8",  "campo": "data", "dataInicio": \"' + opcoes.dataInicio + '\",  "dataFim": \"' + opcoes.dataFim + '\" } ] } }';
+
 
         return $.ajax({
             type: "POST",

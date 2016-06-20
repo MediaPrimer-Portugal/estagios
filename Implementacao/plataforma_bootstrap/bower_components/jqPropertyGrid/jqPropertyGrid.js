@@ -229,11 +229,18 @@
 				};
 			}
 
+	        /*  ADICIONADO
+             *  Adicionado um parametro novo a funçao postCreateInitFuncs
+             * O parametro meta.description recebe a string inserida na description do colorpicker 
+             * na inicialização da propertyGrid e envia para outra função que trata de criar o spectrum
+             *
+             * Caso seja inserido na descrição o modo visualização é iniciado o spectrum como disabled
+            */
 			// If color and we have the spectrum color picker use it
 		} else if (type === 'color' && typeof $.fn.spectrum === 'function') {
 			valueHTML = '<input type="text" id="' + elemId + '" />';
 			if (postCreateInitFuncs) {
-				postCreateInitFuncs.push(initColorPicker(elemId, value, meta.options));
+				postCreateInitFuncs.push(initColorPicker(elemId, value, meta.options, meta.description));
 			}
 
 			if (getValueFuncs) {
@@ -330,7 +337,7 @@
 	 * @param {object} [options] - The color picker options
 	 * @returns {function}
 	 */
-	function initColorPicker(id, color, options) {
+	function initColorPicker(id, color, options, mode) {
 		if (!id) {
 			return null;
 		}
@@ -340,6 +347,15 @@
 		if (typeof color === 'string') {
 			opts.color = color;
 		}
+
+	    /* ADICIONADO
+        *  Verificação, caso esteja no modo de visualização o color picker vai ser mostrado como disabled
+        */
+
+		if(mode === "visualizacao")
+		opts["disabled"] = true;
+
+        //-------------------------------------------------------------------------------------------------
 
 		return function onColorPickerInit() {
 			$('#' + id).spectrum(opts);

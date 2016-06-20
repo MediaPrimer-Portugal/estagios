@@ -50,7 +50,7 @@
         <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
 </head>
-<body>
+<body id="edicao">
     <div id="wrapper">
         <!-- Navigation -->
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
@@ -115,14 +115,14 @@
         <div class="nav-utilizador">
             <img class="showPointer" src="../resources/ic_exit_to_app_white_24dp_1x.png" style="margin-right: 40px !important;" />
             <img class="showPointer" src="../resources/ic_highlight_off_white_24dp_1x.png" />
-            <span style="float:right; margin-right: 20px;">Utilizador</span>
+            <span class="nomeUtilizador-navbar" style="float:right; margin-right: 20px;"></span>
         </div>
         <!-- Nav do dashboard -->
         <div class="nav-dashboard">
-            <span class="nav-dashboard-titulo">Nome do Dashboard</span><img class="showHelp" src="../resources/ic_info_outline_white_24dp_1x.png" data-toggle="tooltip" title="Hooray!" style="max-width:15px; position:relative; top:-10px; left:3px;" />
+            <span class="nao-seleciona nav-dashboard-titulo"></span><img class="showHelp" src="../resources/ic_info_outline_white_24dp_1x.png" data-toggle="tooltip" title="Hooray!" style="max-width:15px; position:relative; top:-10px; left:3px;" />
             <span style="float:right; margin-right: 50px" class="glyphicon glyphicon-remove dashboard-remove" aria-hidden="true"></span>
             <span style="float:right; margin-right: 20px" class="glyphicon glyphicon-save dashboard-guarda" aria-hidden="true"></span>
-            <span style="float:right; margin-right: 20px" class="glyphicon glyphicon-eye-open dashboard-informa" aria-hidden="true"></span>
+            <a href="db_visualizacao.html"><span style="float:right; margin-right: 20px" class="glyphicon glyphicon-eye-open dashboard-visualiza" aria-hidden="true"></span></a>
         </div>
         <!-- Conteudo Principal -->
         <div id="page-wrapper">

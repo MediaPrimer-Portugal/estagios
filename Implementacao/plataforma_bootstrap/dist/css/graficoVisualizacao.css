@@ -55,6 +55,20 @@
         z-index: 9999;
     }
 
+
+    /*------------------
+        Lista Dashboards
+    ------------------*/
+
+
+    .listaDashboards-icon{
+        position: relative; 
+        top: 4px;
+
+    }
+
+
+
 /*------------------
         TESTES // APAGAR ( Tabela de coordenadas )
     ------------------*/
@@ -129,25 +143,48 @@
     }
 
 
+    /*------------------
+        Lista Dashboards
+    ------------------*/
 
-/*------------------
+
+
+
+
+    /*------------------
         Barras de Navegação
     ------------------*/
 
-.nav-separador {
-    height: 5px;
-    background-color: red;
-}
+    /* Icons */
 
-.nav-utilizador {
-    min-height: 30px;
-    width: 100%;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    background-color: #161616;
-    color: white;
-    z-index: 2;
-}
+    .nav-dashboard a{
+        color: white;
+    }
+
+    .nav-dashboard a:hover{
+        color: #00B7AD;
+    }
+
+    .nav-dashboard a:active{
+        color: #01534f;
+    }
+
+
+
+    .nav-separador {
+        height: 5px;
+        background-color: red;
+    }
+
+    .nav-utilizador {
+        min-height: 30px;
+        width: 100%;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        background-color: #161616;
+        color: white;
+        z-index: 2;
+    }
 
     .nav-utilizador img {
         max-height: 20px;
@@ -155,24 +192,24 @@
         margin-right: 20px;
     }
 
-.nav-dashboard {
-    height: 45px;
-    width: 100%;
-    padding: 10px;
-    margin: auto;
-    background-color: #333333;
-    color: white;
-    z-index: 2;
-}
+    .nav-dashboard {
+        height: 45px;
+        width: 100%;
+        padding: 10px;
+        margin: auto;
+        background-color: #333333;
+        color: white;
+        z-index: 2;
+    }
 
-.nav-dashboard-titulo {
-    margin-left: 60px;
-    font-size: larger;
-}
+    .nav-dashboard-titulo {
+        margin-left: 60px;
+        font-size: larger;
+    }
 
-.nav-dashboard .glyphicon {
-    font-size: 20px;
-}
+    .nav-dashboard .glyphicon {
+        font-size: 20px;
+    }
 
 
 
