@@ -235,15 +235,19 @@ primerCORE = (function () {
     /// <param name="query"> Objecto com os parametros necessários para registar o dashboard </param>
     /// <returns></returns>
     objecto.DashboardCria = function (idUtilizador, dashboard) {
+
+        console.log(dashboard);
+
         var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/cria?sessaoID=sessaoDebug",
-            query = {
-                "UtilizadorID": idUtilizador,
-                "Nome": dashboard.Nome,
-                "Descricao": dashboard.Descricao,
-                //"Configuracao":  dashboard. ,
-        //"{\"id\":\"widget0\",\"largura\":271,\"altura\":120,\"titulo\":\"ola\",\"widgetAltura\":20,\"widgetLargura\":20,\"widgetX\":400,\"widgetTipo\":\"dados\",\"widgetElemento\":\"graficoBarras|graficoLinhas|graficoPie|etiqueta|tabela\",\"mostraLegenda\":false,\"mostraToolTip\":false,\"visivel\":true,\"ultimaAtualizacao\":\"4/11/16\",\"contexto\":[\"widget1\",\"widget2\"],\"agregacoes\":[{\"funcao\":\"avg\",\"campo\":\"valor.valorMax\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMed\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMin\"}]}",
-                "Activo": false
-            };
+            query = '{'
+                + '"UtilizadorID":' + "'" + idUtilizador + "'" + ','
+                + '"Nome":' + "'" + dashboard.Nome + "'" + ','
+                + '"Descricao":' + "'" + dashboard.Descricao + "'" + ','
+                + '"Configuracao":' + "'" + dashboard.Configuracao + "'" + ','
+                + '"Activo":' + "'" + true + "'"
+            + '}';
+
+        console.log(query);
 
         return $.ajax({
             type: "PUT",
@@ -298,7 +302,8 @@ primerCORE = (function () {
             query = '{'
                 + '"Nome":' + "'" + dashboard.Nome + "'" + ',' 
                 + '"Descricao":' + "'" + dashboard.Descricao + "'" + ',' 
-                + '"Configuracao":' + "'"+dashboard.Configuracao+"'"
+                + '"Configuracao":' + "'" + dashboard.Configuracao + "'" + ','
+                + '"Activo":' + "'" + true + "'"
             + '}';
 
         console.log(url);
@@ -346,7 +351,7 @@ primerCORE = (function () {
     /// Apaga dashboard do registo
     /// </summary>
     ///
-    objecto.DashbooardApaga = function () {
+    objecto.DashboardApaga = function () {
         // to-do
     };
 
@@ -356,7 +361,7 @@ primerCORE = (function () {
     /// </summary>
     /// <param name="id"> Id do dashboard a ser alterado </param>
     objecto.DashboardAlteraEstado = function (id) {
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/15/activo/false?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/"+ id +"/activo/false?sessaoID=sessaoDebug";
 
         return $.ajax({
             type: "POST",

@@ -2,7 +2,8 @@
 
     // TESTE - REMOVER
 
-    var idUtilizador = 2508;
+    var idUtilizador = 2510;
+    var gridPrincipal;
 
     // Verifica em que modo está a página
     var modo = document.body.id;
@@ -140,6 +141,24 @@
         var inteiro = /[0-9 -()+]+$/;
 
         return inteiro.test(valor) && Math.floor(valor) == valor;
+    }
+
+
+    /// <summary>
+    /// Adquire os parametros enviados pelo URL
+    /// formato: ?parametro=valor
+    /// <param name="sParam"> Parametro a ser adquirido do URL
+    /// <returns> Retorna o valor dessa parametro </returns>
+    var GetURLParameter = function (sParam) {
+        var sPageURL = window.location.search.substring(1);
+        var sURLVariables = sPageURL.split('&');
+
+        for (var i = 0; i < sURLVariables.length; i++) {
+            var sParameterName = sURLVariables[i].split('=');
+            if (sParameterName[0] == sParam) {
+                return sParameterName[1];
+            }
+        }
     }
 
 
@@ -517,7 +536,7 @@
 
 
         /// <summary>
-        /// Apaga o conteudo do widget e desenha uma tabela com os dados que o widget contém
+        /// Apaga o Plataforma do widget e desenha uma tabela com os dados que o widget contém
         /// </summary>
         Widget.prototype.TransformaWidgetTabela = function () {
             var self = this,
@@ -939,30 +958,34 @@
             // Ao clickar no widget especifico
             $("#" + self.id).click(function () {
 
-                // Remove todos os que estão ativos anteriormente
-                $(this).parent().parent().find(".widget-ativo").removeClass("widget-ativo");
 
-                // Caso haja Grids ativas
-                if ($("#main-gridstack").hasClass("widget-ativo")) {
+                if (!($(this).hasClass("widget-ativo"))) {
+                    // Remove todos os que estão ativos anteriormente
+                    $(this).parent().parent().find(".widget-ativo").removeClass("widget-ativo");
 
-                    $("#main-gridstack").removeClass("widget-ativo");
-                    PropertyGrid.RemoveGrid();
+                    // Caso haja Grids ativas
+                    if ($("#main-gridstack").hasClass("widget-ativo")) {
 
+                        $("#main-gridstack").removeClass("widget-ativo");
+                        PropertyGrid.RemoveGrid();
+
+                    }
+
+                    // Adiciona a class ativo ao widget
+                    $(this).addClass('widget-ativo');
+
+                    // Remove o aviso de não haver nenhum widget/dashboard selecionado
+                    PropertyGrid.TogglePropertyGrid();
+
+                    // Substitui o titulo na propertyGrid
+                    PropertyGrid.SetWidgetPropertyGrid(self.titulo, self.id, self.widgetElemento);
+
+                    // Mostra a propertyGrid
+                    PropertyGrid.MostraPropertyGrid(self.widgetElemento);
+
+                    // Modo Tabela
+                    //$(".opcoes-propriedades").css("display", "block");
                 }
-
-                // Adiciona a class ativo ao widget
-                $(this).addClass('widget-ativo');
-
-                // Remove o aviso de não haver nenhum widget/dashboard selecionado
-                PropertyGrid.TogglePropertyGrid();
-
-                // Substitui o titulo na propertyGrid
-                PropertyGrid.SetWidgetPropertyGrid(self.titulo, self.id, self.widgetElemento);
-
-                // Mostra a propertyGrid
-                PropertyGrid.MostraPropertyGrid(self.widgetElemento);
-
-                //$(".opcoes-propriedades").css("display", "block");
 
             });
 
@@ -1035,6 +1058,7 @@
 
         /// Retorna o objeto
         return Widget;
+
 
     })();
 
@@ -4465,12 +4489,7 @@
     var Filtros = (function () {
 
         // Opcoes de filtros a ser guardados
-        var opcoes =
-            [
-                { Nome: "Opção A", Valor: "index:indicadores AND type:dadomedido AND tagID: 773" },
-                { Nome: "Opção B", Valor: "index:indicadores AND type:dadomedido AND tagID: 774" },
-                { Nome: "Opção C", Valor: "index:indicadores AND type:dadomedido AND tagID: 775" }
-            ],
+        var opcoes,
             parseDate = d3.time.format("%y-%b-%d").parse,
             filtros;
 
@@ -4482,14 +4501,14 @@
             Widget.call(this, titulo, widgetAltura, widgetLargura, widgetX, widgetY);
 
             this.contexto = [];
-            this.opcoes = opcoes;
+            this.opcoes = [];
 
             this.widgetTipo = "contexto";
-            this.widgetElemento = "query";
+            this.widgetElemento = "filtros";
 
             // Define o tipo e o elemento do widget
             this.objectoServidor["widgetTipo"] = "contexto";
-            this.objectoServidor["widgetElemento"] = "query";
+            this.objectoServidor["widgetElemento"] = "filtros";
             this.objectoServidor["contexto"] = [];
 
             this.filtros = [];
@@ -4532,6 +4551,7 @@
             $("#" + self.id).find(".filtros-opcoes").find("option").remove();
 
             self.opcoes.forEach(function (item) {
+                console.log(item);
                 $("#" + self.id).find(".filtros-opcoes").append("<option value=" + item.Valor + ">" + item.Nome + "</option>");
             })
 
@@ -4545,7 +4565,7 @@
         Filtros.prototype.Atualiza = function () {
             var self = this
 
-            // to-do
+            self.InsereDados();
 
         }
 
@@ -4597,7 +4617,8 @@
             objecto["contexto"] = self.contexto;
             objecto["opcoes"] = self.opcoes;
 
-            self.objectoServidor = objecto;
+            return objecto;
+
         }
 
 
@@ -4614,6 +4635,7 @@
 
             // Reset nos filtros
             self.filtros = [];
+
 
             // Para cada filtro 
             _.each(dados, function (item, key) {
@@ -4632,6 +4654,9 @@
             // Inserir os novos dados
             self.InsereDados();
 
+            // Guarda objecto atualizado no objectoServidor
+            self.objectoServidor = self.AtualizaObjectoServidor();
+            
         }
 
         /// <summary>
@@ -5075,10 +5100,12 @@
             this.PropertyGrid = {};
         }
 
-
+        // Inicializa o objecto de widgets da propertyGrid
         PropertyGrid.widgets = {};
 
-        // Conforme o modo da janela modifica as opções da property grid entre enabled e disabled
+        /// <summary>
+        /// Conforme o modo da janela modifica as opções da property grid entre enabled e disabled
+        /// </summary>
         PropertyGrid.TogglePermissao = function () {
             var self = this;
 
@@ -5089,8 +5116,10 @@
 
         }
 
-        // Por dentro do Widget??
-        // Guarda dados das séries dentro de um array
+        /// <summary>
+        /// Retorna um objecto com as séries atuais do menu da propertyGrid
+        /// </summary>
+        /// <returns> Objecto com as séries dentro do menu dados</returns>
         PropertyGrid.GuardaSeries = function () {
             var objectoSeries = [],
                 objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get"),
@@ -5137,14 +5166,18 @@
 
         }
 
-
+        /// <summary>
         // Getters e setters dos indicadores do widget 
         // o set neste caso é indicativo da classe propertygrid e não so widget
+        /// </summary>
         PropertyGrid.setIndicadores = function (widgetID) {
             var self = this,
                 opcoes = ["Selecione Indicador"],
                 series;
                 
+
+            console.log(widgetID);
+
             if (gridPrincipal.getWidget(widgetID).getIndicadores() !== undefined) {
                 gridPrincipal.getWidget(widgetID).getIndicadores().forEach(function (valor) { return opcoes.push(valor); })
             }
@@ -5164,8 +5197,9 @@
 
         }
 
-        // Constroi a grid
-        // <param name="tipo"> tipo de componente para qual a grid vai ser construida
+        /// <summary>
+        /// Constroi a propertyGrid
+        /// </summary>
         PropertyGrid.ConstroiGrid = function () {
             var self = this;
 
@@ -5181,6 +5215,7 @@
             if (self.propertyGridElemento !== "dashboard") {
                 // Caso seja um gráfico do tipo dados
                 if (self.propertyGridElemento === "dados") {
+                    console.log("teste");
                     // Seleciona indicadores para o widget ativo
                     self.setIndicadores($(".widget-ativo").attr("id"));
                 }
@@ -5192,7 +5227,9 @@
 
         }
 
-        // Remove propertyGrid atual e a sua visualização
+        /// <summary>
+        /// Remove propertyGrid atual e a sua visualização
+        /// </summary>
         PropertyGrid.RemoveGrid = function () {
             var self = this;
 
@@ -5208,17 +5245,20 @@
 
         };
 
-        // Elimina da DOM as propertyGrids
-        PropertyGrid.EliminaPropertyGrid = function() {
+        /// <summary>
+        /// Elimina da DOM as propertyGrids
+        /// </summary>
+        PropertyGrid.EliminaPropertyGrid = function () {
             $("#propGridGeral").children().remove();
             $("#propGridDados").children().remove();
             $("#propGridAparencia").children().remove();
 
         }
 
-        // Define o titulo do widget
-        // vai ser mostrado na propertyGrid para indicar mais claramente
-        // o widget escolhido pelo utilizador
+        /// <summary>
+        /// Define o titulo do widget dentro da PROPERTYGRID
+        /// Vai ser mostrado na propertyGrid para indicar de forma mais clara
+        /// </summary>
         PropertyGrid.SetWidgetPropertyGrid = function (titulo, id, elemento) {
             var self = this;
 
@@ -5228,14 +5268,18 @@
             $(".nomeWidget-propertyGrid").text(titulo + " - " + elemento);
         };
 
-        // Toggle do aviso que nenhum dashboard/widget estão ativos
+        /// <summary>
+        /// Toggle do aviso que nenhum dashboard/widget estão ativos
+        /// </summary>
         PropertyGrid.TogglePropertyGrid = function () {
             // Remove o div que mostra que nenhum dashboard/widget estão selecionados
             $(".opcoes-semPropertyGrid").css("display", "none");
 
         };
 
-        // Mostra a propertyGrid
+        /// <summary>
+        /// Mostra a propertyGrid
+        /// </summary>
         PropertyGrid.MostraPropertyGrid = function (tipoElemento) {
             var self = this;
 
@@ -5254,17 +5298,20 @@
             } else if (tipoElemento === "grid") {
                 $(".opcoes-propertyGrid").find("[value='dados']").css("display", "none");
                 self.AdicionaGridDashboard();
-            } else if (tipoElemento === "query"){
+            } else if (tipoElemento === "filtros"){
                 self.AdicionaGridFiltro();
                 $(".opcoes-propertyGrid").find("[value='dados']").css("display", "");
-            } else{
+            } else {
+                console.log("ADICIONA GRID NORMAL");
                 self.AdicionaGrid();
                 $(".opcoes-propertyGrid").find("[value='dados']").css("display", "");
             }
 
         }
 
-        // Modifica a box de acordo com a opcao enviada
+        /// <summary>
+        /// Modifica a box de acordo com a opcao enviada
+        /// </summary>
         PropertyGrid.SetGrid = function (opcao) {
             var self = this;
 
@@ -5286,7 +5333,10 @@
 
         }
 
-        // Modifica a propetyGrid para mostrar o tipo de menu recebido como argumento
+        /// <summary>
+        /// Modifica a propetyGrid para mostrar o tipo de menu recebido como argumento
+        /// </summary>
+        /// <param name="opcao"> Opcao a mostrar (geral, dados ou aparencia) </param>
         PropertyGrid.SetPropertyGrid = function (opcao) {
             if (opcao === "geral") {
                 $("#propGridGeral").css("display", "block");
@@ -5303,8 +5353,11 @@
             }
         }
 
-
-        // Atribui as opções possiveis no menu da associação
+        /// <summary>
+        /// Atribui as opções possiveis no menu da associação
+        /// </summary>
+        /// <param name="listaWidgetsDados> Lista de widgets de dados </param>
+        /// <param name="listaWidgetsContexto> Lista de widgets de contexto </param>
         PropertyGrid.setWidgets = function (listaWidgetsDados, listaWidgetsContexto) {
             var self = this;
 
@@ -5318,7 +5371,9 @@
 
         }
 
-        // Volta a ligar os widgets de associacao
+        /// <summary>
+        /// Volta a ligar os widgets de associacao
+        /// </summary>
         PropertyGrid.ResetWidgets = function () {
             var self = this;
 
@@ -5328,12 +5383,16 @@
 
         }
 
-        // Obtem dados da propertyGrid atual
+        /// <summary>
+        /// Obtem dados da propertyGrid atual
+        /// </summary>
         PropertyGrid.getDados = function () {
             return $('#propGrid').jqPropertyGrid('get');
         }
 
-        // Getters para os dados disponiveis nas dropdowns
+        /// <summary>
+        /// Getters para os dados disponiveis nas dropdowns
+        /// </summary>
         PropertyGrid.getWidgetsDados = function () {
             return objecto.widgets.WidgetDados;
         }
@@ -5437,7 +5496,9 @@
         PropertyGrid.InicializaFiltros = function () {
             var self = this;
 
-            gridPrincipal.getWidget($(".widget-ativo").attr("id")).filtros.forEach(function (filtro) {
+            console.log(gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes);
+
+            gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes.forEach(function (filtro) {
                 self.inicializaDados["Filtro-" + idFiltro] = { name: "", group: "Opcoes Disponiveis", description: filtro.Nome, type: "filtro", showHelp: false };
 
                 idFiltro++;
@@ -5547,7 +5608,7 @@
             index = 1;
 
 
-            gridPrincipal.getWidget($(".widget-ativo").attr("id")).filtros.forEach(function (filtro) {
+            gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes.forEach(function (filtro) {
                 self.propriedadesDados["Filtro-" + index] = filtro.Valor;
 
                 index++;
@@ -5932,6 +5993,8 @@
                     // Chama função para filtrar e desenhar os dados
                     gridPrincipal.FiltraContexto();
 
+                    console.log("teste");
+
                     // Atualiza os indicadores da propertyGrid
                     (widget1.widgetTipo === "contexto") ? self.setIndicadores(widget2.id) : self.setIndicadores(widget1.id);
 
@@ -6132,6 +6195,8 @@
                         // Chama função para filtrar e desenhar os dados
                         gridPrincipal.FiltraContexto();
 
+                        console.log("teste");
+
                         // Atualiza os indicadores da propertyGrid
                         (widget1.widgetTipo === "contexto") ? self.setIndicadores(widget2.id) : self.setIndicadores(widget1.id);
 
@@ -6206,6 +6271,7 @@
         }
 
         // Atualiza indicadores ao adicionar Associacao
+        /// <param name="widgetID"> ID do widget para atualizar os indicadores </param>  
         PropertyGrid.EventoAtualizaIndicadores = function (widgetID) {
             var self = this;
 
@@ -6242,7 +6308,7 @@
 
 
 
-        /// #Region - Adiciona Menus ----------------------------------
+        /// #Region - ADICIONA/REMOVE Menus ----------------------------------
 
         // Adiciona menu de checkbox aos widgets contexto 
         // Menu que mostra todos os widgets disponiveis para ligação, estando já marcados os que estão ligados
@@ -6268,11 +6334,9 @@
         PropertyGrid.AdicionaFiltro = function () {
             var self = this;
 
-            self.inicializaDados["Filtro-" + idFiltro] = { name: "          ", group: "Opcoes Disponiveis", type: "filtro", description: " ", showHelp: false };
-            //self.inicializaDados["Quebra-" + idFiltro] = { name: " ", type: "split", group: "Opcoes Disponiveis", showHelp: false };
-
+            self.inicializaDados["Filtro-" + idFiltro] = { name: " ", group: "Opcoes Disponiveis", type: "filtro", description: " ", showHelp: false };
+   
             self.propriedadesDados["Filtro-" + idFiltro] = "";
-            //self.propriedadesDados["Quebra-" + idFiltro] = " ";
 
             // Constroi a grid
             $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
@@ -6283,6 +6347,12 @@
             idFiltro++;
 
         }
+
+        // Remove um filtro
+        PropertyGrid.RemoveFiltro = function() {
+            // TODO
+        }
+
 
         // Adiciona um  menu Series no property grid
         PropertyGrid.AdicionaSerie = function () {
@@ -6313,6 +6383,12 @@
             idSerie++;
 
         }
+
+        // Remove uma série
+        PropertyGrid.RemoveSerie = function(){
+            // TODO
+        }
+
 
         // Adiciona ao objecto das propriedades uma nova Série
         PropertyGrid.AdicionaPropriedades = function () {
@@ -6518,24 +6594,6 @@
 
         }
 
-        /// <summary>
-        /// Carrega uma dashboard para a grid atual
-        /// </summary>
-        Grid.prototype.CarregaDashboard = function (dashboard){
-            var self = this,
-                listaWidgets;
-            
-            if (modo !== "lista") {
-                self.nome = dashboard.Nome;
-                self.descricao = dashboard.Descricao;
-                self.idUnico = dashboard.ID;
-
-                listaWidgets = JSON.parse(dashboard.Configuracao);
-
-                self.CarregaWidgets(listaWidgets);
-            }
-        }
-
 
 
         /// #Region - ADICIONAR/CRIAR ELEMENTOS
@@ -6611,10 +6669,13 @@
             // Define tamanho da listaWidgets
             ultimo = self.listaWidgets.length;
 
+            console.log(tipoWidget);
 
             // Adiciona o widget criado ao dashboard
             self.AdicionaWidgetLista(tipoWidget, GUID, dados);
 
+            console.log(self);
+            console.log(ultimo);
 
             // Atribui ao widget a sua class
             self.listaWidgets[ultimo].setWidgetClass(tipoWidget);
@@ -6642,6 +6703,8 @@
         /// <param name="dados"> Caso o widget tenha dados vindos de outro widget (Tabela) </param>
         Grid.prototype.AdicionaWidgetLista = function (tipoWidget, id, dados) {
             var self = this;
+
+            console.log(tipoWidget);
 
             // todo Factory de classes
             switch (tipoWidget) {
@@ -6818,21 +6881,24 @@
         /// #Region - CARREGAR/GUARDAR Elementos
 
         /// <summary>
-        /// Método para guardar a informação atual dos widgets sempre que algum é atualizado
+        /// Carrega uma dashboard para a grid atual
         /// </summary>
-        Grid.prototype.GuardaInformacao = function () {
-            var self = this;
+        /// <param name="dashboard"> Dashboard a carregar </param>
+        Grid.prototype.CarregaDashboard = function (dashboard){
+            var self = this,
+                listaWidgets;
+            
+            console.log(dashboard);
 
-            self.listaWidgets.forEach(function (item, curIndex) {
-                if (item.visivel === true) {
+            if (modo !== "lista") {
+                self.nome = dashboard.Nome;
+                self.descricao = dashboard.Descricao;
+                self.idUnico = dashboard.ID;
 
-                    // Atualiza objecto servidor
-                    item.objectoServidor = item.AtualizaObjectoServidor();
-                    item.AtualizaObjectoWidget();
+                listaWidgets = JSON.parse(dashboard.Configuracao);
 
-                }
-
-            });
+                self.CarregaWidgets(listaWidgets);
+            }
         }
 
         /// <summary>
@@ -6840,7 +6906,6 @@
         /// Faz o pedido, analisa os dados e desenha os widgets no dashboard
         /// </summary>
         /// <param name="lista"> Lista de widgets recebidos </param>
-        /// <param name="id"> Id do dashboard a carregar </param>
         Grid.prototype.CarregaWidgets = function (lista) {
             var self = this,
                 widget,
@@ -6848,8 +6913,8 @@
                 configuracao;
 
             console.log(lista);
-
-            if (lista !== null) {
+            
+            if (lista !== null && lista instanceof Array) {
                 // Para cada widget na lista
                 // configuracao[0].Dashboard.listaWidgets
                 lista.forEach(function (item) {
@@ -6877,6 +6942,13 @@
 
                     });
 
+                    // Caso seja widget do tipo Filtros
+                    if (widgetNovo.widgetElemento === "filtros") {
+                        // Atualizar o widget para que este mostre os filtros 
+                        widgetNovo.Atualiza();
+                    }
+
+
                     // Atualiza o titulo
                     widgetNovo.setTitulo(widgetNovo.titulo);
 
@@ -6896,9 +6968,29 @@
         }
 
         /// <summary>
+        /// Método para guardar a informação atual dos widgets sempre que algum é atualizado
+        /// </summary>
+        Grid.prototype.GuardaInformacao = function () {
+            var self = this;
+
+            self.listaWidgets.forEach(function (item, curIndex) {
+                if (item.visivel === true) {
+
+                    // Atualiza objecto servidor
+                    item.objectoServidor = item.AtualizaObjectoServidor();
+                    item.AtualizaObjectoWidget();
+
+                }
+
+            });
+        }
+
+        /// <summary>
         /// Constroi widget após ser transferido da barra secundária para a principal
         /// </summary>
         Grid.prototype.ReconstroiWidget = function () {
+            console.log(gridPrincipal);
+
             var grid = gridPrincipal,
                 id = $("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id).attr("id")[$("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id).attr("id").length - 1],
                 widget = $("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id);
@@ -7167,19 +7259,21 @@
             $("#main-gridstack").click(function (event) {
                 // Caso o target do evento seja mesmo a grid
                 if ($(event.target).attr("id") === "main-gridstack") {
-                    // Adiciona classe
-                    $(this).addClass("widget-ativo");
+                    // Caso a grid ainda não esteja ativa
+                    if (!($(this).hasClass("widget-ativo"))) {
+                        // Adiciona classe
+                        $(this).addClass("widget-ativo");
 
-                    // Remove o aviso de não haver nenhum widget/dashboard selecionado
-                    PropertyGrid.TogglePropertyGrid();
+                        // Remove o aviso de não haver nenhum widget/dashboard selecionado
+                        PropertyGrid.TogglePropertyGrid();
 
-                    // Substitui o titulo na propertyGrid
-                    PropertyGrid.SetWidgetPropertyGrid(self.nome, self.id, "Dashboard");
+                        // Substitui o titulo na propertyGrid
+                        PropertyGrid.SetWidgetPropertyGrid(self.nome, self.id, "Dashboard");
 
-                    // Mostra a propertyGrid
-                    PropertyGrid.MostraPropertyGrid("grid");
+                        // Mostra a propertyGrid
+                        PropertyGrid.MostraPropertyGrid("grid");
+                    }
                 }
-
             })
 
         }
@@ -7274,7 +7368,7 @@
 
         /// <summary>
         /// Método para mostrar widget que está "visivel"
-        /// to-do
+        /// TODO
         /// </summary>
         Grid.prototype.MostraWidget = function () {
 
@@ -7294,6 +7388,10 @@
 
                 console.log("Lista de Widgets - Formato Array:")
                 console.log(self.listaWidgets);
+                
+                console.log("Grid:");
+                console.log(self);
+
             })
         }
 
@@ -7432,16 +7530,16 @@
 
 
     /// <summary>
-    /// Class Conteudo, guarda a lista dos "dashboards" do utilizador, encapsula as grids dentro de cada dashboard
+    /// Class Plataforma, guarda a lista dos "dashboards" do utilizador, encapsula as grids dentro de cada dashboard
     /// </summary>
-    var Conteudo = (function () {
+    var Plataforma = (function () {
         var utilizador,
             idUtilizador,
             listaDashboards,
             dashboardAtual;
 
 
-        function Conteudo(idUtilizador, utilizador) {
+        function Plataforma(idUtilizador, utilizador) {
             this.utilizador = utilizador;
             this.idUtilizador = idUtilizador;
             this.listaDashboards = [];
@@ -7452,7 +7550,7 @@
         /// <summary>
         /// Inicializa o utilizador na página, e alguns parametros da dashboard (nome, descrição, etc)
         /// </summary>
-        Conteudo.prototype.Inicializa = function(){
+        Plataforma.prototype.Inicializa = function(){
             var self = this;
 
             // Atualiza nome de utilizador
@@ -7462,28 +7560,108 @@
             gridPrincipal.setNome(gridPrincipal.nome);
             gridPrincipal.setDescricao(gridPrincipal.descricao);
 
-
         }
         
 
         /// <summary>
-        /// Carrega objecto sodas
+        /// Cria um dashboard vazio
         /// </summary>
-        Conteudo.prototype.AdicionaDashboardServidor = function (dashboard) {
+        Plataforma.prototype.CriaDashboard = function () {
             var self = this;
 
-            // Envia para o servidor para guardar
-            //primerCORE.DashboardCria(self.idUtilizador, dashboard);
+            // Opções da gridstack
+            options = {
+                verticalMargin: 2,
+                float: true,
+                // Modificado também nas media queries
+                minWidth: 680,
+                draggable: {
+                    handle: ".widget-navbar"
+                },
+                acceptWidgets: ".grid-stack-item",
+                resizable: {
+                    handles: "sw, se"
+                },
+                swapGridWidth: 3,
+                swapGridHeight: 3
+            };
 
+            // Opções do menu drag&drop
+            optionsBarraLateral = {
+                width: 12,
+                removable: false,
+                cell_height: 100,
+                verticalMargin: 0,
+                disableResize: true
+            }
+
+
+
+            // Criação da grid principal
+            gridPrincipal = new Grid("main-gridstack", options, "barraPrincipal");
+            // Evento que mostra a informação de todos os widgets disponiveis ao clickar um botão
+            gridPrincipal.MostraInformacaoWidgets();
+            // Adicionar o background à gridstack
+            $("#" + gridPrincipal.id).addClass("gridstack-background");
+
+
+            if (modo === "edicao") {
+                // Criação da grid secundária
+                gridGraficos = new Grid("sidebarGraficos-gridstack", optionsBarraLateral, "barraSecundaria");
+                gridLabels = new Grid("sidebarLabels-gridstack", optionsBarraLateral, "barraSecundaria");
+                gridOutros = new Grid("sidebarOutros-gridstack", optionsBarraLateral, "barraSecundaria");
+                gridFiltros = new Grid("sidebarFiltros-gridstack", optionsBarraLateral, "barraSecundaria");
+
+                // Remove handles extra que previnem que seja feito o resize ao mudar da sideGrid para a gridPrincipal
+                gridGraficos.RemoveHandle();
+                gridLabels.RemoveHandle();
+                gridOutros.RemoveHandle();
+                gridFiltros.RemoveHandle();
+
+            }
+
+        }
+
+
+        /// <summary>
+        /// Carrega objecto sodas
+        /// </summary>
+        Plataforma.prototype.AdicionaDashboardServidor = function (dashboard) {
+            var self = this;
+
+            console.log(dashboard);
+
+            // Envia para o servidor para guardar
+            primerCORE.DashboardCria(self.idUtilizador,  dashboard);
             // Aviso para indicar que foi salvo
 
         }
 
+
+        /// <summary>
+        /// Remove o estado de Activo do dashboard atual
+        /// </summary>
+        Plataforma.prototype.RemoveActivo = function () {
+            var self = this;
+
+            self.listaDashboards.forEach(function (dashboard) {
+                if (dashboard.Activo === true) {
+                    dashboard.Activo = false;
+                    console.log(dashboard);
+                    //primerCORE.DashboardAlteraEstado(dashboard.ID);
+                }
+            });
+
+        }
+
+
         /// <summary>
         /// 
         /// </summary>
-        Conteudo.prototype.GuardaDashboardServidor = function (dashboard) {
+        Plataforma.prototype.GuardaDashboardServidor = function (dashboard) {
             var self = this;
+
+            console.log(dashboard);
             
             primerCORE.DashboardAtualiza(self.idUtilizador, dashboard);
             // TODO - aviso utilziar guardou com sucesso
@@ -7494,7 +7672,7 @@
         /// <summary>
         /// Carrega a lista de dashboards de um utilizador especifico ( Pedido ao servidor )
         /// </summary>
-        Conteudo.prototype.CarregaListaDashboards = function () {
+        Plataforma.prototype.CarregaListaDashboards = function () {
             var self = this,
                 pedido;
 
@@ -7516,36 +7694,38 @@
             console.log(self.listaDashboards);
 
         }
-        
+       
 
         /// <summary>
         /// Adiciona um dashboard à lista
         /// </summary>
         /// <param name ="dashboard"> Envia um objecto do tipo "Grid" para ser adicionado a lista </param>
-        Conteudo.prototype.AdicionaDashboard = function (objectoDashboard, nome) {
+        Plataforma.prototype.AdicionaDashboard = function (dashboard, nome) {
             var self = this,
-                dashboard = {},
-                listaWidgets = [];
-
-            objectoDashboard.listaWidgets.forEach(function (widget) {
-                listaWidgets.push(widget.objectoServidor);
-            });
-
-            //dashboard.setNome(nome);
-            dashboard["nome"] = objectoDashboard.nome;
-            dashboard["descricao"] = objectoDashboard.descricao;
-            dashboard["id"] = objectoDashboard.id;
-            dashboard["idUnico"] = objectoDashboard.idUnico;
-            dashboard["listaWidgets"] = listaWidgets;
-            dashboard["opcoesAparencia"] = " ";
-
-            // Guardar na lista 
-            self.listaDashboards.push(dashboard);
+                objectoDashboard = {},
+                listaWidgetsDashboard = [];
 
             console.log(dashboard);
 
+            dashboard.listaWidgets.forEach(function (widget) {
+                listaWidgetsDashboard.push(widget.objectoServidor);
+            });
+
+            //dashboard.setNome(nome);
+            objectoDashboard["Nome"] = dashboard.nome;
+            objectoDashboard["Descricao"] = dashboard.descricao;
+            objectoDashboard["OpcoesAparencia"] = " ";
+
+            // Passa para um objecto
+            objectoDashboard["Configuracao"] = JSON.stringify(listaWidgetsDashboard);
+
+            // Guardar na lista 
+            self.listaDashboards.push(objectoDashboard);
+
+            console.log(objectoDashboard);
+
             // Guardar no servidor
-            //self.AdicionaDashboardServidor(dashboard);
+            self.AdicionaDashboardServidor(objectoDashboard);
 
         }
 
@@ -7553,7 +7733,7 @@
         /// <summary>
         /// Guarda dashboard existente
         /// </summary>
-        Conteudo.prototype.GuardaDashboard = function(){
+        Plataforma.prototype.GuardaDashboard = function(){
             var self = this,
                 index,
                 objectoDashboard = {},
@@ -7569,15 +7749,8 @@
                 objectoDashboard["Descricao"] = gridPrincipal.descricao;               
                 objectoDashboard["opcoesAparencia"] = " ";
 
-                // Todo
-                // passar lista widgets para aformato JSON para enviar para a query
-                // Criar a query para enviar para o servidor
-                // Rever formato de como está guardado array de objecto com um objecto?
-                // lista widgets = configuracao, so por la os widgets
-
                 // Passa os widgets para o formato de configuração 
                 gridPrincipal.listaWidgets.forEach(function (item, curIndex) {
-                    console.log(item);
                     listaWidgetsDashboard.push(item.objectoServidor);
                 });
 
@@ -7600,12 +7773,13 @@
         /// <summary>
         /// Carrega dashboard para a aplicação
         /// </summary>
-        Conteudo.prototype.CarregaDashboard = function(id){
+        Plataforma.prototype.CarregaDashboard = function(id){
             var self = this,
                 index;
 
             // Limpa a dashboard atual
             self.LimpaDashboard();
+
             
             // Procura o index do dashboard a carregar
             index = _.findIndex(self.listaDashboards, function (dashboard) { return dashboard.ID === id; });
@@ -7622,7 +7796,7 @@
         /// <summary>
         /// "Limpa" dashboard atual do ecra, continua guardada na estrutura
         /// </summary>
-        Conteudo.prototype.LimpaDashboard = function () {
+        Plataforma.prototype.LimpaDashboard = function () {
             var self = this;
 
             // Remove widgets do gridstack
@@ -7637,7 +7811,7 @@
         /// <summary>
         /// Remove a dashboard permanentemente
         /// </summary>
-        Conteudo.prototype.RemoveDashboard = function () {
+        Plataforma.prototype.RemoveDashboard = function () {
             var self = this;
 
             // Remove widgets do gridstack
@@ -7656,7 +7830,7 @@
         /// Devolve a lista de dashboards de um utilizador 
         /// </summary>
         /// <returns> Lista de Dashboards "Grids" de um utilizador
-        Conteudo.prototype.getDashboards = function () {
+        Plataforma.prototype.getDashboards = function () {
             var self = this;
 
             return self.listaDashboards;
@@ -7666,13 +7840,13 @@
         /// <summary>
         /// Getters e Setters para a dashboardAtual
         /// </summary>
-        Conteudo.prototype.getDashboardAtual = function () {
+        Plataforma.prototype.getDashboardAtual = function () {
             var self = this;
 
             return self.dashboardAtual;
 
         }
-        Conteudo.prototype.setDashboardAtual = function (idUnico) {
+        Plataforma.prototype.setDashboardAtual = function (idUnico) {
             var self = this;
 
             self.CarregaDashboard(idUnico);
@@ -7684,7 +7858,7 @@
 
         /// #Region - Eventos
 
-        Conteudo.prototype.AtualizaDashboard = function () {
+        Plataforma.prototype.AtualizaDashboard = function () {
             var self = this;
 
             // Ao clickar para atualizar (guardar) o dashboard
@@ -7696,7 +7870,7 @@
 
         /// #Region
 
-        return Conteudo;
+        return Plataforma;
 
     })();
 
@@ -7712,57 +7886,13 @@
     })();
 
 
+    // LIGAÇÃO COM O UTILIZDOR
+    // Cria Dashboards inicial
+    // TODO
+    var Utilizador = new Plataforma(idUtilizador, "Utilizador_Teste");
 
-    // Opções da gridstack
-    options = {
-        verticalMargin: 2,
-        float: true,
-        // Modificado também nas media queries
-        minWidth: 680,
-        draggable: {
-            handle: ".widget-navbar"
-        },
-        acceptWidgets: ".grid-stack-item",
-        resizable: {
-            handles: "sw, se"
-        },
-        swapGridWidth: 3,
-        swapGridHeight: 3
-    };
-
-    // Opções do menu drag&drop
-    optionsBarraLateral = {
-        width: 12,
-        removable: false,
-        cell_height: 100,
-        verticalMargin: 0,
-        disableResize: true
-    }
-
-
-
-    // Criação da grid principal
-    gridPrincipal = new Grid("main-gridstack", options, "barraPrincipal");
-    // Evento que mostra a informação de todos os widgets disponiveis ao clickar um botão
-    gridPrincipal.MostraInformacaoWidgets();
-    // Adicionar o background à gridstack
-    $("#"+gridPrincipal.id).addClass("gridstack-background");
-
-
-    if(modo === "edicao"){
-        // Criação da grid secundária
-        gridGraficos = new Grid("sidebarGraficos-gridstack", optionsBarraLateral, "barraSecundaria");
-        gridLabels = new Grid("sidebarLabels-gridstack", optionsBarraLateral, "barraSecundaria");
-        gridOutros = new Grid("sidebarOutros-gridstack", optionsBarraLateral, "barraSecundaria");
-        gridFiltros = new Grid("sidebarFiltros-gridstack", optionsBarraLateral, "barraSecundaria");
-
-        // Remove handles extra que previnem que seja feito o resize ao mudar da sideGrid para a gridPrincipal
-        gridGraficos.RemoveHandle();
-        gridLabels.RemoveHandle();
-        gridOutros.RemoveHandle();
-        gridFiltros.RemoveHandle();
-
-    }
+    // Cria uma nova dashboard
+    Utilizador.CriaDashboard();
 
 
     // Incializa tooltips
@@ -7770,7 +7900,6 @@
         selector: '[data-toggle="tooltip"]',
         container: "body"
     });
-
 
 
     /// TESTE SIDEBAR - Gestão de elementos para a dropdownlist das "Propriedades"
@@ -7782,35 +7911,56 @@
     ///TESTES - Comunicação
     $(".obterValores").click(function () {
         gridPrincipal.FiltraContexto();
-
     })
 
-    // Query para a lista de widgets
-    // Atualizada
-    var queryWidget = '{ "sessaoID": "sessaoDebug", "dashboardID": "8","utilizadorID": "2502", "widgetsDados": [ { "id": "widget0", "tipo": "dados", "elemento": "GraficoLinhas", "contexto": [ "widget3", "widget8" ], "series": [ {"funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": ""}, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMin", "index": "indicadores", "type": "" } ], "buckets": [ {"tipo": "histogramadata", "campo": "data", "intervalo": "dia" } ]} ], "widgetsContexto": { "contextoPesquisa": [ { "id": "widget3", "tipo": "contexto",  "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "contexto", "filtro": "valor.tagID: 3073"} ],  "contextoData": [  {  "id": "widget8",  "campo": "data", "dataInicio": "2015-06-07",  "dataFim": "2015-06-10"} ] } }';
+    //// Query para a lista de widgets
+    //// Atualizada
+    //var queryWidget = '{ "sessaoID": "sessaoDebug", "dashboardID": "8","utilizadorID": "2502", "widgetsDados": [ { "id": "widget0", "tipo": "dados", "elemento": "GraficoLinhas", "contexto": [ "widget3", "widget8" ], "series": [ {"funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": ""}, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMin", "index": "indicadores", "type": "" } ], "buckets": [ {"tipo": "histogramadata", "campo": "data", "intervalo": "dia" } ]} ], "widgetsContexto": { "contextoPesquisa": [ { "id": "widget3", "tipo": "contexto",  "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "contexto", "filtro": "valor.tagID: 3073"} ],  "contextoData": [  {  "id": "widget8",  "campo": "data", "dataInicio": "2015-06-07",  "dataFim": "2015-06-10"} ] } }';
 
-    // Query para o DashboardCria
-    var query = {
-        "UtilizadorID": 2508,
-        "Nome": "teste_dois",
-        "Descricao": "teste_dois desc",
-        "Configuracao": "{\"id\":\"widget0\",\"largura\":271,\"altura\":120,\"titulo\":\"ola\",\"widgetAltura\":20,\"widgetLargura\":20,\"widgetX\":400,\"widgetTipo\":\"dados\",\"widgetElemento\":\"graficoBarras|graficoLinhas|graficoPie|etiqueta|tabela\",\"mostraLegenda\":false,\"mostraToolTip\":false,\"visivel\":true,\"ultimaAtualizacao\":\"4/11/16\",\"contexto\":[\"widget1\",\"widget2\"],\"agregacoes\":[{\"funcao\":\"avg\",\"campo\":\"valor.valorMax\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMed\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMin\"}]}",
-        "Activo": false
-    };
+    //// Query para o DashboardCria
+    //var query = {
+    //    "UtilizadorID": 2508,
+    //    "Nome": "teste_dois",
+    //    "Descricao": "teste_dois desc",
+    //    "Configuracao": "{\"id\":\"widget0\",\"largura\":271,\"altura\":120,\"titulo\":\"ola\",\"widgetAltura\":20,\"widgetLargura\":20,\"widgetX\":400,\"widgetTipo\":\"dados\",\"widgetElemento\":\"graficoBarras|graficoLinhas|graficoPie|etiqueta|tabela\",\"mostraLegenda\":false,\"mostraToolTip\":false,\"visivel\":true,\"ultimaAtualizacao\":\"4/11/16\",\"contexto\":[\"widget1\",\"widget2\"],\"agregacoes\":[{\"funcao\":\"avg\",\"campo\":\"valor.valorMax\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMed\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMin\"}]}",
+    //    "Activo": false
+    //};
 
 
 
-    // TESTE - CLASS CONTEUDO
-
-    // Cria Dashboards inicial
-    var Utilizador = new Conteudo(idUtilizador, "Utilizador_Teste");
-
+    // TESTE - CLASS Plataforma
 
     // Carrega todos os dashboards do utilizador
     Utilizador.CarregaListaDashboards();
-    // Carrega uma dashboard em especifico
-    Utilizador.CarregaDashboard(31);
 
+
+    // Carrega uma dashboard em especifico, caso esteja em modo Lista
+    if (modo !== "lista") {
+        // Vai buscar o parametro de URL
+        var dashboardID = GetURLParameter("dashboard");
+        
+        // Caso exista parametro
+        if (dashboardID === "new") {
+            // Dá titulo e descrição ào novo dashboard
+            gridPrincipal.setNome("Novo Dashboard");
+            gridPrincipal.setDescricao("Descricao Dashboard");
+
+        }
+        else if (dashboardID !== undefined) {
+            // Carrega a dashboard com o ID especificado
+            Utilizador.setDashboardAtual(+dashboardID);
+
+        } else {
+            // Procura index do dashboard que está ativo
+            var index = _.findIndex(Utilizador.getDashboards(), function (dashboard) { return dashboard.Activo === true; });
+
+            if (index !== -1) {
+                Utilizador.setDashboardAtual(+Utilizador.getDashboards()[index].ID);
+
+            }
+        }
+
+    }
 
 
 
@@ -7818,7 +7968,6 @@
         // Verifica se o dashboard já está guardado na base de dados ou não
         if (_.findIndex(Utilizador.getDashboards(), function (objecto) { return objecto.ID === gridPrincipal.idUnico; }) === -1) {
             console.log("nao existe");
-            console.log(Utilizador.getDashboards());
             Utilizador.AdicionaDashboard(gridPrincipal, gridPrincipal.nome);
             // Enviar Pedido ao servidor para guardar dashboard
 
@@ -7832,10 +7981,8 @@
         Utilizador.RemoveDashboard();
     });
     $(".dashboard-informa").click(function () {
-        //console.log(Utilizador);
-        console.log(Utilizador.getDashboards());
-        //console.log(JSON.stringify(Utilizador.getDashboards()))
-
+        console.log(gridPrincipal);
+        window.open('db_edicao.html' + '?dashboard=' + gridPrincipal.idUnico, '_self', false);
     });
 
 
@@ -7852,54 +7999,67 @@
         //gridPrincipal.listaWidgets;
         //primerCORE.
 
-
     });
+
+
 
 
     ///MODO - LISTA
     /// OPCOES LISTA DASHBOARDS
     if (modo === "lista") {
         var dadosTabela,
+            dataCriacao,
+            dataEdicao,
             objectLista = [],
             dashboards = Utilizador.getDashboards(),
             r = new Array(), j = -1;
 
+        // Opcoes de estilo
         $("#page-wrapper").css("display", "table");
+        $("#page-wrapper").css("width", "100%");
+        
 
         // Carrega lista dashboards para o div
-
-
         for (var key = 0, size = dashboards.length; key < size; key++) {
-            objectLista.push({ "nome": dashboards[key].Nome, "data": { "criacao": dashboards[key].TimestampCriacao, "edicao": dashboards[key].TimestampEdicao, "descricao": dashboards[key].Descricao } });
+            // Analisa as datas
+            dataCriacao = moment(dashboards[key].TimestampCriacao, moment.ISO_8601);
+            dataEdicao = moment(dashboards[key].TimestampEdicao, moment.ISO_8601)
+            
+            // Puxa um objecto com os dados de cada dashboard
+            objectLista.push({ "nome": dashboards[key].Nome, "data": { "id": dashboards[key].ID, "criacao": dataCriacao.format("YYYY-MM-DD  HH:mm:ss"), "edicao": dataEdicao.format("YYYY-MM-DD  HH:mm:ss"), "descricao": dashboards[key].Descricao } });
 
         }
 
+        // Formata os dados para um formato fácil de implementar na tabela
         dadosTabela = $.flatJSON({ data: objectLista, flat: true });
 
-
+        // Inicializa a tabela
         $('#listaDashboards').bootstrapTable({
             data: dadosTabela,
+            locale: getLinguagem(),
             cache: false,
-            search: true,
+            search: false,
             showColumns: false,
             showRefresh: false,
             clickToSelect: true,
-            showToggle: true,
+            showToggle: false,
             cardView: false,
             pagination: false,
+            idField: true,
             singleSelect: true,
+            classes: "showPointer nao-seleciona table table-hover",
             onClickRow: function (item, $element) {
-
-                //TODO abrir visualização com dashboard escolhida
+                // Abrir nova página com o ID associado à linha que foi feito o click
+                window.open('db_visualizacao.html' + '?dashboard=' + item["data.id"], '_self', false);
 
                 return false;
+
             },
             columns: [
                 {
                     field: 'nome',
                     title: 'Dashboard',
                     sortable: true,
-                    width: 200
                 },
                 {
                     field: 'data.criacao',
@@ -7914,13 +8074,22 @@
                 {
                     field: 'data.descricao',
                     title: 'Descrição',
-                    sortable: true,
-                    width: 400
+                    sortable: true
+                },
+                {
+                    field: 'data.ID',
+                    title: 'ID',
+                    sortable: false,
+                    visible: false
                 }
             ]
         });
 
     }
 
+    // Ao clickar para criar novo Dashboard
+    $(".adicionaDashboard-lista").click(function () {
+        window.open('db_edicao.html' + '?dashboard=new', '_self', false);
+    });
 
 })
