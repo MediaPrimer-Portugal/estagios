@@ -385,7 +385,7 @@
 
     .legenda {
         height: 5%;
-        width: 90px;
+        width: 120px;
         position: absolute;
         right: 0;
         top: 50px;
@@ -565,10 +565,12 @@
         Widget Dropdown Options
     ----------------------*/
 
-    .dropdown-menu{
+    .dropdown-menu {
         overflow: visible !important;
         top: 0% !important;
         left: 100% !important;
+
+        z-index: 99;
     }
 
 

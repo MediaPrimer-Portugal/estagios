@@ -777,6 +777,28 @@
             return self.agregacoes;
         }
 
+
+        /// <summary>
+        /// Atualizar indicadores
+        /// </summary>
+        Widget.prototype.getIndicadores = function () {
+            var self = this,
+            indicadores = [];
+            
+            if (self.contexto.length <= 0) {
+                return indicadores;
+            } else {
+                if (self.dadosNormal !== undefined && self.dadosNormal !== null) {
+                    self.dadosNormal.forEach(function (indicador) {
+                        indicadores.push(indicador.name);
+                    });
+                }
+            }
+
+            return indicadores;
+        }
+
+
         /// <summary>
         /// Adicionar uma série
         /// </summary>
@@ -867,10 +889,10 @@
 
             // Cria evento para alternar entre legendas visiveis e invisiveis
             $("#" + self.id).find(".legenda-widget").on("click", function () {
-
                 // Define o widget
                 var $widget = $("#" + self.id);
 
+                console.log($widget.find(".legenda"));
 
                 // Atualiza o estado das legendas
                 self.setLegendas();
@@ -882,13 +904,18 @@
                     // Aumentar o conteudo gráfico
                     $widget.find(".wrapper").css("width", "100%");
                     self.Atualiza();
+
                     // Caso esteja escondida
                 } else {
+
+                    console.log("MOSTRA");
+
                     // Mostra
                     $widget.find(".legenda").show();
                     // Diminui a largura
                     $widget.find(".wrapper").css("width", "80%");
                     self.Atualiza();
+
                 }
 
             });
@@ -1081,7 +1108,7 @@
             valores,
             pontos,
             chave = [],
-            color = d3.scale.category20(),
+            color = d3.scale.category20c(),
             nomeEixoX = "Eixo X",
             nomeEixoY = "Eixo Y",
             modoVisualizacao = "normal",  // stacked
@@ -1129,10 +1156,10 @@
             larguraRect = (self.largura / self.dados.dados.Widgets[0].Items.length);
 
 
-            if (self.modoVisualizacao === "stacked") {
-                stack = d3.layout.stack()
-                    .values(function (d) { return d.values; });
-            }
+            //if (self.modoVisualizacao === "stacked") {
+            //    stack = d3.layout.stack()
+            //        .values(function (d) { return d.values; });
+            //}
 
 
             // Update nos paths do gráfico
@@ -1143,7 +1170,7 @@
                 // y0 é igual a altura pois no d3 a escala é feita de forma contrária
                 .y0(function (d) { return self.altura; })
                 // Devolve o "Y" de cada valor no objecto Dados de acordo com a escala Y
-                .y1(function (d) { return self.transformaY(d.y); });
+                .y1(function (d) { console.log(self.transformaY(d.y)); return self.transformaY(d.y); });
 
 
             if (self.modoVisualizacao === "stacked") {
@@ -1152,8 +1179,6 @@
                     .y0(function (d) { return self.transformaY(d.y0); })
                     // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
                     .y1(function (d) { return self.transformaY(d.y0 + d.y); });
-            } else {
-                //to-do
             }
 
 
@@ -1161,13 +1186,19 @@
             // Controla as keys (Series) que vão estar contidas no gráfico
             color.domain(d3.values(self.dados.dados.Widgets[0].Items[0].Valores).map(function (d) { return d.Nome; }));
 
+            
+
+            // AJUSTAR OS VALORES PARA PERCENTAGEM 
+            // y0 ?
+            // Descobrir total, passar valores normais para percentagem??
+            // TODO  v 
 
             // Caso esteja em modo Stacked
             if (self.modoVisualizacao === "stacked") {
 
                 // Criar novo array de objectos para guardar a informação de forma fácil de utilizar
                 // Recorre ao método stack do d3
-                dadosStacked = stack(color.domain().map(function (name) {
+                self.dadosNormal = (color.domain().map(function (name) {
                     return {
                         // Atribuir nome da chave
                         name: name,
@@ -1190,63 +1221,19 @@
                     }
                 }));
 
+                // "Reset" ao array da chave
+                self.chave = [];
 
-                // Acrescentar ao SVG
-                dados = self.svg.selectAll(".dados")
-                                .data(dadosStacked)
-                              .enter().append("g")
-                                .attr("class", "dados")
-                                // Compensar margem da esquerda
-                                .attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
-
-
-                // Acrescenta o desenho do gráfico
-                dados.append("path")
-                    .attr("class", "area")
-                    .attr("title", "")
-                    // Chamar area() para desenhar de acordo o "path" com os valores
-                    .attr("d", function (d) { return self.area(d.values); })
-                    // Adiciona tooltips
-                    .style("fill", function (d) { return color(d.name); });
-
-
-                // Grupo das tooltips
-                self.pontos = self.svg.append("g")
-                    .attr("class", "pontos");
-
-
-                // Circulo que apresenta o "foco" do utilizador
-                self.pontos.append("circle")
-                    .attr("class", "circuloFoco")
-                    .style("fill", "none")
-                    .style("stroke", "red")
-                    .style("stroke-width", "2")
-                    .attr("r", 4)
-                        .style("display", "none");
-
-                // Atualizar eixo depois de dados inseridos
-                self.transformaX.domain(d3.extent(self.dados, function (d) { return d.date; }));
-
-                // Para cada objecto ( Ponto )
-                dadosStacked.forEach(function (item, curIndex) {
-                    // Para cada "variável"
-                    self.pontos.selectAll(".ponto" + curIndex)
-                        // Ligar o valor dos pontos
-                        .data(item.values)
-                      // Inserir rectangulo
-                      .enter().append("rect")
-                        .attr("class", "ponto" + curIndex)
-                        .attr("x", function (d) { return self.transformaX(d.date); })
-                        .attr("y", function (d) { return self.transformaY(d.y0 + d.y); })
-                        .attr("width", larguraRect)
-                        .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
-                        .style("opacity", "0");
-
+                // Adquirir valor máximo de cada uma das chaves(keys)
+                self.dadosNormal.forEach(function (item) {
+                    self.chave.push(d3.max(item.values, function (d) { return d.y; }));
                 });
 
-                // Caso esteja em modo normal
-            } else {
 
+                self.DesenhaSerie();
+
+            // Caso esteja em modo normal
+            } else {
                 // Criar novo array de objectos para guardar a informação de forma fácil de utilizar
                 self.dadosNormal = color.domain().map(function (name) {
                     return {
@@ -1271,6 +1258,8 @@
                     }
                 });
 
+                // "Reset" ao array da chave
+                self.chave = [];
 
                 // Adquirir valor máximo de cada uma das chaves(keys)
                 self.dadosNormal.forEach(function (item) {
@@ -1278,7 +1267,6 @@
                 });
 
 
-                // to-do var close
                 self.transformaY.domain([0, d3.max(self.chave)]);
 
                 // Atualizar eixo depois de dados inseridos
@@ -1286,16 +1274,61 @@
 
 
                 // Passar os dados para dentro de um objecto para serem facilmente lidos pelos métodos d3
-                valores = [{ values: self.dadosNormal }];
+                //valores = [{ values: self.dadosNormal }];
 
+                self.DesenhaSerie();
+
+            }
+
+        }
+
+
+        /// <summary>
+        /// Desenha as séries que foram selecionadas pelo utilizador (seriesUtilizadas)
+        /// </summary>
+        /// TODO
+        /// incompleto
+        GraficoArea.prototype.DesenhaSerie = function () {
+            var self = this,
+                index,
+                id = 0;
+            dadosEscolhidos = [];
+
+
+            // Remove as séries anteriores
+            $("#" + self.id).find(".series").remove();
+            $("#" + self.id).find(".pontos").remove();
+
+            // Para cada serie utilizada
+            self.seriesUtilizadas.forEach(function (item) {
+
+                console.log(item);
+
+                // Descobrir quais as que têm o valor de indicador correto
+                index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.ComponenteSerie })
+                if (index !== -1) {
+
+                    // Adiciona um numero a cada série para ser facilmente identificada
+                    self.dadosNormal[index]["Numero"] = id++;
+                    self.dadosNormal[index]["Nome"] = item.Nome;
+
+                    dadosEscolhidos.push(self.dadosNormal[index]);
+                }
+            });
+
+            console.log(self.modoVisualizacao)
+            
+            // Caso esteja em modo normal (diferente de stacked)
+            if (self.modoVisualizacao !== "stacked") {
 
                 // Acrescentar ao SVG
                 dados = self.svg.selectAll(".dados")
-                                .data(self.dadosNormal)
+                                .data(dadosEscolhidos)
                               .enter().append("g")
                                 .attr("class", "dados")
-                                // Compensar margem da esquerda
-                                .attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
+                              // Atribui o nome da série a um atributo 
+                                .attr("value", function (d) { return d.Nome; })
+                                .attr("numero", function (d) { return d.Numero; });
 
 
                 // Acrescenta o desenho do gráfico
@@ -1305,7 +1338,7 @@
                     // Chamar area() para desenhar de acordo o "path" com os valores
                     .attr("d", function (d) { return self.area(d.values); })
                     // Adiciona tooltips
-                    .style("fill", function (d) { return color(d.name); });
+                    .style("fill", function (d) { console.log(color(d.Nome)); return color(d.Nome); })
 
 
                 // Grupo das tooltips
@@ -1324,7 +1357,7 @@
 
 
                 // Para cada objecto ( Ponto )
-                self.dadosNormal.forEach(function (item, curIndex) {
+                dadosEscolhidos.forEach(function (item, curIndex) {
                     // Para cada "variável"
                     self.pontos.selectAll(".ponto" + curIndex)
                         // Ligar o valor dos pontos
@@ -1334,6 +1367,73 @@
                         .attr("class", "ponto" + curIndex)
                         .attr("x", function (d) { return self.transformaX(d.date); })
                         .attr("y", function (d) { return self.transformaY(d.y); })
+                        .attr("width", larguraRect)
+                        .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
+                        .style("opacity", "0");
+
+                });
+            // Caso esteja em modo Stacked
+            } else {
+
+                // "Define" a função do d3 para "empilhar" os valores
+                stack = d3.layout.stack()
+                    .values(function (d) { return d.values; });
+
+                // Conforme os valores dados faz os cálculos para atribuir valores a y0 e y1 para se empilharem
+                dadosEscolhidos = stack(dadosEscolhidos);
+
+                // Acrescentar ao SVG
+                dados = self.svg.selectAll(".dados")
+                                .data(dadosEscolhidos)
+                              .enter().append("g")
+                                .attr("class", "dados")
+                              // Atribui o nome da série a um atributo 
+                                .attr("value", function (d) { return d.Nome; })
+                                .attr("numero", function (d) { return d.Numero; });
+
+
+                // Acrescenta o desenho do gráfico
+                dados.append("path")
+                    .attr("class", "area")
+                    .attr("title", "")
+                    // Chamar area() para desenhar de acordo o "path" com os valores
+                    .attr("d", function (d) { return self.area(d.values); })
+                    // Adiciona tooltips
+                    .style("fill", function (d) { console.log(color(d.Nome)); return color(d.Nome); });
+
+
+                // Grupo das tooltips
+                self.pontos = self.svg.append("g")
+                    .attr("class", "pontos");
+
+
+                // Circulo que apresenta o "foco" do utilizador
+                self.pontos.append("circle")
+                    .attr("class", "circuloFoco")
+                    .style("fill", "none")
+                    .style("stroke", "red")
+                    .style("stroke-width", "2")
+                    .attr("r", 4)
+                        .style("display", "none");
+
+
+                // Atualizar eixo depois de dados inseridos
+                self.transformaX.domain(d3.extent(dadosEscolhidos[0].values, function (d) {return d.date; }));
+
+                console.log(d3.extent(dadosEscolhidos[0].values, function (d) { return d.date; }));
+
+
+                // Para cada objecto ( Ponto )
+                dadosEscolhidos.forEach(function (item, curIndex) {
+                    // Para cada "variável"
+                    self.pontos.selectAll(".ponto" + curIndex)
+                        // Ligar o valor dos pontos
+                        .data(item.values)
+                      // Inserir rectangulo
+                      .enter().append("rect")
+                        .attr("class", "ponto" + curIndex)
+                        .attr("x", function (d) { return self.transformaX(d.date); })
+                        .attr("y", function (d) { return self.transformaY(d.y0 + d.y); })
                         .attr("width", larguraRect)
                         .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
                         .style("opacity", "0");
@@ -1380,10 +1480,10 @@
               .orient("left");
 
             // Adiciona escala em formato percentagem
-            if (self.modoVisualizacao === "stacked") {
-                self.escalaY
-                    .tickFormat(formatPercent);
-            }
+            //if (self.modoVisualizacao === "stacked") {
+            //    self.escalaY
+            //        .tickFormat(formatPercent);
+            //}
         }
 
 
@@ -1402,12 +1502,11 @@
                 // Mapeia o dominio conforme a a data disponivel nos dad
                 .domain(d3.extent(self.dadosNormal[0].values, function (d) { return d.date; }));
 
-
             if (self.modoVisualizacao === "stacked") {
                 // Atribui valores a Y conforme a sua escala
                 self.transformaY = d3.scale.linear()
                     // Para stack não é preciso domain
-                    //.domain([0, d3.max(self.dados, function (d) { return d.teste1; })])
+                    .domain([0, d3.sum(self.chave)])
                     .range([self.altura, 0]);
 
             } else {
@@ -1430,7 +1529,7 @@
                 self.escalaY.ticks(5);
             }
             if (self.altura <= (self.TamanhoLimite - 100)) {
-                self.escalaY.ticks(2);
+                self.escalaY.ticks(3);
             }
 
 
@@ -1451,7 +1550,7 @@
             // Atualização do eixo dos X
             self.svg.select(".x.axis")
                 .attr("class", "x axis")
-                .attr("transform", "translate(" + self.margem.esquerda / 2 + " ," + self.altura + ")")
+                .attr("transform", "translate(0 ," + self.altura + ")")
                 .call(self.escalaX)
             .selectAll("text")
               .attr("dx", "-2em")
@@ -1461,7 +1560,7 @@
             // Atualização do eixo dos Y
             self.svg.select(".y.axis")
                 .attr("class", "y axis")
-                .attr("transform", "translate(" + self.margem.esquerda / 2 + " , 0)")
+                .attr("transform", "translate(0 , 0)")
                 .call(self.escalaY);
         }
 
@@ -1531,7 +1630,6 @@
 
             // Insere Botões na navbar
             self.OpcaoLegenda();
-            self.EventoLegenda();
             self.OpcaoTooltip();
             self.OpcaoMostraDados();
 
@@ -1576,61 +1674,55 @@
         GraficoArea.prototype.ConstroiLegenda = function () {
             var self = this,
                 series = $("#" + self.id).find(".wrapper").find(".dados").length,
-                legenda;
+                legenda,
+                nomesLegenda = [];
 
 
+
+            // Inserir SVG legenda
             legenda = d3.select("#" + self.id).select(".legenda").insert("svg");
 
-            for (var i = 0; i < series; i++) {
+            // Para cada index
+            for (var index = 0; index < series; index++) {
+                // Selecionar o index no DOM
+                var nome = $("#" + self.id + " .wrapper").find(".dados:eq(" + index + ")").attr("value");
+
+                // Adicionar circulo "legenda"
                 legenda.append("circle")
                     .attr("r", 5)
                     .attr("cx", 15)
-                    .attr("cy", 15 + 20 * i)
-                    .style("fill", color(color.domain()[i]));
+                    .attr("cy", 15 + 20 * index)
+                    .style("fill", color(nome));
+
+                //$(".legenda").prepend("<span style='float:right; padding-top:4px'>" + nome + "</span>")
 
                 legenda.append("text")
                     .attr("x", 30)
-                    .attr("y", ((15 + 20 * i) + 5))
-                    .text(color.domain()[i]);
+                    .attr("y", ((15 + 20 * index) + 5))
+                    .text(nome);
 
             }
 
+
+
+            //legenda = d3.select("#" + self.id).select(".legenda").insert("svg");
+
+            //for (var i = 0; i < series; i++) {
+            //    legenda.append("circle")
+            //        .attr("r", 5)
+            //        .attr("cx", 15)
+            //        .attr("cy", 15 + 20 * i)
+            //        .style("fill", color(color.domain()[i]));
+
+            //    legenda.append("text")
+            //        .attr("x", 30)
+            //        .attr("y", ((15 + 20 * i) + 5))
+            //        .text(color.domain()[i]);
+
+            //}
+
         }
 
-
-        /// <summary>
-        /// Evento que mostra/esconde as legendas do widget
-        /// </summary>
-        GraficoArea.prototype.EventoLegenda = function () {
-            var self = this;
-            // Cria evento para alternar entre legendas visiveis e invisiveis
-            $("#" + self.id).find(".legenda-widget").on("click", function () {
-
-                // Define o widget
-                var $widget = $("#" + self.id);
-
-
-                // Atualiza o estado das legendas
-                self.setLegendas();
-
-                // Caso esteja visivel
-                if ($widget.find(".legenda").is(":visible")) {
-                    // Esconder
-                    $widget.find(".legenda").hide();
-                    // Aumentar o conteudo gráfico
-                    $widget.find(".wrapper").css("width", "100%");
-                    self.Atualiza();
-                    // Caso esteja escondida
-                } else {
-                    // Mostra
-                    $widget.find(".legenda").show();
-                    // Diminui a largura
-                    $widget.find(".wrapper").css("width", "80%");
-                    self.Atualiza();
-                }
-
-            });
-        }
 
 
         /// <summary>
@@ -1650,13 +1742,13 @@
             // Seleciona todos os elementos com class .area e liga-os aos dados
             self.svg.selectAll(".area")
                 .attr("d", function (d) { return self.area(d.values); })
-                .style("fill", function (d) { return color(d.name); });
+                .style("fill", function (d) { return color(d.Nome); });
 
             // Caso esteja modo visualização stacked
             if (self.modoVisualizacao === "stacked") {
 
                 // Para cada objecto ( Ponto )
-                dadosStacked.forEach(function (item, curIndex) {
+                self.dadosNormal.forEach(function (item, curIndex) {
 
                     // Largura de cada rectangulo, de acordo com o tamanho do widget
 
@@ -2631,7 +2723,6 @@
             // Remove as séries anteriores
             $("#" + self.id).find(".series").remove();
 
-
             // Para cada serie utilizada
             self.seriesUtilizadas.forEach(function (item) {
                 // Descobrir quais as que têm o valor de indicador correto
@@ -2646,7 +2737,7 @@
                 }
             });
             
-            
+
             // Seleciona todas as series
             series = self.svg.selectAll(".series")
                // Liga os elementos aos dados dataNest
@@ -2710,16 +2801,16 @@
 
 
         /// <summary>
-        /// Atualização dos eixos através da construção de escalas novas, incluindo o método da àrea
+        /// Atualização dos eixos através da construção de escalas novas, incluindo o método da área
         /// </summary>
         GraficoLinhas.prototype.AtualizaEixos = function () {
             var self = this;
 
-            // Atribui valores a Y conforme a sua escala
+            // Atribui valores a X conforme a sua escala
             transformaX = d3.time.scale()
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
                 .range([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda])
-                // Mapeia o dominio conforme a a data disponivel nos dad
+                // Mapeia o dominio conforme a data disponivel nos dados
                 .domain(d3.extent(self.dadosNormal[0].values, function (d) { return d.date; }));
 
 
@@ -2740,34 +2831,34 @@
                 // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
                 .y(function (d) { return transformaY(d.y); });
 
-            // TODO
-            // Atualizar coordenadas do Eixo do X de acordo com o tamanho do widget
-            //d3.select("#" + self.id).select(".nomeEixoX")
-            //    .attr("x", self.largura - self.margem.esquerda - self.margem.direita - 50)
-            //    .attr("y", self.altura + self.margem.cima);
-
+    
             // Se a altura do widget for menor
             if (self.altura <= 250) {
                 // Remover nomeEixo
                 // melhorar a visualização
                 d3.select("#" + self.id).select(".nomeEixoY")
                     .text("");
+
             } else {
                 // Senão, voltar a adicionar o nome
                 d3.select("#" + self.id).select(".nomeEixoY")
                     .text(nomeEixoY);
+
             }
 
 
             // Numero de representações nos eixos de acordo com o tamanho do widget
             if (self.altura > self.TamanhoLimite) {
                 escalaY.ticks(10);
+
             }
             if (self.altura <= self.TamanhoLimite) {
                 escalaY.ticks(6);
+
             }
             if (self.altura <= (self.TamanhoLimite - 100)) {
                 escalaY.ticks(4);
+
             }
 
             // Se largura for maior ou igual ao tamanho limite a escala X vai dispor todos os valores do dominio X
@@ -6513,7 +6604,7 @@
             idUnico = 0,
             listaWidgets = [],
             // Definição de cada Menu Widget
-            widgetsGrafico = ["area", "barras", "GraficoLinhas", "pie"],
+            widgetsGrafico = ["GraficoArea", "barras", "GraficoLinhas", "pie"],
             widgetsLabel = [],
             widgetsOutros = ["gauge", "kpi", "tabela"],
             widgetsFiltros = ["datahora_simples", "filtros"];
@@ -6543,7 +6634,6 @@
         /// Inicializa a "grid" com as opccoes que foram dadas pelo utilizador
         /// </summary>
         Grid.prototype.Inicializa = function () {
-
             var self = this;
 
             // Inicializa lista de widgets
@@ -6572,17 +6662,16 @@
 
             // Caso se trata de uma barra secundária
             if (self.tipoGrid === "barraSecundaria") {
-
                 // Ao pressionar no elemento com a class especifica da grid
                 $("#"+ self.id).parent().parent().click(function () {
                     // Preencher barra
                     self.PreencheBarraLateral();
-
                 });
+
             }
 
             // Guarda informação no Widget sempre que um é modificado
-            //self.GuardaInformacao();
+            // self.GuardaInformacao();
 
             if (self.id === "main-gridstack") {
                 // Liga o evento ao botão cria dados e ao clickar no botão uma tabela é criada
@@ -6704,11 +6793,9 @@
         Grid.prototype.AdicionaWidgetLista = function (tipoWidget, id, dados) {
             var self = this;
 
-            console.log(tipoWidget);
-
             // todo Factory de classes
             switch (tipoWidget) {
-                case "area":
+                case "GraficoArea":
                     self.listaWidgets.push(new GraficoArea(id, "GraficoArea"));
                     break;
                 case "barras":
@@ -6857,6 +6944,8 @@
             var self = this,
                 tipo = self.getWidgetsGrid();
 
+            console.log(self);
+            console.log($("#" + self.id).closest("li"));
 
             // Caso tenha a class
             if ($("#" + self.id).closest("li").hasClass("active")) {
@@ -6866,9 +6955,11 @@
                 // Para cada widget adiciona
                 tipo.forEach(function (item) {
                     self.AdicionaWidget(item, item, undefined, 12, 1);
+
                 });
             } else {
                 $("#sidebar-gridstack").children().remove()
+
             }
 
         }
@@ -6989,8 +7080,6 @@
         /// Constroi widget após ser transferido da barra secundária para a principal
         /// </summary>
         Grid.prototype.ReconstroiWidget = function () {
-            console.log(gridPrincipal);
-
             var grid = gridPrincipal,
                 id = $("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id).attr("id")[$("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id).attr("id").length - 1],
                 widget = $("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id);
@@ -7030,9 +7119,12 @@
                 widget.find(".wrapper").addClass("wrapper-contexto");
             }
 
-
+            // Dar altura e largura da main grid ao widget que foi transportado
             $("#" + grid.id).data("gridstack").minWidth($($("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id).closest(".grid-stack-item")), 3);
             $("#" + grid.id).data("gridstack").minHeight($($("#" + grid.listaWidgets[grid.listaWidgets.length - 1].id).closest(".grid-stack-item")), 3);
+
+            // Preencher novamente a grid secundária que está ativa
+            //[$("#side-menu > .active").find(".widgets-sidebar").children().attr("id")].PreencheBarraLateral();
 
         }
 
