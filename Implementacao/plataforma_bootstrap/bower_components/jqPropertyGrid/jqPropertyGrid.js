@@ -186,7 +186,19 @@
              *
             */
 		} else if (type === "split") {
-		    valueHTML = '<p></p>';
+		    valueHTML = '<button style="float:right;" type="submit" id="' + "pgButton" + '" value="'+ meta.description +'" class="removeSerie-propertyGrid"><img src="../resources/ic_clear_white_24dp_1x.png" /></button>';
+		    if (getValueFuncs) {
+		        getValueFuncs[name] = function () {
+		            return "quebra";
+		        }
+		    }
+		    /*
+             *  Adicionado
+             *  Módulo de quebra de linha, para separar várias secções dentro de um grupo
+             *
+            */
+		} else if (type === "splitFiltro") {
+		    valueHTML = '<button style="float:right;" type="submit" id="' + "pgButton" + '" value="' + meta.description + '" class="removeFiltro-propertyGrid"><img src="../resources/ic_clear_white_24dp_1x.png" /></button>';
 		    if (getValueFuncs) {
 		        getValueFuncs[name] = function () {
 		            return "quebra";
@@ -244,8 +256,9 @@
 			}
 
 			if (getValueFuncs) {
-				getValueFuncs[name] = function() {
-					return $('#' + elemId).spectrum('get').toHexString();
+			    getValueFuncs[name] = function () {
+                    // TODO
+				    return ($('#' + elemId).spectrum('get') !== null)? $('#' + elemId).spectrum('get').toHexString() : "empty" ;
 				};
 			}
 
@@ -342,7 +355,9 @@
 			return null;
 		}
 
-		var opts = {};
+		var opts = {
+		    allowEmpty: true
+		};
 		$.extend(opts, options);
 		if (typeof color === 'string') {
 			opts.color = color;

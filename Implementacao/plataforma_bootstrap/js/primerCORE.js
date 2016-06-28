@@ -360,12 +360,14 @@ primerCORE = (function () {
     /// Altera o estado de um dashboard
     /// </summary>
     /// <param name="id"> Id do dashboard a ser alterado </param>
-    objecto.DashboardAlteraEstado = function (id) {
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/"+ id +"/activo/false?sessaoID=sessaoDebug";
+    objecto.DashboardAlteraEstado = function (id, estado) {
+
+        console.log(id);
+
+        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/"+ id +"/activo/" + estado + "?sessaoID=sessaoDebug";
 
         return $.ajax({
             type: "POST",
-            data: objecto,
             async: false,
             cache: false,
             // Antes de enviar

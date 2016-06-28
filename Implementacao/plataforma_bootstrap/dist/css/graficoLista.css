@@ -63,7 +63,7 @@
 
     .listaDashboards-icon{
         position: relative; 
-        top: 4px;
+        bottom: 2px;
 
     }
 
@@ -210,7 +210,6 @@
     .nav-dashboard .glyphicon {
         font-size: 20px;
     }
-
 
 
 

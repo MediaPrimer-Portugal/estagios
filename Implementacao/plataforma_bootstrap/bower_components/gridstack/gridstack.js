@@ -122,7 +122,20 @@
 
     var idSeq = 0;
 
-    var GridStackEngine = function(width, onchange, floatMode, height, items) {
+
+    /**  (Adicionado) 
+     *
+     *  Parametro "gridType", para diferenciar entre a maingridstack e as grids secundárias usadas apenas para   
+     *  os widgets
+     *
+     */
+
+    var GridStackEngine = function(gridType, width, onchange, floatMode, height, items) {
+
+        this.gridType = gridType;
+
+    /*-------------------------------------------------------*/
+
         this.width = width;
         this.float = floatMode || false;
         this.height = height || 0;
@@ -438,15 +451,22 @@
     GridStackEngine.prototype.getGridHeight = function () {
         /**  (Adicionado) Modificado 0 por 10 
          *
-         *   Define o minimo da grid a 10, para ser possivel adicionar novos widgets, mesmo que não existam
-         *   criados na dashboard, pois se o minimo for 0, a gridstack não tem height, e é impossivel arrastar
+         *   Define o minimo da grid (Inteiro no final do return), para ser possivel adicionar novos widgets mesmo que não existam
+         *   criados na dashboard, pois se o minimo for 0 a gridstack não vai ter height e será impossivel arrastar
          *   para lá widgets
          *
          *      Alterar? Modificar o valor "" dependendo do tipo de grid ( principal ou secundaria )
          */
 
+        var self = this;
 
-        return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 5);
+        console.log(self.gridType);
+
+        if (self.gridType === "barraSecundaria-gridstack") {
+            return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 0);
+        } else {
+            return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 10);
+        }
 
         /*----------------------------------------------------------------------------------------------*/
     };
@@ -562,10 +582,13 @@
              *  Atributos que definem o tamanho e largura "default" da grid
              *  
              */
+
+            gridType: opts.gridType || null,
             gridObject: opts.gridObject || null,
             PropertyGrid: opts.PropertyGrid || null,
             swapGridWidth: opts.swapGridWidth || null,
             swapGridHeight: opts.swapGridHeight || null
+
             /* -------------------------------------------------------- */
         });
 
@@ -597,7 +620,13 @@
 
         this._initStyles();
 
-        this.grid = new GridStackEngine(this.opts.width, function(nodes) {
+        /** Adicionado 
+         *
+         *  Adicionado parametro da função, gridType, para enviar para o "gridstackEngine" o tipo de
+         *  grid que vai ser criada e adaptar-se
+         *  
+        */
+        this.grid = new GridStackEngine(this.opts.gridType, this.opts.width, function(nodes) {
             var maxHeight = 0;
             _.each(nodes, function(n) {
                 if (n._id === null) {
@@ -1202,9 +1231,6 @@
      *
      */
     GridStack.prototype.AdicionaWidgetGrid = function (node) {
-
-        // ALTERAR
-
         var widgets,
             grid = this.opts.gridObject,
             listaWidgetsDados = [" Sem componente "],
@@ -1219,9 +1245,6 @@
 
         // Para cada item
         grid.listaWidgets.forEach(function (item) {
-            // Preenche a sidebar
-            //$(".associaWidget-lista").append("<li class=\"associaWidget-elemento\" valor=" + item.id + ">" + item.titulo + "<ul style=\"display:none;\"></ul></li>");
-
             // Adiciona ao array de objectos correcto
             (item.widgetTipo === "contexto") ? listaWidgetsContexto.push({ text: item.titulo, value: item.id }) : listaWidgetsDados.push({ text: item.titulo, value: item.id });
 
@@ -1243,6 +1266,7 @@
         var grid = this.opts.gridObject;
         
         grid.ReconstroiWidget();
+        grid.PreencheBarraLateral();
 
     }
 

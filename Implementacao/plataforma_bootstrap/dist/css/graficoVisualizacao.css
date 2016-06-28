@@ -373,6 +373,16 @@
         background: transparent;
     }
 
+    .removeSerie-propertyGrid {
+        border: none;
+        background: transparent;
+    }
+
+    .removeFiltro-propertyGrid {
+        border: none;
+        background: transparent;
+    }
+
     .adicionaOpcao-propertyGrid {
         border: none;
         background: transparent;

@@ -343,8 +343,19 @@
     }
 
     /* Botões property Grid */
-    /* */
+    /* Botao */
+
     .adicionaSerie-propertyGrid {
+        border: none;
+        background: transparent;
+    }
+
+    .removeSerie-propertyGrid {
+        border: none;
+        background: transparent;
+    }
+
+    .removeFiltro-propertyGrid {
         border: none;
         background: transparent;
     }

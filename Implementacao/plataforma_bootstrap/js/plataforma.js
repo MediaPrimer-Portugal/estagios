@@ -2,7 +2,7 @@
 
     // TESTE - REMOVER
 
-    var idUtilizador = 2510;
+    var idUtilizador = 2511;
     var gridPrincipal;
 
     // Verifica em que modo está a página
@@ -25,6 +25,19 @@
         .attr('class', 'd3-tip')
         .offset([0, 0])
         .html(function (d) {
+
+            // Caso seja um grafico de area
+            if (d.tipo === "GraficoArea") {
+
+                return "<p>Indicador: <span style='color:green'>" + d.nome  + "</span></p>" +
+                    "<p></p>" +
+                    "<p>Data: " + moment(d.date).format("DD-MM-YYYY") + "</p>" +
+                    "<p>Valor: " + ((Number(d.y).toFixed(2))) + "%</p>";
+
+            }
+
+
+
             return "<p>Dados: <span style='color:green'>" + d.name + "</span></p>" +
                 "<p></p>" +
                 "<p>Data: " + (d.y1 - d.y0) + "</p>" +
@@ -494,6 +507,11 @@
             objecto["ultimaAtualizacao"] = self.ultimaAtualizacao;
             objecto["contexto"] = self.contexto;
             objecto["agregacoes"] = self.agregacoes;
+            
+            if (self.suavizar !== undefined) {
+                console.log(self.suavizar);
+                objecto["suavizar"] = self.suavizar;
+            }
 
             if (self.widgetTipo === "dados") {
                 objecto["seriesUtilizadas"] = self.getSeriesUtilizadas();
@@ -536,11 +554,11 @@
 
 
         /// <summary>
-        /// Apaga o Plataforma do widget e desenha uma tabela com os dados que o widget contém
+        /// Apaga o gráfico e desenha uma tabela com os dados que o widget contém
         /// </summary>
         Widget.prototype.TransformaWidgetTabela = function () {
-            var self = this,
-                construtorTabela = new Tabela("", "Tabela", self.dados);
+            var self = this;
+                construtorTabela = new Tabela("tab", "Tabela", self.dados);
 
             // Remove todos os elementos excepto a navbar
             $("#" + self.id).children().not(".widget-navbar").children().remove();
@@ -548,9 +566,12 @@
             if (self.dados !== undefined) {
                 // Constroi tabela dentro do Widget selecionado
                 construtorTabela.InsereDadosAlternativo.call(this, self.id, construtorTabela);
+
             } else {
                 $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">Não existem dados disponiveis</span>");
+
             }
+
         }
 
 
@@ -569,11 +590,17 @@
             // Adicionar o tamanho conforme o tamanho da main-gridstack mais a diferença das barras de navegação
             $("#ecraFadeout-widget").css("height", gridPrincipal.AlturaMaxima());
 
-            // Evento para o botão de rmemoção
+            // Evento para o botão de remoção do novo gráfico
             self.RemoveExpandir();
+
+
+            console.log(self);
+            
 
             // Cria um objecto para construir o widget em formato ampliado
             widgetExpandido = FabricaClasses("ecraExpandido-widget", self.widgetElemento);
+
+            widgetExpandido.modoVisualizacao = self.modoVisualizacao;
 
             // Copia os dados do original para objecto criado
             widgetExpandido.dados = self.dados;
@@ -611,12 +638,8 @@
         Widget.prototype.RedesenhaGrafico = function (id) {
             var self = this;
 
-            // TODO
-
             // Remove todos os elementos excepto a navbar
             $("#" + self.id).children().not(".widget-navbar").children().remove();
-
-            console.log("redesenha");
 
             // caso os dados estejam vazios
             if (self.dados.dados !== undefined) {
@@ -807,6 +830,8 @@
 
             self.seriesUtilizadas = [];
 
+            console.log(series);
+
             if (self.dados !== undefined && self.dados !== null) {
                 series.forEach(function (item) {
                     // Caso o indicador exista
@@ -936,6 +961,25 @@
             });
         }
 
+        /// <summary>
+        /// Opção para "interpolar"/suavizar o gráfico
+        /// </summary>
+        Widget.prototype.OpcaoSuavizarLinhas = function () {
+            var self = this;
+
+            // Criar botão para simbolizar o "toggle" das legendas
+            $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"suavizaLinhas-widget\">" + "Suavizar Linhas" + "</a></li>");
+
+            $("#" + self.id).find(".dropdown-menu").on("click", ".suavizaLinhas-widget", function () {
+                //  Modifica o tipo de visualização
+                self.suavizar = !self.suavizar;
+
+                self.SuavizarLinhas(self.suavizar);
+                self.objectoServidor = self.AtualizaObjectoServidor();
+                self.Atualiza();
+
+            });
+        }
 
         /// <summary>
         /// Cria o botao para "expandir" o widget para ecra inteiro
@@ -1112,7 +1156,7 @@
             nomeEixoX = "Eixo X",
             nomeEixoY = "Eixo Y",
             modoVisualizacao = "normal",  // stacked
-            suavizarLinhas = false,
+            suavizar = false,
             parseDate = d3.time.format("%Y-%m-%dT%H:%M:%S").parse,
             formatPercent = d3.format(".0%");
 
@@ -1133,8 +1177,12 @@
             this.objectoServidor["widgetElemento"] = "graficoArea";
             this.objectoServidor["contexto"] = [];
             this.objectoServidor["agregacoes"] = [];
+            this.objectoServidor["suavizar"] = false;
 
             this.chave = [];
+
+            this.suavizar = false;
+
         };
 
 
@@ -1170,7 +1218,7 @@
                 // y0 é igual a altura pois no d3 a escala é feita de forma contrária
                 .y0(function (d) { return self.altura; })
                 // Devolve o "Y" de cada valor no objecto Dados de acordo com a escala Y
-                .y1(function (d) { console.log(self.transformaY(d.y)); return self.transformaY(d.y); });
+                .y1(function (d) { return self.transformaY(d.y); });
 
 
             if (self.modoVisualizacao === "stacked") {
@@ -1229,7 +1277,6 @@
                     self.chave.push(d3.max(item.values, function (d) { return d.y; }));
                 });
 
-
                 self.DesenhaSerie();
 
             // Caso esteja em modo normal
@@ -1252,7 +1299,10 @@
                             // Devolve objecto
                             return {
                                 y: +d.Valores[index].Valor,
-                                date: parseDate(d.Data)
+                                date: parseDate(d.Data),
+                                tipo: self.widgetElemento,
+                                nome: name
+
                             };
                         })
                     }
@@ -1301,9 +1351,6 @@
 
             // Para cada serie utilizada
             self.seriesUtilizadas.forEach(function (item) {
-
-                console.log(item);
-
                 // Descobrir quais as que têm o valor de indicador correto
                 index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.ComponenteSerie })
                 if (index !== -1) {
@@ -1316,8 +1363,7 @@
                 }
             });
 
-            console.log(self.modoVisualizacao)
-            
+
             // Caso esteja em modo normal (diferente de stacked)
             if (self.modoVisualizacao !== "stacked") {
 
@@ -1330,6 +1376,73 @@
                                 .attr("value", function (d) { return d.Nome; })
                                 .attr("numero", function (d) { return d.Numero; });
 
+                // Verificar o tipo de linha do widget
+                self.SuavizarLinhas(self.suavizar);
+
+                // Acrescenta o desenho do gráfico
+                dados.append("path")
+                    .attr("class", "area")
+                    .attr("title", "")
+                    // Chamar area() para desenhar de acordo o "path" com os valores
+                    .attr("d", function (d) { return self.area(d.values); })
+                    // Adiciona tooltips
+                    .style("fill", function (d) { console.log(color(d.Nome)); return color(d.Nome); })
+
+                // Grupo das tooltips
+                self.pontos = self.svg.append("g")
+                    .attr("class", "pontos");
+
+
+                // Circulo que apresenta o "foco" do utilizador
+                self.pontos.append("circle")
+                    .attr("class", "circuloFoco")
+                    .style("fill", "none")
+                    .style("stroke", "red")
+                    .style("stroke-width", "2")
+                    .attr("r", 4)
+                        .style("display", "none");
+
+
+                // Para cada objecto ( Ponto )
+                dadosEscolhidos.forEach(function (item, curIndex) {
+                    // Para cada "variável"
+                    self.pontos.selectAll(".ponto" + curIndex)
+                        // Ligar o valor dos pontos
+                        .data(item.values)
+                      // Inserir rectangulo
+                      .enter().append("rect")
+                        .attr("class", "ponto" + curIndex)
+                        .attr("x", function (d) { return self.transformaX(d.date) - larguraRect / 2; })
+                        .attr("y", function (d) { return self.transformaY(d.y); })
+                        .attr("width", larguraRect)
+                        .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
+                        .style("opacity", "0");
+
+                    console.log(item.values);
+
+                });
+
+            // Caso esteja em modo Stacked
+            } else {
+
+                // "Define" a função do d3 para "empilhar" os valores
+                stack = d3.layout.stack()
+                    .values(function (d) { return d.values; });
+
+                // Conforme os valores dados faz os cálculos para atribuir valores a y0 e y1 para se empilharem
+                dadosEscolhidos = stack(dadosEscolhidos);
+
+                // Acrescentar ao SVG
+                dados = self.svg.selectAll(".dados")
+                                .data(dadosEscolhidos)
+                              .enter().append("g")
+                                .attr("class", "dados")
+                              // Atribui o nome da série a um atributo 
+                                .attr("value", function (d) { return d.Nome; })
+                                .attr("numero", function (d) { return d.Numero; });
+
+                // Verificar o tipo de linha do widget
+                self.SuavizarLinhas(self.suavizar);
 
                 // Acrescenta o desenho do gráfico
                 dados.append("path")
@@ -1356,72 +1469,12 @@
                         .style("display", "none");
 
 
-                // Para cada objecto ( Ponto )
-                dadosEscolhidos.forEach(function (item, curIndex) {
-                    // Para cada "variável"
-                    self.pontos.selectAll(".ponto" + curIndex)
-                        // Ligar o valor dos pontos
-                        .data(item.values)
-                      // Inserir rectangulo
-                      .enter().append("rect")
-                        .attr("class", "ponto" + curIndex)
-                        .attr("x", function (d) { return self.transformaX(d.date); })
-                        .attr("y", function (d) { return self.transformaY(d.y); })
-                        .attr("width", larguraRect)
-                        .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
-                        .style("opacity", "0");
-
-                });
-            // Caso esteja em modo Stacked
-            } else {
-
-                // "Define" a função do d3 para "empilhar" os valores
-                stack = d3.layout.stack()
-                    .values(function (d) { return d.values; });
-
-                // Conforme os valores dados faz os cálculos para atribuir valores a y0 e y1 para se empilharem
-                dadosEscolhidos = stack(dadosEscolhidos);
-
-                // Acrescentar ao SVG
-                dados = self.svg.selectAll(".dados")
-                                .data(dadosEscolhidos)
-                              .enter().append("g")
-                                .attr("class", "dados")
-                              // Atribui o nome da série a um atributo 
-                                .attr("value", function (d) { return d.Nome; })
-                                .attr("numero", function (d) { return d.Numero; });
-
-
-                // Acrescenta o desenho do gráfico
-                dados.append("path")
-                    .attr("class", "area")
-                    .attr("title", "")
-                    // Chamar area() para desenhar de acordo o "path" com os valores
-                    .attr("d", function (d) { return self.area(d.values); })
-                    // Adiciona tooltips
-                    .style("fill", function (d) { console.log(color(d.Nome)); return color(d.Nome); });
-
-
-                // Grupo das tooltips
-                self.pontos = self.svg.append("g")
-                    .attr("class", "pontos");
-
-
-                // Circulo que apresenta o "foco" do utilizador
-                self.pontos.append("circle")
-                    .attr("class", "circuloFoco")
-                    .style("fill", "none")
-                    .style("stroke", "red")
-                    .style("stroke-width", "2")
-                    .attr("r", 4)
-                        .style("display", "none");
-
-
                 // Atualizar eixo depois de dados inseridos
                 self.transformaX.domain(d3.extent(dadosEscolhidos[0].values, function (d) {return d.date; }));
 
                 console.log(d3.extent(dadosEscolhidos[0].values, function (d) { return d.date; }));
 
+                console.log(dadosEscolhidos);
 
                 // Para cada objecto ( Ponto )
                 dadosEscolhidos.forEach(function (item, curIndex) {
@@ -1432,7 +1485,7 @@
                       // Inserir rectangulo
                       .enter().append("rect")
                         .attr("class", "ponto" + curIndex)
-                        .attr("x", function (d) { return self.transformaX(d.date); })
+                        .attr("x", function (d) { return self.transformaX(d.date) - larguraRect/2; })
                         .attr("y", function (d) { return self.transformaY(d.y0 + d.y); })
                         .attr("width", larguraRect)
                         .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
@@ -1632,6 +1685,7 @@
             self.OpcaoLegenda();
             self.OpcaoTooltip();
             self.OpcaoMostraDados();
+            self.OpcaoSuavizarLinhas();
 
             // Liga evento de modificar visualização ao gráfico
             self.ModificaVisualizacao();
@@ -1757,13 +1811,13 @@
                         // Ligar o valor dos pontos
                         .data(item.values)
                       // Inserir rectangulo
-                        .attr("x", function (d) { return self.transformaX(d.date); })
+                        .attr("x", function (d) { return self.transformaX(d.date) - larguraRect / 2; })
                         .attr("y", function (d) { return self.transformaY(d.y0 + d.y); })
                         .attr("width", larguraRect)
                         .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
-                            .style("opacity", "0")
+                            .style("opacity", "0");
                         // Compensar margem para eixo dos Y
-                        .attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
+                        //.attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
 
 
                     // Adicionar tooltip
@@ -1814,13 +1868,13 @@
                         // Ligar o valor dos pontos
                         .data(item.values)
                       // Inserir rectangulo
-                        .attr("x", function (d) { return self.transformaX(d.date); })
+                        .attr("x", function (d) { return self.transformaX(d.date) - larguraRect / 2; })
                         .attr("y", function (d) { return self.transformaY(d.y); })
                         .attr("width", larguraRect)
                         .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
-                            .style("opacity", "0")
+                            .style("opacity", "0");
                         // Compensar margem para eixo dos Y
-                        .attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
+                        //.attr("transform", "translate(" + self.margem.esquerda / 2 + " ,0)");
 
                     // Adicionar tooltip
                     if (self.mostraToolTip === true) {
@@ -1844,33 +1898,57 @@
         /// <summary>
         /// Suaviza as linhas do gráfico através da interpolação
         /// </summary>
-        GraficoArea.prototype.SuavizarLinhas = function (suaviza) {
+        GraficoArea.prototype.SuavizarLinhas = function (suavizar) {
             var self = this;
 
-            if (suaviza === true) {
-                // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
-                self.area = d3.svg.area()
-                    // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
-                    .x(function (d) { return self.transformaX(d.nome); })
-                    // y0 é igual a altura pois no d3 a escala é feita de forma contrária
-                    .y0(self.altura)
-                    // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
-                    .y1(function (d) { return self.transformaY(d.teste1); })
-                     //Faz a interpolação para suavizar as linhas
-                    .interpolate("basis");
+            //suavizarLinhas = !suavizarLinhas;
+
+            if (self.modoVisualizacao !== "stacked") {
+                if (suavizar === true) {
+                    // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
+                    self.area = d3.svg.area()
+                        // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
+                        .x(function (d) { return self.transformaX(d.date); })
+                        // y0 é igual a altura pois no d3 a escala é feita de forma contrária
+                        .y0(function (d) { return self.altura; })
+                        // Devolve o "Y" de cada valor no objecto Dados de acordo com a escala Y
+                        .y1(function (d) { return self.transformaY(d.y); })
+                        .interpolate("basis");
+
+                } else {
+                    // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
+                    self.area = d3.svg.area()
+                        // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
+                        .x(function (d) { return self.transformaX(d.date); })
+                        // y0 é igual a altura pois no d3 a escala é feita de forma contrária
+                        .y0(function (d) { return self.altura; })
+                        // Devolve o "Y" de cada valor no objecto Dados de acordo com a escala Y
+                        .y1(function (d) { return self.transformaY(d.y); })
+
+                }
             } else {
-                // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
-                self.area = d3.svg.area()
-                    // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
-                    .x(function (d) { return self.transformaX(d.nome); })
-                    // y0 é igual a altura pois no d3 a escala é feita de forma contrária
-                    .y0(self.altura)
-                    // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
-                    .y1(function (d) { return self.transformaY(d.teste1); });
+                if (suavizar === true) {
+                    // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
+                    self.area = d3.svg.area()
+                        // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
+                        .x(function (d) { return self.transformaX(d.date); })
+                        // y0 é igual a altura pois no d3 a escala é feita de forma contrária
+                        .y0(function (d) { return self.transformaY(d.y0); })
+                        // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
+                        .y1(function (d) { return self.transformaY(d.y0 + d.y); })
+                        .interpolate("basis");
+
+                } else {
+                    self.area = d3.svg.area()
+                        // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
+                        .x(function (d) { return self.transformaX(d.date); })
+                        // y0 é igual a altura pois no d3 a escala é feita de forma contrária
+                        .y0(function (d) { return self.transformaY(d.y0); })
+                        // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
+                        .y1(function (d) { return self.transformaY(d.y0 + d.y); })
+                }
             }
 
-            // Atualiza gráfico
-            self.Atualiza();
         }
 
 
@@ -2590,7 +2668,7 @@
             nomeEixoX = "Eixo X",
             nomeEixoY = "Eixo Y",
             modoVisualizacao = "normal",
-            suavizarLinhas = "false",
+            suavizar = false,
             linhasConexao = "false",
             circulos = "false",
             parseDate = d3.time.format("%Y-%m-%dT%H:%M:%S").parse;
@@ -2611,9 +2689,10 @@
             this.objectoServidor["contexto"] = [];
             this.objectoServidor["agregacoes"] = [];
 
-
-            // TODO
             this.chave = [];
+
+            this.suavizar = false;
+
         };
 
 
@@ -2736,7 +2815,7 @@
                     dadosEscolhidos.push(self.dadosNormal[index]);
                 }
             });
-            
+
 
             // Seleciona todas as series
             series = self.svg.selectAll(".series")
@@ -2748,6 +2827,9 @@
               // Atribui o nome da série a um atributo 
               .attr("value", function (d) { return d.Nome; })
               .attr("numero", function (d) { return d.Numero; });
+
+            // Verificar o tipo de linha do widget
+            self.SuavizarLinhas(self.suavizar);
 
             // Acrescenta um path para cada série
             series.append("path")
@@ -2822,14 +2904,6 @@
             // Atualização da escala dos Eixos
             escalaX.scale(transformaX);
             escalaY.scale(transformaY);
-
-            // Update nos paths do gráfico
-            // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
-            linha = d3.svg.line()
-                // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
-                .x(function (d) { return transformaX(d.date); })
-                // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
-                .y(function (d) { return transformaY(d.y); });
 
     
             // Se a altura do widget for menor
@@ -2953,6 +3027,7 @@
             // Insere botões na navbar
             //self.OpcaoUpdate();
             self.OpcaoMostraDados();
+            self.OpcaoSuavizarLinhas();
             self.OpcaoLegenda();
 
             // Liga evento para modificar titulo
@@ -2995,14 +3070,9 @@
         /// </summary>
         GraficoLinhas.prototype.Atualiza = function () {
             var self = this;
-
+            
             self.Renderiza();
-
-
-            // Seleciona todos os elementos da class .line e liga-os aos dados
-            self.svg.selectAll(".linha")
-                // Para cada d, é calculado um novo path através da variável "linha"
-                .attr("d", function (d) { return linha(d.values); })
+            self.DesenhaSerie();
 
         }
 
@@ -3010,28 +3080,30 @@
         /// <summary>
         /// Suaviza as linhas do gráfico através da interpolação
         /// </summary>
-        GraficoLinhas.prototype.SuavizarLinhas = function (suaviza) {
+        GraficoLinhas.prototype.SuavizarLinhas = function (suavizar) {
             var self = this;
 
-            if (suaviza === true) {
+            if (suavizar === true) {
+
                 // Aplica o método svg.line do d3 à variável linha
                 linha = d3.svg.line()
-                    // Dá um valor X conforme a sua escala
-                    .x(function (d) { return transformaX(d.nome); })
-                    // Dá um valor Y conforme a sua escala
-                    .y(function (d) { return transformaY(d.teste1); })
+                    // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
+                    .x(function (d) { return transformaX(d.date); })
+                    // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
+                    .y(function (d) { return transformaY(d.y); })
                     // Faz a interpolação para suavizar as linhas
                     .interpolate("basis");
+
             } else {
                 // Aplica o método svg.line do d3 à variável linha
                 linha = d3.svg.line()
-                    // Dá um valor X conforme a sua escala
-                    .x(function (d) { return transformaX(d.nome); })
-                    // Dá um valor Y conforme a sua escala
-                    .y(function (d) { return transformaY(d.teste1); });
+                    // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
+                    .x(function (d) { return transformaX(d.date); })
+                    // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
+                    .y(function (d) { return transformaY(d.y); });
+
             }
 
-            self.Atualiza();
         }
 
 
@@ -5517,7 +5589,7 @@
                 Botao: { name: " ", group: "Series", type: "botao", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false },
                 Fixo: { name: "Fixo:", group: "Periodo", type: "options", options: FixoPeriodo, description: "Analisar numa data fixa", showHelp: false },
                 ComponenteContexto: { name: "Componente Data", group: "Periodo", type: "options", options: [""], description: "Analisar através de um widget", showHelp: false },
-                Quebra: { name: " ", group: "Series", type: "split", showHelp: false }, 
+                Quebra: { name: " ", group: "Series", type: "split", showHelp: false },
 
                 // CONTEXTO
                 CheckboxContexto: { name: " ", group: "Widgets Ligados", type: "checkboxContexto", description: "Grupo de widgets", showHelp: false },
@@ -5531,7 +5603,8 @@
 
                 // Dados Widget CONTEXTO (FILTRO)
                 LabelFiltro: { name: "", group: "Opcoes Disponiveis", type: "filtro", description: "Labels para o widget Filtro", showHelp: false },
-                BotaoFiltro: { name: " ", group: "Opcoes Disponiveis", type: "botaoFiltro", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false }
+                BotaoFiltro: { name: " ", group: "Opcoes Disponiveis", type: "botaoFiltro", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false },
+                QuebraFiltro: { name: " ", group: "Opcoes Disponiveis", type: "splitFiltro", showHelp: false }
             };
             self.inicializaAparencia = {
                 Margem: { name: "Margem:", group: "Aparencia", description: "Margem em volta do gráfico", showHelp: false },
@@ -5547,8 +5620,11 @@
         PropertyGrid.InicializaEventos = function () {
             var self = this;
 
-            // Adiciona o evento para adicionar séries
+            // Adiciona o evento para adicionar/remover séries
             self.EventoAdicionaSerie();
+            self.EventoRemoveSerie();
+
+            self.EventoRemoveFiltro();
 
             self.EventoAdicionaFiltro();
 
@@ -5571,7 +5647,7 @@
                 self.inicializaDados["ComponenteSerie-" + idSerie] = { name: "Indicador:", group: "Series", type: "options", options: self.getIndicadores($(".widget-ativo").attr("id")), description: "Widgets que contêm os gráficos", showHelp: false };
                 self.inicializaDados["Campo-" + idSerie] = { name: "Campo:", group: "Series", type: "options", options: CampoSeries, description: "Campos para ordenar os dados", showHelp: false };
                 self.inicializaDados["Funcao-" + idSerie] = { name: "Função:", group: "Series", type: "options", options: FuncaoSeries, description: "Funções ordenar os dados", showHelp: false };
-                self.inicializaDados["Quebra-" + idSerie] = { name: " ", type: "split", group: "Series", showHelp: false }
+                self.inicializaDados["Quebra-" + idSerie] = { name: " ", type: "split", group: "Series", description: idSerie, showHelp: false }
 
                 idSerie++;
 
@@ -5591,6 +5667,7 @@
 
             gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes.forEach(function (filtro) {
                 self.inicializaDados["Filtro-" + idFiltro] = { name: "", group: "Opcoes Disponiveis", description: filtro.Nome, type: "filtro", showHelp: false };
+                self.inicializaDados["QuebraFiltro-" + idFiltro] = { name: " ", group: "Opcoes Disponiveis", type: "splitFiltro", description: idFiltro, showHelp: false };
 
                 idFiltro++;
             });
@@ -5674,11 +5751,25 @@
         }
 
         // Preenche séries do widget na PropertyGrid
-        PropertyGrid.PreencheSeries = function () {
+        PropertyGrid.PreencheSeries = function (series) {
             var self = this,
                 index = 1;
 
-            gridPrincipal.getWidget($(".widget-ativo").attr("id")).seriesUtilizadas.forEach(function (serie) {
+            if (series !== undefined) {
+                series.forEach(function (serie) {
+                    self.propriedadesDados["Nome-" + index] = serie.Nome || "Serie"+index;
+                    self.propriedadesDados["Pesquisa-" + index] = serie.Pesquisa || "";
+                    self.propriedadesDados["ComponenteSerie-" + index] = serie.ComponenteSerie;
+                    self.propriedadesDados["Campo-" + index] = serie.Campo;
+                    self.propriedadesDados["Funcao-" + index] = serie.Funcao;
+                    self.propriedadesDados["Quebra-" + index] = " ";
+
+                    index++;
+
+                });
+
+            } else {
+                gridPrincipal.getWidget($(".widget-ativo").attr("id")).seriesUtilizadas.forEach(function (serie) {
                 self.propriedadesDados["Nome-" + index] = serie.Nome;
                 self.propriedadesDados["Pesquisa-" + index] = serie.Pesquisa;
                 self.propriedadesDados["ComponenteSerie-" + index] = serie.ComponenteSerie;
@@ -5690,6 +5781,7 @@
 
             });
 
+            }
 
         }
 
@@ -5701,6 +5793,7 @@
 
             gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes.forEach(function (filtro) {
                 self.propriedadesDados["Filtro-" + index] = filtro.Valor;
+                self.propriedadesDados["QuebraFiltro-" + index] = " ";
 
                 index++;
             })
@@ -5909,12 +6002,17 @@
         PropertyGrid.AtualizaDashboard = function () {
             var self = this,
                 objPropertyGridGeral = $("#propGridGeral").jqPropertyGrid("get"),
-                objPrpertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get");
+                objPropertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get");
 
 
             // Atualiza o titulo/descricao do widget com o nome inserido na box da propertyGrid
             gridPrincipal.setNome(objPropertyGridGeral.Nome);
             gridPrincipal.setDescricao(objPropertyGridGeral.Descricao);
+
+            console.log(objPropertyGridAparencia);
+
+            // Aparencia
+            gridPrincipal.PintaBackground(objPropertyGridAparencia.Fundo);
 
         }
 
@@ -5936,6 +6034,8 @@
 
             objectoSeries = self.GuardaSeries();
 
+            console.log(objectoSeries);
+
             // Atualiza Widget (to-do atualizar dados? // Alerta)
             if (gridPrincipal.getWidget(widget1.id).dados !== undefined) {
 
@@ -5948,10 +6048,11 @@
 
             }
 
-            // Chamar método para atualizar objecto servidor no widget
+            // Chama método para atualizar objecto servidor no widget
             gridPrincipal.GuardaInformacao();
 
-            gridPrincipal.FiltraContexto();
+            // "Filtra" e desenha
+            //gridPrincipal.FiltraContexto();
 
         }
 
@@ -6133,6 +6234,22 @@
         }
 
 
+        // Atualiza a PropertyGrid de acordo com o tipo de widget
+        PropertyGrid.AtualizaPropertyGrid = function () {
+            var self = this;
+
+            if (self.propertyGridElemento === "dashboard") {
+                self.AtualizaDashboard();
+            } else if (self.propertyGridElemento === "dados") {
+                self.AtualizaWidget();
+            } else if (self.propertyGridElemento === "data") {
+                self.AtualizaWidgetData();
+            } else if (self.propertyGridElemento === "filtro") {
+                self.AtualizaWidgetFiltro();
+            }
+        }
+
+
         /// #Region
 
 
@@ -6212,6 +6329,45 @@
             });
         }
 
+        // Remove uma serie da grid
+        PropertyGrid.EventoRemoveSerie = function () {
+            var self = this;
+
+            
+            // Ao clickar no botão para remover propertyGrid
+            $(document).on("click", ".removeSerie-propertyGrid", function () {
+                var widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+                // Caso não hajam séries guardadas
+                if (widget.seriesUtilizadas.length === 0) {
+                    // Volta a desenhar a grid
+                    self.AdicionaGrid();
+
+                    // Mete no menu original
+                    self.SetPropertyGrid("dados");
+                    self.SetGrid("dados");  
+
+                } else {
+                    if (confirm("Deseja apagar a série - " + widget.seriesUtilizadas[($(this).attr("value")) - 1].Nome + " ?")) {
+                        // Remove a série com o valor
+                        self.RemoveSerie($(this).attr("value"));
+
+                        // Volta a desenhar a grid
+                        self.AdicionaGrid();
+
+                        // Mete no menu original
+                        self.SetPropertyGrid("dados");
+                        self.SetGrid("dados");
+
+                        // Desenha gráfico
+                        gridPrincipal.FiltraContexto();
+                    }
+
+                }
+            });
+        }
+
+
         // Adiciona um filtro à grid
         PropertyGrid.EventoAdicionaFiltro = function () {
             var self = this;
@@ -6221,8 +6377,40 @@
                 self.AdicionaFiltro();
                 //self.AdicionaBotaoFiltro();
 
-            })
+            });
+
         }
+
+        // Remove um filtro da grid
+        PropertyGrid.EventoRemoveFiltro = function () {
+            var self = this;
+
+            $(document).on("click", ".removeFiltro-propertyGrid", function () {
+                var widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+                console.log($(this).attr("value"));
+
+                if (confirm("Deseja apagar o filtro - " + widget.opcoes[($(this).attr("value"))-1].Nome + " ?")) {
+
+                    // Remove a série com o valor
+                    self.RemoveFiltro($(this).attr("value"));
+
+                    // Volta a desenhar a grid
+                    self.AdicionaGridFiltro();
+
+                    // Mete no menu original
+                    self.SetPropertyGrid("dados");
+                    self.SetGrid("dados");
+
+                    // Desenha gráfico
+                    //gridPrincipal.FiltraContexto();
+
+                }
+
+            });
+
+        }
+
 
         // Atualiza datas no widget de contexto Datas
         PropertyGrid.EventoAtualizaDatas = function () {
@@ -6379,20 +6567,12 @@
 
             // Liga o evento de atualização ao botão
             $(".atualiza-propertyGrid").click(function () {
-
-                if (self.propertyGridElemento === "dashboard") {
-                    self.AtualizaDashboard();
-                } else if (self.propertyGridElemento === "dados") {
-                    self.AtualizaWidget();
-                } else if (self.propertyGridElemento === "data") {
-                    self.AtualizaWidgetData();
-                } else if (self.propertyGridElemento === "filtro") {
-                    self.AtualizaWidgetFiltro();
-                }
-
+                self.AtualizaPropertyGrid();
+                gridPrincipal.FiltraContexto();
             });
 
         }
+
 
 
         /// #Region 
@@ -6426,8 +6606,11 @@
             var self = this;
 
             self.inicializaDados["Filtro-" + idFiltro] = { name: " ", group: "Opcoes Disponiveis", type: "filtro", description: " ", showHelp: false };
-   
+            self.inicializaDados["QuebraFiltro-" + idFiltro] = { name: " ", type: "split", group: "Opcoes Disponiveis", description: idFiltro, showHelp: false };
+
             self.propriedadesDados["Filtro-" + idFiltro] = "";
+            self.propriedadesDados["QuebraFiltro-" + idFiltro] = "";
+
 
             // Constroi a grid
             $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
@@ -6440,15 +6623,27 @@
         }
 
         // Remove um filtro
-        PropertyGrid.RemoveFiltro = function() {
-            // TODO
+        PropertyGrid.RemoveFiltro = function(serie) {
+            var self = this,
+                widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+            console.log("REMOVE");
+            console.log(serie);
+
+            // Remove a posição indicada
+            widget.opcoes.splice(serie-1, 1);
+
+            console.log(widget);
+
         }
 
 
         // Adiciona um  menu Series no property grid
         PropertyGrid.AdicionaSerie = function () {
             var self = this,
-                serieAuxiliar;
+                serieAuxiliar,
+                objectoSeries = self.GuardaSeries();
+
 
             // Inicializa os componentes de uma nova série
             self.inicializaDados["Nome-" + idSerie] = { name: "Nome:", group: "Series", description: "Nome da série", showHelp: false };
@@ -6456,7 +6651,7 @@
             self.inicializaDados["ComponenteSerie-" + idSerie] = { name: "Indicador:", group: "Series", type: "options", options: self.getIndicadores($(".widget-ativo").attr("id")), description: "Widgets que contêm os gráficos", showHelp: false };
             self.inicializaDados["Campo-" + idSerie] = { name: "Campo:", group: "Series", type: "options", options: CampoSeries, description: "Campos para ordenar os dados", showHelp: false };
             self.inicializaDados["Funcao-" + idSerie] = { name: "Função:", group: "Series", type: "options", options: FuncaoSeries, description: "Funções ordenar os dados", showHelp: false };
-            self.inicializaDados["Quebra-" + idSerie] = { name: " ", type: "split", group: "Series", showHelp: false };
+            self.inicializaDados["Quebra-" + idSerie] = { name: " ", type: "split", group: "Series", description: idSerie, showHelp: false };
 
             // Inicializa propriedades e o botão
             self.AdicionaPropriedades();
@@ -6464,6 +6659,8 @@
 
             // Constroi a grid
             $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
+
+            self.PreencheSeries(objectoSeries);
 
             // Liga o evento de atualização ao botão
             $(".atualizaWidget-propertyGrid").click(function () {
@@ -6476,8 +6673,16 @@
         }
 
         // Remove uma série
-        PropertyGrid.RemoveSerie = function(){
-            // TODO
+        PropertyGrid.RemoveSerie = function(serie){
+            var self = this,
+                widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+            // Remove a posição indicada
+            widget.seriesUtilizadas.splice(serie-1, 1);
+
+            // Atualiza o widget
+            gridPrincipal.getWidget($(".widget-ativo").attr("id")).AdicionaSerieUtilizada(widget.seriesUtilizadas);
+
         }
 
 
@@ -6536,7 +6741,7 @@
         PropertyGrid.AdicionaBotao = function () {
             var self = this;
 
-            self.inicializaDados["Botao"] = { name: " ", group: "Series", type: "botao", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false };
+            self.inicializaDados["Botao"] = { name: " ", group: "Series", type: "botao", description: "../resources/ic_add_circle_white_24dp_1x.png", showHelp: false };
             self.propriedadesDados["Botao"] = "";
 
             $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
@@ -6559,7 +6764,7 @@
         PropertyGrid.AdicionaBotaoFiltro = function () {
             var self = this;
 
-            self.inicializaDados["BotaoFiltro"] = { name: " ", group: "Opcoes Disponiveis", type: "botaoFiltro", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false };
+            self.inicializaDados["BotaoFiltro"] = { name: " ", group: "Opcoes Disponiveis", type: "botaoFiltro", description: "../resources/ic_add_circle_white_24dp_1x.png", showHelp: false };
             self.propriedadesDados["BotaoFiltro"] = " ";
 
             $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
@@ -6684,6 +6889,23 @@
         }
 
 
+        /// <summary>
+        /// Preenche cor de background do dashboard
+        /// </summary>
+        Grid.prototype.PintaBackground = function (cor) {
+            var self = this;
+
+            // Caso a cor recebida seja vazia
+            if (cor === "empty") {
+                $("#" + self.id).css("background-color", "");
+            // Senão pinta
+            } else {
+                $("#" + self.id).css("background-color", cor);
+
+            }
+
+        }
+
 
         /// #Region - ADICIONAR/CRIAR ELEMENTOS
 
@@ -6763,8 +6985,7 @@
             // Adiciona o widget criado ao dashboard
             self.AdicionaWidgetLista(tipoWidget, GUID, dados);
 
-            console.log(self);
-            console.log(ultimo);
+            console.log(self.listaWidgets);
 
             // Atribui ao widget a sua class
             self.listaWidgets[ultimo].setWidgetClass(tipoWidget);
@@ -6941,8 +7162,14 @@
         /// Preenche a barra lateral com todos os widgets possiveis
         /// </summary>
         Grid.prototype.PreencheBarraLateral = function () {
-            var self = this,
-                tipo = self.getWidgetsGrid();
+            var self = this;
+            var tipo;
+
+            // MODIFICAR 
+            // TODO
+            // ATUAL
+            
+            tipo = self.getWidgetsGrid();
 
             console.log(self);
             console.log($("#" + self.id).closest("li"));
@@ -7012,7 +7239,6 @@
                     var widgetNovo,
                         idOriginal;
 
-                    console.log(item);
 
                     // Guardar o id original
                     idOriginal = item.id;
@@ -7522,9 +7748,14 @@
                 // Procura na lista de widgets pelo widget com o id equivalente
                 index = _.findIndex(self.listaWidgets, function (item) { return item.id === widget.attr("id"); });
 
+                console.log(self.listaWidgets);
+                console.log(self.listaWidgets[index]);
 
+                // Modifica estado da tabela
                 self.listaWidgets[index].setEstadoTabela();
+                // Caso esteja em formato widget passa para tabela, senão passa para o modo gráfico
                 (self.listaWidgets[index].estadoTabela) ? self.listaWidgets[index].TransformaWidgetTabela() : self.listaWidgets[index].RedesenhaGrafico(self.id);
+                (self.listaWidgets[index].estadoTabela) ? $(".verTabela-widget").text("Ver Gráfico") : $(".verTabela-widget").text("Ver Tabela");
 
             });
 
@@ -7675,18 +7906,9 @@
                     handles: "sw, se"
                 },
                 swapGridWidth: 3,
-                swapGridHeight: 3
+                swapGridHeight: 3,
+                gridType: "main-gridstack"
             };
-
-            // Opções do menu drag&drop
-            optionsBarraLateral = {
-                width: 12,
-                removable: false,
-                cell_height: 100,
-                verticalMargin: 0,
-                disableResize: true
-            }
-
 
 
             // Criação da grid principal
@@ -7696,6 +7918,27 @@
             // Adicionar o background à gridstack
             $("#" + gridPrincipal.id).addClass("gridstack-background");
 
+            self.AdicionaBarraSecundaria();
+
+
+        }
+
+
+        /// <summary>
+        /// Cria menu barraSecundária para poder adicionar Widgets ao dashboard
+        /// <summary>
+        Plataforma.prototype.AdicionaBarraSecundaria = function () {
+            var self = this;
+
+            // Opções do menu drag&drop
+            optionsBarraLateral = {
+                width: 12,
+                removable: false,
+                cell_height: 100,
+                verticalMargin: 0,
+                disableResize: true,
+                gridType: "barraSecundaria-gridstack"
+            }
 
             if (modo === "edicao") {
                 // Criação da grid secundária
@@ -7711,7 +7954,6 @@
                 gridFiltros.RemoveHandle();
 
             }
-
         }
 
 
@@ -7797,14 +8039,13 @@
                 objectoDashboard = {},
                 listaWidgetsDashboard = [];
 
-            console.log(dashboard);
-
+            
             dashboard.listaWidgets.forEach(function (widget) {
                 listaWidgetsDashboard.push(widget.objectoServidor);
             });
 
-            //dashboard.setNome(nome);
-            objectoDashboard["Nome"] = dashboard.nome;
+            dashboard.setNome(nome);
+            objectoDashboard["Nome"] = nome || dashboard.nome;
             objectoDashboard["Descricao"] = dashboard.descricao;
             objectoDashboard["OpcoesAparencia"] = " ";
 
@@ -7813,8 +8054,6 @@
 
             // Guardar na lista 
             self.listaDashboards.push(objectoDashboard);
-
-            console.log(objectoDashboard);
 
             // Guardar no servidor
             self.AdicionaDashboardServidor(objectoDashboard);
@@ -7871,6 +8110,8 @@
 
             // Limpa a dashboard atual
             self.LimpaDashboard();
+
+            
 
             
             // Procura o index do dashboard a carregar
@@ -7941,7 +8182,25 @@
         Plataforma.prototype.setDashboardAtual = function (idUnico) {
             var self = this;
 
+            // Carrega lista de dashboards do Utilizador
+            self.CarregaListaDashboards();
+
+            // Carrega a Dashboard para a plataforma
             self.CarregaDashboard(idUnico);
+
+            // Para a lista de dashboards do utilizador
+            Utilizador.listaDashboards.forEach(function (dashboard) {
+                // Caso haja algum ativo
+                if (dashboard.Activo) {
+                    // Passar a false
+                    primerCORE.DashboardAlteraEstado(dashboard.ID, "false");
+                }
+
+            });
+            
+            // Envia o pedido para alterar o estado no servidor
+            primerCORE.DashboardAlteraEstado(idUnico, "true");
+
 
             self.dashboardAtual = idUnico;
 
@@ -7978,6 +8237,7 @@
     })();
 
 
+
     // LIGAÇÃO COM O UTILIZDOR
     // Cria Dashboards inicial
     // TODO
@@ -8005,18 +8265,6 @@
         gridPrincipal.FiltraContexto();
     })
 
-    //// Query para a lista de widgets
-    //// Atualizada
-    //var queryWidget = '{ "sessaoID": "sessaoDebug", "dashboardID": "8","utilizadorID": "2502", "widgetsDados": [ { "id": "widget0", "tipo": "dados", "elemento": "GraficoLinhas", "contexto": [ "widget3", "widget8" ], "series": [ {"funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": ""}, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMin", "index": "indicadores", "type": "" } ], "buckets": [ {"tipo": "histogramadata", "campo": "data", "intervalo": "dia" } ]} ], "widgetsContexto": { "contextoPesquisa": [ { "id": "widget3", "tipo": "contexto",  "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "contexto", "filtro": "valor.tagID: 3073"} ],  "contextoData": [  {  "id": "widget8",  "campo": "data", "dataInicio": "2015-06-07",  "dataFim": "2015-06-10"} ] } }';
-
-    //// Query para o DashboardCria
-    //var query = {
-    //    "UtilizadorID": 2508,
-    //    "Nome": "teste_dois",
-    //    "Descricao": "teste_dois desc",
-    //    "Configuracao": "{\"id\":\"widget0\",\"largura\":271,\"altura\":120,\"titulo\":\"ola\",\"widgetAltura\":20,\"widgetLargura\":20,\"widgetX\":400,\"widgetTipo\":\"dados\",\"widgetElemento\":\"graficoBarras|graficoLinhas|graficoPie|etiqueta|tabela\",\"mostraLegenda\":false,\"mostraToolTip\":false,\"visivel\":true,\"ultimaAtualizacao\":\"4/11/16\",\"contexto\":[\"widget1\",\"widget2\"],\"agregacoes\":[{\"funcao\":\"avg\",\"campo\":\"valor.valorMax\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMed\"},{\"funcao\":\"avg\",\"campo\":\"valor.valorMin\"}]}",
-    //    "Activo": false
-    //};
 
 
 
@@ -8060,12 +8308,15 @@
         // Verifica se o dashboard já está guardado na base de dados ou não
         if (_.findIndex(Utilizador.getDashboards(), function (objecto) { return objecto.ID === gridPrincipal.idUnico; }) === -1) {
             console.log("nao existe");
-            Utilizador.AdicionaDashboard(gridPrincipal, gridPrincipal.nome);
-            // Enviar Pedido ao servidor para guardar dashboard
-
+            Utilizador.AdicionaDashboard(gridPrincipal, prompt("Guardar como:"));
+            alert("Dashboard guardado com sucesso!");
+            window.open('db_edicao.html', '_self', false);
+            
         } else {
             console.log("existe");
             Utilizador.GuardaDashboard();
+            alert("Dashboard guardado com sucesso!")
+            
         };
 
     });
@@ -8074,7 +8325,7 @@
     });
     $(".dashboard-informa").click(function () {
         console.log(gridPrincipal);
-        window.open('db_edicao.html' + '?dashboard=' + gridPrincipal.idUnico, '_self', false);
+        window.open('db_edicao.html', '_self', false);
     });
 
 
@@ -8140,9 +8391,25 @@
             idField: true,
             singleSelect: true,
             classes: "showPointer nao-seleciona table table-hover",
+
+            // Evento ao clickar numa das linhas da tabela 
             onClickRow: function (item, $element) {
+
+                // Para a lista de dashboards do utilizador
+                Utilizador.listaDashboards.forEach(function (dashboard) {
+                    // Caso haja algum ativo
+                    if (dashboard.Activo) {
+                        // Passar a false
+                        primerCORE.DashboardAlteraEstado(dashboard.ID, "false");
+                    }
+
+                });
+
+                // Passar o dashboard escolhido para activo
+                primerCORE.DashboardAlteraEstado(item["data.id"], "true");
+
                 // Abrir nova página com o ID associado à linha que foi feito o click
-                window.open('db_visualizacao.html' + '?dashboard=' + item["data.id"], '_self', false);
+                window.open('db_visualizacao.html', '_self', false);
 
                 return false;
 
@@ -8181,6 +8448,18 @@
 
     // Ao clickar para criar novo Dashboard
     $(".adicionaDashboard-lista").click(function () {
+
+        // Para a lista de dashboards do utilizador
+        Utilizador.listaDashboards.forEach(function (dashboard) {
+            // Caso haja algum ativo
+            if (dashboard.Activo) {
+                // Passar a false
+                primerCORE.DashboardAlteraEstado(dashboard.ID, "false");
+            }
+
+        });
+
+        // Abre nova janela com indicação de novo
         window.open('db_edicao.html' + '?dashboard=new', '_self', false);
     });
 
