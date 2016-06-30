@@ -2,7 +2,7 @@
 
     // TESTE - REMOVER
 
-    var idUtilizador = 2511;
+    var idUtilizador = 2508;
     var gridPrincipal;
 
     // Verifica em que modo está a página
@@ -642,7 +642,7 @@
             $("#" + self.id).children().not(".widget-navbar").children().remove();
 
             // caso os dados estejam vazios
-            if (self.dados.dados !== undefined) {
+            if (self.dados.dados !== undefined && self.dados.dados.Widgets[0] !== undefined) {
                 // caso tenha items para desenhar
                 if (self.dados.dados.Widgets[0].Items.length != 0) {
 
@@ -702,8 +702,11 @@
         Widget.prototype.setDados = function (opcoes) {
             var self = this;
 
-            self.dados = ((primerCORE.DashboardDevolveWidget(self, opcoes, gridPrincipal.idUnico, Utilizador.idUtilizador)));
-            self.dados = $.parseJSON(self.dados);
+            console.log(self);
+            console.log(opcoes);
+            console.log(gridPrincipal.idUnico);
+
+            /*self.dados = $.parseJSON(*/primerCORE.DashboardDevolveWidget(self, opcoes, gridPrincipal.idUnico, Utilizador.idUtilizador);
 
         }
 
@@ -1504,6 +1507,21 @@
 
             var self = this;
 
+            // TESTE ATUAL
+
+            var customTimeFormat = d3.time.format.multi([
+              [".%L", function (d) { return d.getMilliseconds(); }],
+              [":%S", function (d) { return d.getSeconds(); }],
+              ["%I:%M", function (d) { return d.getMinutes(); }],
+              ["%I %p", function (d) { return d.getHours(); }],
+              ["%a %d", function (d) { return d.getDay() && d.getDate() != 1; }],
+              ["%b %d", function (d) { return d.getDate() != 1; }],
+              ["%B", function (d) { return d.getMonth(); }],
+              ["%Y", function () { return true; }]
+            ]);
+
+
+
             // to-do
             // nome? data
             // teste1? valores
@@ -1520,7 +1538,8 @@
             self.escalaX = d3.svg.axis()
               .scale(self.transformaX)
               // Orientação da escala
-              .orient("bottom");
+              .orient("bottom")
+              .tickFormat(customTimeFormat);
 
             // Atribui valores a Y conforme a sua escala
             self.transformaY = d3.scale.linear()
@@ -1569,9 +1588,16 @@
 
             }
 
+            console.log("TESTE_ATUAL");
+            console.log(self);
+
             //// Atualização da escala dos Eixos
             self.escalaX.scale(self.transformaX);
             self.escalaY.scale(self.transformaY);
+
+
+            // Estabelecer limites para os ticks dos widgets na escala X
+            self.escalaX.ticks(self.dados.dados.Widgets[0].length);
 
 
             // Numero de representações nos eixos de acordo com o tamanho do widget
@@ -4713,9 +4739,10 @@
 
             $("#" + self.id).find(".filtros-opcoes").find("option").remove();
 
+            
             self.opcoes.forEach(function (item) {
                 console.log(item);
-                $("#" + self.id).find(".filtros-opcoes").append("<option value=" + item.Valor + ">" + item.Nome + "</option>");
+                $("#" + self.id).find(".filtros-opcoes").append("<option value=" + item.valor + ">" + item.label + "</option>");
             })
 
         }
@@ -4799,17 +4826,22 @@
             // Reset nos filtros
             self.filtros = [];
 
+            console.log(dados);
 
             // Para cada filtro 
             _.each(dados, function (item, key) {
+
+                console.log(item);
                 
                 // Caso o filtro não esteja vazio
-                if (item.label !== "") {
+                if (item.label !== "" && item.label !== undefined) {
                     // Adicionar
-                    self.filtros.push({ Nome: item.label, Valor: item.valor });
+                    self.filtros.push({ label: item.label, valor: item.valor });
                 }
             
             });
+
+            
 
             // Substituir nas opcoes
             self.opcoes = self.filtros;
@@ -5295,10 +5327,9 @@
                 var objecto = {},
                     chave;
 
-
                 // Como as quebras começam no numero 1, iniciamos o index a -1, e adicionamos no ciclo +2
                 // para ter um array em ordem, a começar do 0
-                if (key === "Quebra-" + (index + 1)) {
+                if (key === "Quebra-" + (index + 1) || key === "QuebraFiltro-" + (index + 1)) {
 
                     // Separa chave do numero associado
                     chave = key.split('-');
@@ -5314,7 +5345,7 @@
 
                     // Caso nao seja quebra ou alguma das propriedades do menu de periodo, 
                     // é adicionado ao objecto
-                } else if (key !== "Botao" && key !== "Fixo" && key !== "ComponenteContexto") {
+                } else if (key !== "Botao" && key !== "Fixo" && key !== "ComponenteContexto" && key !== "BotaoFiltro" && key!== "CheckboxContexto") {
                     // Separa chave do numero associado
                     chave = key.split('-');
 
@@ -5325,9 +5356,35 @@
 
             });
 
+
             return objectoSeries;
 
         }
+
+
+        /// <summary>
+        /// Retorna um objecto com os filtros atuais do menu da propertyGrid
+        /// </summary>
+        /// <returns> Retorna o objecto com os filtros </returns>
+        PropertyGrid.GuardaFiltros = function () {
+            var self = this,
+                objectoFiltros = [],
+                objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get");
+
+            // Para cada parametro na propertyGrid
+            _.each(objPropertyGridDados, function (item, key) {
+                // Caso não seja filtros
+                if (key !== "Botao" && key !== "Fixo" && key !== "ComponenteContexto" && key !== "BotaoFiltro" && key !== "CheckboxContexto") {
+                    // Adicionar o filtro ao objecto
+                    objectoFiltros.push(item);
+
+                }
+            });
+
+            return objectoFiltros;
+
+        }
+
 
         /// <summary>
         // Getters e setters dos indicadores do widget 
@@ -5338,8 +5395,6 @@
                 opcoes = ["Selecione Indicador"],
                 series;
                 
-
-            console.log(widgetID);
 
             if (gridPrincipal.getWidget(widgetID).getIndicadores() !== undefined) {
                 gridPrincipal.getWidget(widgetID).getIndicadores().forEach(function (valor) { return opcoes.push(valor); })
@@ -5378,7 +5433,6 @@
             if (self.propertyGridElemento !== "dashboard") {
                 // Caso seja um gráfico do tipo dados
                 if (self.propertyGridElemento === "dados") {
-                    console.log("teste");
                     // Seleciona indicadores para o widget ativo
                     self.setIndicadores($(".widget-ativo").attr("id"));
                 }
@@ -5666,7 +5720,7 @@
             console.log(gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes);
 
             gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes.forEach(function (filtro) {
-                self.inicializaDados["Filtro-" + idFiltro] = { name: "", group: "Opcoes Disponiveis", description: filtro.Nome, type: "filtro", showHelp: false };
+                self.inicializaDados["Filtro-" + idFiltro] = { name: "", group: "Opcoes Disponiveis", description: filtro.label, type: "filtro", showHelp: false };
                 self.inicializaDados["QuebraFiltro-" + idFiltro] = { name: " ", group: "Opcoes Disponiveis", type: "splitFiltro", description: idFiltro, showHelp: false };
 
                 idFiltro++;
@@ -5674,6 +5728,7 @@
 
 
             self.PreencheFiltros();
+
             self.RemoveBotaoFiltro();
             self.AdicionaBotaoFiltro();
 
@@ -5755,6 +5810,7 @@
             var self = this,
                 index = 1;
 
+
             if (series !== undefined) {
                 series.forEach(function (serie) {
                     self.propriedadesDados["Nome-" + index] = serie.Nome || "Serie"+index;
@@ -5770,14 +5826,14 @@
 
             } else {
                 gridPrincipal.getWidget($(".widget-ativo").attr("id")).seriesUtilizadas.forEach(function (serie) {
-                self.propriedadesDados["Nome-" + index] = serie.Nome;
-                self.propriedadesDados["Pesquisa-" + index] = serie.Pesquisa;
-                self.propriedadesDados["ComponenteSerie-" + index] = serie.ComponenteSerie;
-                self.propriedadesDados["Campo-" + index] = serie.Campo;
-                self.propriedadesDados["Funcao-" + index] = serie.Funcao;
-                self.propriedadesDados["Quebra-" + index] = " ";
+                    self.propriedadesDados["Nome-" + index] = serie.Nome;
+                    self.propriedadesDados["Pesquisa-" + index] = serie.Pesquisa;
+                    self.propriedadesDados["ComponenteSerie-" + index] = serie.ComponenteSerie;
+                    self.propriedadesDados["Campo-" + index] = serie.Campo;
+                    self.propriedadesDados["Funcao-" + index] = serie.Funcao;
+                    self.propriedadesDados["Quebra-" + index] = " ";
 
-                index++;
+                    index++;
 
             });
 
@@ -5786,17 +5842,41 @@
         }
 
         // Preenche filtros do widget na PropertyGrid
-        PropertyGrid.PreencheFiltros = function () {
+        PropertyGrid.PreencheFiltros = function (filtros) {
             var self = this;
             index = 1;
 
+            console.log(filtros);
 
-            gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes.forEach(function (filtro) {
-                self.propriedadesDados["Filtro-" + index] = filtro.Valor;
-                self.propriedadesDados["QuebraFiltro-" + index] = " ";
+            if (filtros !== undefined) {
+                if (filtros.length > 0) {
+                    filtros.forEach(function (item) {
 
-                index++;
-            })
+                        console.log(item.valor);
+                        
+                        self.propriedadesDados["Filtro-" + index] = item.valor;
+                        self.propriedadesDados["QuebraFiltro-" + index] = " ";
+
+                        index++;
+                    });
+
+                } 
+            } else {
+                // Para cada filtro
+                gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes.forEach(function (filtro) {
+
+                    console.log(filtro.valor);
+
+                    self.propriedadesDados["Filtro-" + index] = filtro.valor;
+                    self.propriedadesDados["QuebraFiltro-" + index] = " ";
+
+                    index++;
+                });
+
+            }
+
+            
+
         }
 
         /// #Region
@@ -6386,27 +6466,64 @@
             var self = this;
 
             $(document).on("click", ".removeFiltro-propertyGrid", function () {
-                var widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+                var widget = gridPrincipal.getWidget($(".widget-ativo").attr("id")),
+                    objectoFiltro = [];
 
-                console.log($(this).attr("value"));
+                // Guarda filtros já preenchidos
+                objectoFiltro = self.propertyGuardaFiltros();
 
-                if (confirm("Deseja apagar o filtro - " + widget.opcoes[($(this).attr("value"))-1].Nome + " ?")) {
-
-                    // Remove a série com o valor
-                    self.RemoveFiltro($(this).attr("value"));
-
-                    // Volta a desenhar a grid
-                    self.AdicionaGridFiltro();
-
-                    // Mete no menu original
-                    self.SetPropertyGrid("dados");
-                    self.SetGrid("dados");
-
-                    // Desenha gráfico
-                    //gridPrincipal.FiltraContexto();
-
+                if (widget.opcoes[$(this).attr("value") - 1] !== undefined) {
+                    if (confirm("Deseja apagar o filtro - " + widget.opcoes[($(this).attr("value")) - 1] + " ?")) {
+                        // Remove a série com o valor
+                        self.RemoveFiltro($(this).attr("value"));
+                    }
                 }
 
+
+                objectoFiltro.splice($(this).attr("value") - 1, 1);
+
+                
+                // Volta a desenhar a grid
+                self.AdicionaGridFiltro();
+
+                objectoFiltro.forEach(function (filtro) {
+                    self.inicializaDados["Filtro-" + idFiltro] = { name: "", group: "Opcoes Disponiveis", description: filtro.label, type: "filtro", showHelp: false };
+                    self.inicializaDados["QuebraFiltro-" + idFiltro] = { name: " ", group: "Opcoes Disponiveis", type: "splitFiltro", description: idFiltro, showHelp: false };
+
+                    idFiltro++;
+
+                })
+
+                self.PreencheFiltros(objectoFiltro);
+
+                // Constroi a grid
+                $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
+
+                // Mete no menu original
+                self.SetPropertyGrid("dados");
+                self.SetGrid("dados");
+
+
+                //} else {
+                //    if (confirm("Deseja apagar o filtro - " + widget.opcoes[($(this).attr("value")) - 1] + " ?")) {
+                //        // Remove a série com o valor
+                //        self.RemoveFiltro($(this).attr("value"));
+
+                //        // Volta a desenhar a grid
+                //        self.AdicionaGridFiltro();
+
+                //        // Mete no menu original
+                //        self.SetPropertyGrid("dados");
+                //        self.SetGrid("dados");
+
+
+
+                //        // Desenha gráfico
+                //        //gridPrincipal.FiltraContexto();
+
+                //    }
+
+                //}
             });
 
         }
@@ -6601,19 +6718,57 @@
             });
         }
 
+        //
+        PropertyGrid.propertyGuardaFiltros = function () {
+            var self = this,
+                objectoFiltros = [],
+                index = 1;
+            
+
+            // Adquire valores na propertyGrid
+            objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get");
+
+            // Para cada propriedade no objPropertyGrid
+            _.each(objPropertyGridDados, function (item, key) {
+
+
+                // Caso seja um filtro, adiciona a um objecto temporário
+                if (key === "Filtro-" + index) {
+                    objectoFiltros.push({ "label": item.label, "valor": item.valor });
+                    self.inicializaDados["Filtro-" + index].description = item.label;
+
+                    index++;
+                }
+
+            });
+
+            return objectoFiltros;
+
+        }
+
         // Adiciona um filtro na propertyGrid do widget Filtro
         PropertyGrid.AdicionaFiltro = function () {
-            var self = this;
+            var self = this,
+                objectoFiltros = [];
 
+
+
+            // Inicializar novas séries
             self.inicializaDados["Filtro-" + idFiltro] = { name: " ", group: "Opcoes Disponiveis", type: "filtro", description: " ", showHelp: false };
-            self.inicializaDados["QuebraFiltro-" + idFiltro] = { name: " ", type: "split", group: "Opcoes Disponiveis", description: idFiltro, showHelp: false };
+            self.inicializaDados["QuebraFiltro-" + idFiltro] = { name: " ", type: "splitFiltro", group: "Opcoes Disponiveis", description: idFiltro, showHelp: false };
 
             self.propriedadesDados["Filtro-" + idFiltro] = "";
             self.propriedadesDados["QuebraFiltro-" + idFiltro] = "";
 
+            // Guarda valores preenchidos
+            objectoFiltros = self.propertyGuardaFiltros();
 
             // Constroi a grid
             $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
+
+
+            // Preenche valores e envia objecto com os filtros que já se encontram na propertyGrid
+            self.PreencheFiltros(objectoFiltros);
 
             self.AdicionaBotaoFiltro();
             self.AdicionaCheckboxMenu();
@@ -6631,9 +6786,13 @@
             console.log(serie);
 
             // Remove a posição indicada
-            widget.opcoes.splice(serie-1, 1);
+            widget.opcoes.splice(serie - 1, 1);
 
-            console.log(widget);
+            console.log(widget.opcoes);
+
+            // Atualiza o widget 
+            gridPrincipal.getWidget($(".widget-ativo").attr("id")).GuardaFiltros(widget.opcoes);
+
 
         }
 
@@ -6984,9 +7143,7 @@
 
             // Adiciona o widget criado ao dashboard
             self.AdicionaWidgetLista(tipoWidget, GUID, dados);
-
-            console.log(self.listaWidgets);
-
+                
             // Atribui ao widget a sua class
             self.listaWidgets[ultimo].setWidgetClass(tipoWidget);
 
@@ -7169,10 +7326,9 @@
             // TODO
             // ATUAL
             
-            tipo = self.getWidgetsGrid();
+            
 
-            console.log(self);
-            console.log($("#" + self.id).closest("li"));
+            tipo = self.getWidgetsGrid();
 
             // Caso tenha a class
             if ($("#" + self.id).closest("li").hasClass("active")) {
@@ -7542,18 +7698,23 @@
                 // Caso seja do tipo contexto
                 if (item.widgetTipo === "contexto") {
 
+                    // Modificar  (Caso seja um widget do tipo filtro)
+
                     // Para cada widget dentro do seu contexto
                     item.contexto.forEach(function (widget) {
                         var dadosFiltrados,
                             // Procura index do widget no contexto
                             index = _.findIndex(self.listaWidgets, function (d) { return widget === d.id });
 
-                        // Adquire os dados filtrados (apagar paraemtro widget?)
-                        item.FiltraDados(self.listaWidgets[index], widget);
+                        // Começa o "refresh" e continua o programa
+                        setTimeout(function () {
+                            // Adquire os dados filtrados (apagar paraemtro widget?)
+                            item.FiltraDados(self.listaWidgets[index], widget);
+                            //// Redeseha os dados de acordo com os dados adquiridos
+                            //self.listaWidgets[index].RedesenhaGrafico(self.listaWidgets[index].id);
 
-                        // Redeseha os dados de acordo com os dados adquiridos
-                        self.listaWidgets[index].RedesenhaGrafico(self.listaWidgets[index].id);
-
+                        }, 0);
+                        
                     });
                 }
 
@@ -8025,8 +8186,6 @@
                 alert("ERRO - Pedido de lista dashboards não foi concretizado")
             }
 
-            console.log(self.listaDashboards);
-
         }
        
 
@@ -8345,11 +8504,15 @@
     });
 
 
+    
 
 
-    ///MODO - LISTA
-    /// OPCOES LISTA DASHBOARDS
-    if (modo === "lista") {
+
+    function inicializaLista() {
+
+        ///MODO - LISTA
+        /// OPCOES LISTA DASHBOARDS
+
         var dadosTabela,
             dataCriacao,
             dataEdicao,
@@ -8357,94 +8520,127 @@
             dashboards = Utilizador.getDashboards(),
             r = new Array(), j = -1;
 
-        // Opcoes de estilo
-        $("#page-wrapper").css("display", "table");
-        $("#page-wrapper").css("width", "100%");
-        
+            // Opcoes de estilo
+            $("#page-wrapper").css("display", "table");
+            $("#page-wrapper").css("width", "100%");
 
-        // Carrega lista dashboards para o div
-        for (var key = 0, size = dashboards.length; key < size; key++) {
-            // Analisa as datas
-            dataCriacao = moment(dashboards[key].TimestampCriacao, moment.ISO_8601);
-            dataEdicao = moment(dashboards[key].TimestampEdicao, moment.ISO_8601)
-            
-            // Puxa um objecto com os dados de cada dashboard
-            objectLista.push({ "nome": dashboards[key].Nome, "data": { "id": dashboards[key].ID, "criacao": dataCriacao.format("YYYY-MM-DD  HH:mm:ss"), "edicao": dataEdicao.format("YYYY-MM-DD  HH:mm:ss"), "descricao": dashboards[key].Descricao } });
 
-        }
+            // Carrega lista dashboards para o div
+            for (var key = 0, size = dashboards.length; key < size; key++) {
+                // Analisa as datas
+                dataCriacao = moment(dashboards[key].TimestampCriacao, moment.ISO_8601);
+                dataEdicao = moment(dashboards[key].TimestampEdicao, moment.ISO_8601)
 
-        // Formata os dados para um formato fácil de implementar na tabela
-        dadosTabela = $.flatJSON({ data: objectLista, flat: true });
+                // Puxa um objecto com os dados de cada dashboard
+                objectLista.push({ "nome": dashboards[key].Nome, "data": { "id": dashboards[key].ID, "criacao": dataCriacao.format("YYYY-MM-DD  HH:mm:ss"), "edicao": dataEdicao.format("YYYY-MM-DD  HH:mm:ss"), "descricao": dashboards[key].Descricao } });
 
-        // Inicializa a tabela
-        $('#listaDashboards').bootstrapTable({
-            data: dadosTabela,
-            locale: getLinguagem(),
-            cache: false,
-            search: false,
-            showColumns: false,
-            showRefresh: false,
-            clickToSelect: true,
-            showToggle: false,
-            cardView: false,
-            pagination: false,
-            idField: true,
-            singleSelect: true,
-            classes: "showPointer nao-seleciona table table-hover",
+            }
 
-            // Evento ao clickar numa das linhas da tabela 
-            onClickRow: function (item, $element) {
+            // Formata os dados para um formato fácil de implementar na tabela
+            dadosTabela = $.flatJSON({ data: objectLista, flat: true });
 
-                // Para a lista de dashboards do utilizador
-                Utilizador.listaDashboards.forEach(function (dashboard) {
-                    // Caso haja algum ativo
-                    if (dashboard.Activo) {
-                        // Passar a false
-                        primerCORE.DashboardAlteraEstado(dashboard.ID, "false");
+            // Inicializa a tabela
+            $('#listaDashboards').bootstrapTable({
+                data: dadosTabela,
+                locale: getLinguagem(),
+                cache: false,
+                search: false,
+                showColumns: false,
+                showRefresh: false,
+                clickToSelect: true,
+                showToggle: false,
+                cardView: false,
+                pagination: false,
+                idField: true,
+                singleSelect: true,
+                classes: "showCursor nao-seleciona table table-hover",
+                // Evento ao clickar numa das linhas da tabela 
+                onClickCell: function (field, value, row, $element) {
+
+                    // Se o campo não for o de descrição
+                    if (field !== "data.descricao") {
+                        console.log(row);
+
+                        // Para a lista de dashboards do utilizador
+                        Utilizador.listaDashboards.forEach(function (dashboard) {
+                            // Caso haja algum ativo
+                            if (dashboard.Activo) {
+                                // Passar a false
+                                primerCORE.DashboardAlteraEstado(dashboard.ID, "false");
+                            }
+
+                        });
+
+                        // Passar o dashboard escolhido para activo
+                        primerCORE.DashboardAlteraEstado(row["data.id"], "true");
+
+                        //// Abrir nova página com o ID associado à linha que foi feito o click
+                        window.open('db_visualizacao.html', '_self', false);
+                    
                     }
 
-                });
+                    return false;
 
-                // Passar o dashboard escolhido para activo
-                primerCORE.DashboardAlteraEstado(item["data.id"], "true");
-
-                // Abrir nova página com o ID associado à linha que foi feito o click
-                window.open('db_visualizacao.html', '_self', false);
-
-                return false;
-
-            },
-            columns: [
-                {
-                    field: 'nome',
-                    title: 'Dashboard',
-                    sortable: true,
                 },
-                {
-                    field: 'data.criacao',
-                    title: 'Criação',
-                    sortable: true
-                },
-                {
-                    field: 'data.edicao',
-                    title: 'Edição',
-                    sortable: true
-                },
-                {
-                    field: 'data.descricao',
-                    title: 'Descrição',
-                    sortable: true
-                },
-                {
-                    field: 'data.ID',
-                    title: 'ID',
-                    sortable: false,
-                    visible: false
-                }
-            ]
-        });
+                columns: [
+                    {
+                        field: 'nome',
+                        title: 'Dashboard',
+                        sortable: true,
+                        'class': "showPointer"
+                    },
+                    {
+                        field: 'data.criacao',
+                        title: 'Criação',
+                        sortable: true,
+                        'class': "showPointer"
+                    },
+                    {
+                        field: 'data.edicao',
+                        title: 'Edição',
+                        sortable: true,
+                        'class': "showPointer"
+                    },
+                    {
+                        field: 'data.descricao',
+                        title: 'Descrição',
+                        sortable: true,
+                        'class': "listaDashboards-botoes",
+                    },
+                    {
+                        field: 'data.ID',
+                        title: 'ID',
+                        sortable: false,
+                        visible: false
+                    }
+                ]
+            });
 
+            $(".listaDashboards-botoes").append('<button type="button" style="float:right;" class="removeDashboard"><img src ="../resources/ic_clear_black_24dp_1x.png"/></button>')
+            $("thead  .listaDashboards-botoes > button").remove();
     }
+
+    if (modo === "lista") {
+        inicializaLista();
+    }
+
+    // Ao clickar no botão de remoção de dashboard
+    $(document).on("click", ".removeDashboard", function () {
+
+        // Caso o utilizador confirme
+        if (confirm("Pretende mesmo apagar o dashboard ?")) {
+            // Pedido ao servidor para remover a dashboard selecionada
+            primerCORE.DashboardApaga(Utilizador.listaDashboards[$(this).closest("[data-index]").attr("data-index")].ID);
+
+            // Remove linha da tabela
+            $(this).closest("tr").remove();
+
+            // Atualizar lista de Dashboards
+            Utilizador.CarregaListaDashboards();
+
+        }
+    });
+
 
     // Ao clickar para criar novo Dashboard
     $(".adicionaDashboard-lista").click(function () {

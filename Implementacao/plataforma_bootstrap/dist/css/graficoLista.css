@@ -12,12 +12,18 @@
 
     .showHelp{
         cursor: help;
+
     }
 
+    .showCursor{
+        cursor: default;
+
+    }
 
     .showPointer,
     .glyphicon{
-        cursor: pointer;
+        cursor: pointer !important;
+
     }
 
     .nao-seleciona {
@@ -67,6 +73,10 @@
 
     }
 
+    .removeDashboard {
+        border: none;
+        background: transparent;
+    }
 
 
 /*------------------

@@ -74,8 +74,6 @@
 
 
 
-
-
     /*------------------
         TESTES // APAGAR ( Tabela de coordenadas )
     ------------------*/
@@ -345,21 +343,9 @@
     /* Botões property Grid */
     /* Botao */
 
-    .adicionaSerie-propertyGrid {
-        border: none;
-        background: transparent;
-    }
-
-    .removeSerie-propertyGrid {
-        border: none;
-        background: transparent;
-    }
-
-    .removeFiltro-propertyGrid {
-        border: none;
-        background: transparent;
-    }
-
+    .adicionaSerie-propertyGrid,
+    .removeSerie-propertyGrid,
+    .removeFiltro-propertyGrid,
     .adicionaOpcao-propertyGrid {
         border: none;
         background: transparent;

@@ -43,7 +43,7 @@ primerCORE = (function () {
     /// </summary>
     /// <returns> Objecto com a informação de todos os dashboards </returns>
     objecto.DashboardsDevolveLista = function () {
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard?sessaoID=sessaoDebug";
             
         return $.ajax({
             type: "GET",
@@ -89,7 +89,7 @@ primerCORE = (function () {
     /// <param name="id"> Id do dashboard a ser pedido </param>
     /// <returns> Devolve a dashboard indicada pelo ID do utilizador </returns>
     objecto.DashboardDevolve = function (id) {
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/"+ id +"?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/"+ id +"?sessaoID=sessaoDebug";
 
         return $.ajax({
             type: "GET",
@@ -133,7 +133,7 @@ primerCORE = (function () {
     /// </summary>
     /// <returns> Retorna um objecto com os dados de inicialização (dadomedido, indicadores, etc) </returns> 
     objecto.DashboardDadosIniciais = function () {
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/iniciais?sessaoID=sessaoDebug",
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/iniciais?sessaoID=sessaoDebug",
             query = '{}';
 
         return $.ajax({
@@ -187,7 +187,7 @@ primerCORE = (function () {
     /// <param name="id"> Id do utilizador a pesquisar </param>
     /// <returns> Retorna todos os dashboards ligados ao ID do utilizador que foi enviado </returns>
     objecto.DashboardsUtilizadorLista = function (id) {
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/utilizador/" + id + "?sessaoID=sessaoDebug"
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/utilizador/" + id + "?sessaoID=sessaoDebug"
 
         return $.ajax({
             type: "GET",
@@ -238,7 +238,7 @@ primerCORE = (function () {
 
         console.log(dashboard);
 
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/cria?sessaoID=sessaoDebug",
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/cria?sessaoID=sessaoDebug",
             query = '{'
                 + '"UtilizadorID":' + "'" + idUtilizador + "'" + ','
                 + '"Nome":' + "'" + dashboard.Nome + "'" + ','
@@ -288,6 +288,53 @@ primerCORE = (function () {
         }).responseText;
     };
 
+
+    /// <summary>
+    /// Remove dashboard
+    /// </summary>
+    objecto.DashboardApaga = function (id) {
+
+        console.log(id);
+
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/" + id + "?sessaoID=sessaoDebug"
+
+        return $.ajax({
+            type: "DELETE",
+            async: false,
+            cache: false,
+            // Antes de enviar
+            beforeSend: function () {
+
+                // $("#" + widget.id).find("wrapper").css("display", "none");
+
+                // Constroi o spinner 
+                //ConstroiSpinner(widget);
+                // Adicionar class ao spinner
+                //$("#" + widget.id).addClass("carregar")
+            },
+            // Depois do pedido estar completo
+            complete: function () {
+                // Parar widget
+                //widget.spinner.stop();
+
+                //$("#" + widget.id).find("wrapper").css("display", "block");
+
+                // Remover class do spinner
+                //$("#" + widget.id).removeClass("carregar");
+            },
+            url: url,
+            // Ao receber o pedido
+            success: function () {
+                console.log("Dados obtidos");
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                console.log(xhr);
+                alert(xhr.status + " - " + thrownError);
+            },
+        }).responseText;
+    };
+
+
     // to-do 400
     /// <summary>
     /// Atualiza um dashboard
@@ -298,7 +345,7 @@ primerCORE = (function () {
 
         console.log(dashboard);
 
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/" + dashboard.ID + "?sessaoID=sessaoDebug",
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/" + dashboard.ID + "?sessaoID=sessaoDebug",
             query = '{'
                 + '"Nome":' + "'" + dashboard.Nome + "'" + ',' 
                 + '"Descricao":' + "'" + dashboard.Descricao + "'" + ',' 
@@ -348,23 +395,12 @@ primerCORE = (function () {
 
 
     /// <summary>
-    /// Apaga dashboard do registo
-    /// </summary>
-    ///
-    objecto.DashboardApaga = function () {
-        // to-do
-    };
-
-
-    /// <summary>
     /// Altera o estado de um dashboard
     /// </summary>
     /// <param name="id"> Id do dashboard a ser alterado </param>
     objecto.DashboardAlteraEstado = function (id, estado) {
-
-        console.log(id);
-
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/"+ id +"/activo/" + estado + "?sessaoID=sessaoDebug";
+        
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/"+ id +"/activo/" + estado + "?sessaoID=sessaoDebug";
 
         return $.ajax({
             type: "POST",
@@ -415,7 +451,7 @@ primerCORE = (function () {
     /// </summary>
     /// <returns> </returns>
     objecto.DashboardWidgetsLista = function (query) {
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard?sessaoID=sessaoDebug";
 
             return $.ajax({
                 type: "POST",
@@ -466,18 +502,33 @@ primerCORE = (function () {
     objecto.DashboardDevolveWidget = function (widget, opcoes, dashboardID, utilizadorID) {
         // substituir campos na query, funcao e campo????
 
-        var url = "http://prodserver1/MP/primerCORE/db/rest/dashboard/valores?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/valores?sessaoID=sessaoDebug";
 
-        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "8","utilizadorID": "2502", "widgetsDados": [ { "id": \"' + widget.id +
-            '\", "tipo": \"' + widget.widgetTipo +
-            '\", "elemento": \"' + widget.widgetElemento +
-            '\", "contexto": [ "widget3", "widget8" ], "series": [ {"funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": ""}, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMin", "index": "indicadores", "type": "" } ], "buckets": [ {"tipo": "histogramadata", "campo": "data", "intervalo": "dia" } ]} ], "widgetsContexto": { "contextoPesquisa": [ { "id": "widget3", "tipo": "contexto",  "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "contexto", "filtro": "valor.tagID: 3073"} ],  "contextoData": [  {  "id": "widget8",  "campo": "data", "dataInicio": \"' + opcoes.dataInicio + '\",  "dataFim": \"' + opcoes.dataFim + '\" } ] } }';
+        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12", "utilizadorID": "2502", "widgetsDados":'
+                + '[{ "id": "widget0", '
+                + '"tipo": "1",'
+                + '"elemento": "GraficoLinhas", '
+                + '"contexto": ["widget3", "widget4", "widget8"], '
+                + '"series": [{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, '
+                            +'{ "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, '
+                            +'{ "funcao": "media", "campo": "valor.valorMin", "index": "indicadores", "type": "" }], '
+                + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "mes" }] }], '
+                + '"widgetsContexto": { "contextoPesquisa": [{ "id": "widget3", "tipo": "contexto", "filtro": "_index:indicadores" }, '
+                                        + '{ "id": "widget4", "tipo": "contexto", "filtro": "_type:dadomedidotriplo" }], '
+                + '"contextoData": [{ "id": "widget8", "campo": "data", '
+                                    + '"dataInicio": \"' + opcoes.dataInicio + '\",  '
+                                    + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
+
+        //query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12","utilizadorID": "2502", "widgetsDados": [ { "id": \"' + widget.id +
+        //    '\", "tipo": \"' + widget.widgetTipo +
+        //    '\", "elemento": \"' + widget.widgetElemento +
+        //    '\", "contexto": [ "widget3", "widget8" ], "series": [ {"funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": ""}, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMin", "index": "indicadores", "type": "" } ], "buckets": [ {"tipo": "histogramadata", "campo": "data", "intervalo": "dia" } ]} ], "widgetsContexto": { "contextoPesquisa": [ { "id": "widget3", "tipo": "contexto",  "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "contexto", "filtro": "valor.tagID: 3073"} ],  "contextoData": [  {  "id": "widget8",  "campo": "data", "dataInicio": \"' + opcoes.dataInicio + '\",  "dataFim": \"' + opcoes.dataFim + '\" } ] } }';
 
 
-        return $.ajax({
+        $.ajax({
             type: "POST",
             data: query,
-            async: false,
+            async: true,
             cache: false,
             // Antes de enviar
             beforeSend: function () {
@@ -491,14 +542,22 @@ primerCORE = (function () {
                 $("#" + widget.id).addClass("carregar")
             },
             // Depois do pedido estar completo
-            complete: function () {
+            complete: function (event) {
+
+                if (widget.widgetTipo === "dados") {
+                    widget.dados = $.parseJSON(event.responseText);
+                    widget.RedesenhaGrafico(widget.id);
+                }
+
                 // Parar widget
                 widget.spinner.stop();
+
 
                 $("#" + widget.id).find(".legenda").show();
 
                 // Remover class do spinner
                 $("#" + widget.id).removeClass("carregar");
+
             },
             url: url,
             // Ao receber o pedido
@@ -511,7 +570,9 @@ primerCORE = (function () {
                 //alert(thrownError);
                 alert("O seu pedido sofreu um erro e não foi concretizado");
             },
-        }).responseText;
+        });
+
+
 
     };
 

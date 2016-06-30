@@ -460,7 +460,6 @@
 
         var self = this;
 
-        console.log(self.gridType);
 
         if (self.gridType === "barraSecundaria-gridstack") {
             return _.reduce(this.nodes, function (memo, n) { return Math.max(memo, n.y + n.height); }, 0);

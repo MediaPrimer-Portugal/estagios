@@ -161,8 +161,9 @@
              *
             */
 		} else if (type === "filtro") {
-            displayName = "<input class="+ elemId +" type='text' value=" + meta.description + ">";
-		    valueHTML = "<input type='text' class='valor"+ elemId +"' value="+ value +" >";
+		    displayName = "<input class=" + elemId + " type='text' value=\"" + meta.description + "\" />";
+		    valueHTML = "<input type='text' class='valor" + elemId + "' value=\"" + value + "\" />";
+
 		    if (getValueFuncs) {
 		        getValueFuncs[name] = function () {
 		            return { label: $("." + elemId).val(), valor: $(".valor" + elemId).val() };
