@@ -1245,13 +1245,27 @@
         // Para cada item
         grid.listaWidgets.forEach(function (item) {
             // Adiciona ao array de objectos correcto
-            (item.widgetTipo === "contexto") ? listaWidgetsContexto.push({ text: item.titulo, value: item.id }) : listaWidgetsDados.push({ text: item.titulo, value: item.id });
+            if (item.widgetTipo === "contexto") {
+                // Caso não seja um widget de filtros
+                if (item.widgetElemento !== "filtros") {
+                    listaWidgetsContexto.push({ text: item.titulo, value: item.id })
+                } else {
+                    // TODO widget filtro
+                }
+
+            } else {
+                listaWidgetsDados.push({ text: item.titulo, value: item.id });
+            }
 
         });
 
         // Define widgets na PropertyGrid
         this.opts.PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
         this.opts.PropertyGrid.AdicionaCheckboxMenu();
+
+
+        // Adiciona ao menu "Componente data" nova opção, caso seja possivel
+        //this.opts.PropertyGrid.AdicionaMenuPeriodo();
 
     }
 

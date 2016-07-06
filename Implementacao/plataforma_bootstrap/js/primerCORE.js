@@ -512,7 +512,7 @@ primerCORE = (function () {
                 + '"series": [{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, '
                             +'{ "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, '
                             +'{ "funcao": "media", "campo": "valor.valorMin", "index": "indicadores", "type": "" }], '
-                + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "mes" }] }], '
+                + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "dia" }] }], '
                 + '"widgetsContexto": { "contextoPesquisa": [{ "id": "widget3", "tipo": "contexto", "filtro": "_index:indicadores" }, '
                                         + '{ "id": "widget4", "tipo": "contexto", "filtro": "_type:dadomedidotriplo" }], '
                 + '"contextoData": [{ "id": "widget8", "campo": "data", '

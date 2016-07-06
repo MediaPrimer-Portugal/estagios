@@ -25,20 +25,29 @@
         .attr('class', 'd3-tip')
         .offset([0, 0])
         .html(function (d) {
-
+            
             // Caso seja um grafico de area
             if (d.tipo === "GraficoArea") {
 
                 return "<p>Indicador: <span style='color:green'>" + d.nome  + "</span></p>" +
                     "<p></p>" +
                     "<p>Data: " + moment(d.date).format("DD-MM-YYYY") + "</p>" +
-                    "<p>Valor: " + ((Number(d.y).toFixed(2))) + "%</p>";
+                    "<p>Valor: " + ((Number(d.y).toFixed(2))) + "</p>";
+
+            }
+
+            // Caso seja um grafico de barras
+            if (d.tipo === "GraficoBarras") {
+
+                return "<p>Indicador: <span style='color:green'>" + d.nome + "</span></p>" +
+                    "<p></p>" +
+                    "<p>Data: " + moment(d.date).format("DD-MM-YYYY") + "</p>" +
+                    "<p>Valor: " + ((Number(d.y).toFixed(2))) + "</p>";
 
             }
 
 
-
-            return "<p>Dados: <span style='color:green'>" + d.name + "</span></p>" +
+            return "<p>Dados: <span style='color:green'>" + d.nome + "</span></p>" +
                 "<p></p>" +
                 "<p>Data: " + (d.y1 - d.y0) + "</p>" +
                 "<p>Percentagem: " + ((Number(d.y).toFixed(2))) + "%</p>";
@@ -450,7 +459,7 @@
         /// <summary>
         /// Remove associacao dos widgets
         /// </summary>
-        /// <param name="widget"> STRING do Id de widget a ser desassociado </param>
+        /// <param name="widget"> STRING do id de widget a ser desassociado </param>
         /// <returns> Booleano que retorna true caso desaassocie com sucesso</returns>
         Widget.prototype.DesassociaWidget = function (widget) {
             var self = this,
@@ -702,10 +711,6 @@
         Widget.prototype.setDados = function (opcoes) {
             var self = this;
 
-            console.log(self);
-            console.log(opcoes);
-            console.log(gridPrincipal.idUnico);
-
             /*self.dados = $.parseJSON(*/primerCORE.DashboardDevolveWidget(self, opcoes, gridPrincipal.idUnico, Utilizador.idUtilizador);
 
         }
@@ -833,15 +838,17 @@
 
             self.seriesUtilizadas = [];
 
-            console.log(series);
-
+            // Se os dados não foram nulos ou indefinidos
             if (self.dados !== undefined && self.dados !== null) {
                 series.forEach(function (item) {
-                    // Caso o indicador exista
-                    if (_.findIndex(self.dados.dados.Widgets[0].Items[0].Valores, function (valor) { return valor.Nome === item.ComponenteSerie }) !== -1) {
-                        // Caso não seja repetido
-                        if (_.findIndex(self.seriesUtilizadas, function (valor) { return item.ComponenteSerie === valor.ComponenteSerie }) === -1) {
-                            self.seriesUtilizadas.push(item);
+                    // Caso o objecto não esteja vazio, ter mais que uma chave
+                    if (Object.keys(self.dados).length > 0) {
+                        // Caso o indicador exista
+                        if (_.findIndex(self.dados.dados.Widgets[0].Items[0].Valores, function (valor) { return valor.Nome === item.ComponenteSerie }) !== -1) {
+                            // Caso não seja repetido
+                            if (_.findIndex(self.seriesUtilizadas, function (valor) { return item.ComponenteSerie === valor.ComponenteSerie }) === -1) {
+                                self.seriesUtilizadas.push(item);
+                            }
                         }
                     }
                 })
@@ -1588,8 +1595,6 @@
 
             }
 
-            console.log("TESTE_ATUAL");
-            console.log(self);
 
             //// Atualização da escala dos Eixos
             self.escalaX.scale(self.transformaX);
@@ -2054,9 +2059,11 @@
             this.widgetElemento = "GraficoBarras";
 
             this.objectoServidor["widgetTipo"] = "dados";
-            this.objectoServidor["widgetElemento"] = "graficoBarras";
+            this.objectoServidor["widgetElemento"] = "GraficoBarras";
             this.objectoServidor["contexto"] = [];
             this.objectoServidor["agregacoes"] = [];
+
+            this.dadosEscolhidos = [];
 
             this.chave = []
         };
@@ -2077,11 +2084,11 @@
 
             self.AtualizaEixos();
 
-            self.dadosAnalisados.forEach(function (item, curIndex) {
+            self.dadosEscolhidos.forEach(function (item, curIndex) {
 
                 self.selecao.selectAll(".barra" + curIndex)
                     // to-do modificar nome State para um genérico - Contar numero de keys e substituir pelo inteiro
-                    .attr("x", function (d, curIndex) { return escalaSecundaria(d.name); })
+                    .attr("x", function (d, curIndex) { return escalaSecundaria(d.nome); })
                 .transition("grouped")
                     .attr("y", function (d) { return transformaY(d.y); })
                     .attr("width", escalaSecundaria.rangeBand())
@@ -2116,10 +2123,27 @@
             // Atualiza o dominio Y
             transformaY.domain([0, d3.max(self.dados, function (d) { return d.total; })]);
 
+            // Atribui o valor "yStacked" que é a soma de todas as barras anteriores para que seja possivel
+            // a concretização do tipo e gráfico stacked
+            // Para cada data
+            for (var index = 0; self.dadosEscolhidos[0].values.length > index; index++) {
+                // Para cada série
+                for (var indexSeries = 1; self.dadosEscolhidos.length > indexSeries ; indexSeries++) {
+                    // Adicionar ao yStacked a soma entre o y e o yStacked anteriores
+                    self.dadosEscolhidos[indexSeries].values[index].yStacked = self.dadosEscolhidos[indexSeries - 1].values[index].y + self.dadosEscolhidos[indexSeries - 1].values[index].yStacked;
+                }
+            }
+
+            console.log(self.dadosEscolhidos);
+
+
             self.AtualizaEixos();
 
 
-            self.dadosAnalisados.forEach(function (item, curIndex) {
+            self.dadosEscolhidos.forEach(function (item, curIndex) {
+
+                console.log(curIndex);
+
                 // Para todas as barras com numero curIndex
                 self.selecao.selectAll(".barra" + curIndex)
                     // "Remover" atributo X, caso tenha sido atribuido quando estava em modo Grouped
@@ -2148,75 +2172,61 @@
 
         }
 
-
         /// <summary>
-        /// Adapta os dados e acrescenta-os ao DOM, mais especificamente na secção do SVG
+        /// Desenha as séries que foram selecionadas pelo utilizador (seriesUtilizadas)
         /// </summary>
-        GraficoBarras.prototype.InsereDados = function () {
+        /// TODO
+        /// incompleto
+        GraficoBarras.prototype.DesenhaSerie = function () {
             var self = this,
-                objectoAuxiliar,
+                index,
+                id = 0,
+                dadosEscolhidos = [],
                 listaSeries = [];
-            
-
-            // Controla as keys (Series) que vão estar contidas no gráfico
-            color.domain(d3.values(self.dados.dados.Widgets[0].Items[0].Valores).map(function (d) { return d.Nome; }));
-
-            // Criar novo array de objectos para guardar a informação de uma forma mais fácil de utilizar
-            self.dadosAnalisados = color.domain().map(function (name, curIndex) {
-                return {
-                    // Atribuir nome a chave (Serie)
-                    name: name,
-                    // Mapear os valores
-                    values: self.dados.dados.Widgets[0].Items.map(function (d) {
-                        var arrayvalores = [],
-                            arrayDatas = [],
-                            index;
-
-                        // Encontrar index do parametro atual
-                        index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
-
-                        return {
-                            name: name,
-                            y: +d.Valores[index].Valor,
-                            yStacked: 0,
-                            date: parseDate(d.Data)
-                        };
-                    })
-                }
-            });
 
 
-            // Atribui o valor "yStacked" que é a soma de todas as barras anteriores para que seja possivel
-            // a concretização do tipo e gráfico stacked
-            // Para cada data
-            for (var index = 0; self.dadosAnalisados[0].values.length > index; index++) {
-                // Para cada série
-                for (var indexSeries = 1; self.dadosAnalisados.length > indexSeries ; indexSeries++) {
-                    // Adicionar ao yStacked a soma entre o y e o yStacked anteriores
-                    self.dadosAnalisados[indexSeries].values[index].yStacked = self.dadosAnalisados[indexSeries - 1].values[index].y + self.dadosAnalisados[indexSeries - 1].values[index].yStacked;
-                }
-            }
+            // Remove as séries anteriores
+            $("#" + self.id).find(".series").remove();
 
-            // Adquirir valor máximo de cada uma das séries (chave)
-            self.dadosAnalisados.forEach(function (item) {
-                self.chave.push(d3.max(item.values, function (d) { return d.y; }))
-            });
-
-
-            // Ajustar escalas de acordo com o máximo
-            transformaY.domain([0, d3.max(self.chave)]);
-
+            console.log("SERIES UTILIZADAS");
+            console.log(self.seriesUtilizadas);
 
             // Guarda o nome de cada série para "filtrar"
-            self.dadosAnalisados.forEach(function (item) {
+            self.dadosNormal.forEach(function (item) {
                 listaSeries.push(item.name);
             });
+
+            console.log("DADOS NORMAL");
+            console.log(self.dadosNormal);
+
+
+            // Como está a ser guardado os dados temporariamente no widget, é necessário limpar sempre que ocorre o desenhaSerie
+            self.dadosEscolhidos = [];
+
+            // Para cada serie utilizada
+            self.seriesUtilizadas.forEach(function (item) {
+                // Descobrir quais as que têm o valor de indicador correto
+                index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.ComponenteSerie })
+                if (index !== -1) {
+                    // Adiciona um numero a cada série para ser facilmente identificada
+                    self.dadosNormal[index]["Numero"] = id++;
+                    self.dadosNormal[index]["Nome"] = item.Nome;
+
+
+                    self.dadosEscolhidos.push(self.dadosNormal[index]);
+
+                }
+            });
+
+
+            console.log("DADOS ESCOLHIDOS");
+            console.log(self.dadosEscolhidos);
 
 
             // Atualizar eixo X
             escalaOriginal
                 .rangeRoundBands([0, self.largura], 0.1)
-                .domain(self.dadosAnalisados[0].values.map(function (d) { return d.date; }));
+                .domain(self.dadosNormal[0].values.map(function (d) { return d.date; }));
 
             // Atualizar eixo secundário X
             escalaSecundaria
@@ -2233,12 +2243,12 @@
 
                 // Para cada "serie" criar as barras necessárias para complementar o atributo data
                 // desse elemento
-                self.dadosAnalisados.forEach(function ( item, curIndex) {
+                self.dadosEscolhidos.forEach(function (item, curIndex) {
                     // Adicionar "barras" ao gráfico
                     self.selecao.selectAll("rect")
                         .data(item.values)
                     .enter().append("rect")
-                        .attr("class", "barra"+curIndex)
+                        .attr("class", "barra" + curIndex)
                         .attr("x", function (d) { return escalaOriginal(d.date); })
                         .attr("y", function (d) { return transformaY(d.y); })
                         // rangeBand() - Função que divide o espaço em "bandas" equivalentes
@@ -2258,11 +2268,13 @@
 
                 // Para cada "serie" criar as barras necessárias para complementar o atributo data
                 // desse elemento
-                self.dadosAnalisados.forEach(function (item, curIndex) {
-                    self.selecao.selectAll(".barra"+curIndex)
+                self.dadosEscolhidos.forEach(function (item, curIndex) {
+                    console.log(item);
+
+                    self.selecao.selectAll(".barra" + curIndex)
                         .data(item.values)
                     .enter().append("rect")
-                        .attr("class", "barra"+curIndex)
+                        .attr("class", "barra" + curIndex)
                         .attr("x", function (d, curIndex) { return escalaOriginal(d.date); })
                         .attr("y", function (d) { return transformaY(d.y); })
                         // rangeBand() - Função que divide o espaço em "bandas" equivalentes
@@ -2275,6 +2287,134 @@
 
                 })
             }
+
+
+        }
+
+        /// <summary>
+        /// Adapta os dados e acrescenta-os ao DOM, mais especificamente na secção do SVG
+        /// </summary>
+        GraficoBarras.prototype.InsereDados = function () {
+            var self = this,
+                objectoAuxiliar,
+                listaSeries = [];
+            
+
+            // Controla as keys (Series) que vão estar contidas no gráfico
+            color.domain(d3.values(self.dados.dados.Widgets[0].Items[0].Valores).map(function (d) { return d.Nome; }));
+
+            
+
+            // Criar novo array de objectos para guardar a informação de uma forma mais fácil de utilizar
+            self.dadosNormal = color.domain().map(function (name, curIndex) {
+                return {
+                    // Atribuir nome a chave (Serie)
+                    name: name,
+                    // Mapear os valores
+                    values: self.dados.dados.Widgets[0].Items.map(function (d) {
+                        var arrayvalores = [],
+                            arrayDatas = [],
+                            index;
+
+                        // Encontrar index do parametro atual
+                        index = _.findIndex(d.Valores, function (valor) { return valor.Nome === name; });
+
+
+                        return {
+                            nome: name,
+                            y: +d.Valores[index].Valor,
+                            yStacked: 0,
+                            tipo: self.widgetElemento,
+                            date: parseDate(d.Data)
+
+                        };
+                    })
+                }
+            });
+
+
+            // Adquirir valor máximo de cada uma das séries (chave)
+            self.dadosNormal.forEach(function (item) {
+                self.chave.push(d3.max(item.values, function (d) { return d.y; }))
+            });
+
+
+            // Ajustar escalas de acordo com o máximo
+            transformaY.domain([0, d3.max(self.chave)]);
+
+
+            //// Guarda o nome de cada série para "filtrar"
+            //self.dadosAnalisados.forEach(function (item) {
+            //    listaSeries.push(item.name);
+            //});
+
+
+            self.DesenhaSerie();
+
+
+
+            //// Atualizar eixo X
+            //escalaOriginal
+            //    .rangeRoundBands([0, self.largura], 0.1)
+            //    .domain(self.dadosAnalisados[0].values.map(function (d) { return d.date; }));
+
+            //// Atualizar eixo secundário X
+            //escalaSecundaria
+            //    .domain(listaSeries).rangeRoundBands([0, escalaOriginal.rangeBand()]);
+
+
+            //// Criar elemento "g" para cada representação
+            //self.selecao = self.svg.append("g")
+            //    .attr("class", "dados")
+
+
+            //// Caso seja modo Stacked (Empilhado)
+            //if (self.modoVisualizacao === "stacked") {
+
+            //    // Para cada "serie" criar as barras necessárias para complementar o atributo data
+            //    // desse elemento
+            //    self.dadosAnalisados.forEach(function ( item, curIndex) {
+            //        // Adicionar "barras" ao gráfico
+            //        self.selecao.selectAll("rect")
+            //            .data(item.values)
+            //        .enter().append("rect")
+            //            .attr("class", "barra"+curIndex)
+            //            .attr("x", function (d) { return escalaOriginal(d.date); })
+            //            .attr("y", function (d) { return transformaY(d.y); })
+            //            // rangeBand() - Função que divide o espaço em "bandas" equivalentes
+            //            .attr("width", escalaOriginal.rangeBand())
+            //            .attr("height", function (d) { return self.altura - transformaY(d.y); })
+            //                .style("fill", function (d) { return color(d.name); })
+            //                // Atribuir tooltips
+            //                .on("mouseover", tip.show)
+            //                .on("mouseout", tip.hide);
+
+            //    })
+            //}
+
+
+            //// Caso seja modo Grouped ( Agrupado )
+            //if (self.modoVisualizacao === "grouped") {
+
+            //    // Para cada "serie" criar as barras necessárias para complementar o atributo data
+            //    // desse elemento
+            //    self.dadosAnalisados.forEach(function (item, curIndex) {
+            //        self.selecao.selectAll(".barra"+curIndex)
+            //            .data(item.values)
+            //        .enter().append("rect")
+            //            .attr("class", "barra"+curIndex)
+            //            .attr("x", function (d, curIndex) { return escalaOriginal(d.date); })
+            //            .attr("y", function (d) { return transformaY(d.y); })
+            //            // rangeBand() - Função que divide o espaço em "bandas" equivalentes
+            //            .attr("width", escalaSecundaria.rangeBand())
+            //            .attr("height", function (d) { return self.altura - transformaY(d.y); })
+            //            .style("fill", function (d, curIndex) { return color(item.name); })
+            //               // Atribuir tooltips
+            //               .on("mouseover", tip.show)
+            //               .on("mouseout", tip.hide);
+
+            //    })
+            //}
 
         }
 
@@ -2353,18 +2493,18 @@
         /// </summary>
         GraficoBarras.prototype.AtualizaEixos = function () {
             var self = this,
-                intervaloData = (d3.extent(self.dadosAnalisados[0].values, function (d) { return d.date; })),
+                intervaloData = (d3.extent(self.dadosNormal[0].values, function (d) { return d.date; })),
                 listaSeries = [];
 
             // Guarda os nomes de todas as séries
-            self.dadosAnalisados.forEach(function (item) {
+            self.dadosNormal.forEach(function (item) {
                 listaSeries.push(item.name);
             });
 
             // Atualizar escala original
             escalaOriginal
                 .rangeRoundBands(([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda]), 0.1)
-                .domain(self.dadosAnalisados[0].values.map(function(d) { return d.date;}));
+                .domain(self.dadosNormal[0].values.map(function(d) { return d.date;}));
 
             // Atualizar escala secundária
             escalaSecundaria
@@ -2378,9 +2518,9 @@
                 var soma = 0,
                     listaTotal = [];
 
-                for (var indexValores = 0; indexValores < self.dadosAnalisados[0].values.length; indexValores++) {
-                    for (var index = 0; index < self.dadosAnalisados.length; index++) {
-                        soma += self.dadosAnalisados[index].values[indexValores].y;
+                for (var indexValores = 0; indexValores < self.dadosNormal[0].values.length; indexValores++) {
+                    for (var index = 0; index < self.dadosNormal.length; index++) {
+                        soma += self.dadosNormal[index].values[indexValores].y;
                     }
                     listaTotal.push(soma);
                     soma = 0;
@@ -2588,7 +2728,7 @@
         /// </summary>
         GraficoBarras.prototype.ConstroiLegenda = function () {
             var self = this,
-                series = self.dadosAnalisados.length,
+                series = self.dadosNormal.length,
                 legenda;
 
             //color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
@@ -2604,7 +2744,7 @@
                 legenda.append("text")
                     .attr("x", 30)
                     .attr("y", ((15 + 20 * i) + 5))
-                    .text(self.dadosAnalisados[i].name);
+                    .text(self.dadosNormal[i].name);
 
             }
 
@@ -5811,6 +5951,8 @@
                 index = 1;
 
 
+            console.log(series);
+
             if (series !== undefined) {
                 series.forEach(function (serie) {
                     self.propriedadesDados["Nome-" + index] = serie.Nome || "Serie"+index;
@@ -6078,6 +6220,70 @@
 
         /// #Region - Atualizações ----------------------------------
          
+        //Associação
+        PropertyGrid.AdicionaAssociacao = function () {
+            var self = this;
+
+            // Widgets a serem associados
+            var widget1,
+                widget2,
+                // Define o tipo do componente do widget
+                tipoComponente,
+                // Adquire valores da caixa de propriedades em formato Objecto
+                valores = jQuery.parseJSON(JSON.stringify($('#propGridDados').jqPropertyGrid('get'), null, '\t'));
+
+            // Adapta conforme o tipo de componente/propertyGrid 
+            if (_.has(valores, "ComponenteContexto")) {
+                tipoComponente = valores.ComponenteContexto;
+            } else if (_.has(valores, "ComponenteDados")) {
+                tipoComponente = valores.ComponenteDados;
+            } else {
+                alert("Erro no tipoComponente");
+            }
+
+
+
+            // Caso sejam 2 valores diferentes do "default"
+            if (valores.WidgetDados !== "Sem componente" && tipoComponente !== "Sem componente") {
+
+                // Adquire referencia dos widgets a associar
+                widget1 = gridPrincipal.getWidget(tipoComponente);
+                widget2 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+                // Verificar erro
+                if (widget1 === undefined) {
+                    alert("ERRO - Widget indefinido");
+                    return;
+                }
+
+                if ((_.findIndex(widget1.contexto, function (contexto) { return gridPrincipal.getWidget(contexto).widgetTipo === "contexto" })) === -1) {
+
+                    // Associa o widget a cada um
+                    verifica1 = widget1.AssociaWidget($(".widget-ativo").attr("id"));
+                    verifica2 = widget2.AssociaWidget(tipoComponente);
+
+
+                    // Caso os 2 tenham associado com sucesso
+                    if (verifica1 === true & verifica2 === true) {
+                        // Apresentar aviso
+                        alert(widget2.titulo + " foi associado com sucesso a " + tipoComponente);
+                    }
+
+                    // Chama função para filtrar e desenhar os dados
+                    gridPrincipal.FiltraContexto();
+
+                    // Atualiza os indicadores da propertyGrid
+                    (widget1.widgetTipo === "contexto") ? self.setIndicadores(widget2.id) : self.setIndicadores(widget1.id);
+
+                    //self.ConstroiGrid();
+
+                } else {
+                    alert("O " + widget2.titulo + " já tem um widget contexto associado");
+                }
+            }
+
+        }
+
         // Dashboard
         PropertyGrid.AtualizaDashboard = function () {
             var self = this,
@@ -6105,16 +6311,21 @@
                 objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get"),
                 objPropertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get");
 
+
             // ID do widget contexto
             widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
 
+            // Atualiza os widgets com a sua informação
             gridPrincipal.getWidget(widget1.id).setTitulo(objPropertyGridGeral.Nome);
             gridPrincipal.getWidget(widget1.id).setDescricao(objPropertyGridGeral.Descricao);
 
-
+            
+            // Guarda as series 
             objectoSeries = self.GuardaSeries();
 
             console.log(objectoSeries);
+
+            self.AdicionaAssociacao();
 
             // Atualiza Widget (to-do atualizar dados? // Alerta)
             if (gridPrincipal.getWidget(widget1.id).dados !== undefined) {
@@ -6138,8 +6349,6 @@
 
         // widget Data
         PropertyGrid.AtualizaWidgetData = function () {
-            var self = this;
-
             //$("#propGridGeral").change(function () {
             //    var widget1,
             //        objPropertyGridGeral = $("#propGridGeral").jqPropertyGrid("get");
@@ -6201,6 +6410,19 @@
             gridPrincipal.getWidget(self.widgetID).AtualizaOpcoesProperty(objPropertyGridGeral, objPropertyGridDados, objPrpertyGridAparencia);
             gridPrincipal.getWidget(self.widgetID).Atualiza();
 
+
+
+            // Atualizar titulo dos widgets para o Menu Periodo
+            self.listaWidgetsContexto.forEach(function (item, index) {
+                // Caso seja diferente doo primeiro index "Sem Componente"
+                if (index !== 0) {
+                    item.text = gridPrincipal.getWidget(item.value).titulo;
+                }
+
+            });
+
+            // Atualizar menu "Componente Data"
+            self.setWidgets(self.listaWidgetsDados, self.listaWidgetsContexto);
 
         }
 
@@ -6537,72 +6759,15 @@
 
         }
 
+
         // Associa os widgets através da opção escolhida pela propertyGrid (Dropdownlist)
         PropertyGrid.EventoAdicionaAssociacao = function () {
             var self = this;
 
             // Ao pressionar adicionar
             $(".adicionarAssociacao").click(function () {
-                // Widgets a serem associados
-                var widget1,
-                    widget2,
-                    // Define o tipo do componente do widget
-                    tipoComponente,
-                    // Adquire valores da caixa de propriedades em formato Objecto
-                    valores = jQuery.parseJSON(JSON.stringify($('#propGridDados').jqPropertyGrid('get'), null, '\t'));
-
-                // Adapta conforme o tipo de componente/propertyGrid 
-                if (_.has(valores, "ComponenteContexto")) {
-                    tipoComponente = valores.ComponenteContexto;
-                } else if (_.has(valores, "ComponenteDados")) {
-                    tipoComponente = valores.ComponenteDados;
-                } else {
-                    alert("Erro no tipoComponente");
-                }
-
-
-
-                // Caso sejam 2 valores diferentes do "default"
-                if (valores.WidgetDados !== "Sem componente" && tipoComponente !== "Sem componente") {
-
-                    // Adquire referencia dos widgets a associar
-                    widget1 = gridPrincipal.getWidget(tipoComponente);
-                    widget2 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
-
-                    // Verificar erro
-                    if (widget1 === undefined) {
-                        alert("ERRO - Widget indefinido");
-                        return;
-                    }
-
-                    if ((_.findIndex(widget1.contexto, function (contexto) { return gridPrincipal.getWidget(contexto).widgetTipo === "contexto" })) === -1) {
-
-                        // Associa o widget a cada um
-                        verifica1 = widget1.AssociaWidget($(".widget-ativo").attr("id"));
-                        verifica2 = widget2.AssociaWidget(tipoComponente);
-
-
-                        // Caso os 2 tenham associado com sucesso
-                        if (verifica1 === true & verifica2 === true) {
-                            // Apresentar aviso
-                            alert(widget2.titulo + " foi associado com sucesso a " + tipoComponente);
-                        }
-
-                        // Chama função para filtrar e desenhar os dados
-                        gridPrincipal.FiltraContexto();
-
-                        console.log("teste");
-
-                        // Atualiza os indicadores da propertyGrid
-                        (widget1.widgetTipo === "contexto") ? self.setIndicadores(widget2.id) : self.setIndicadores(widget1.id);
-
-                        self.ConstroiGrid();
-
-                    } else {
-                        alert("O " + widget2.titulo + " já tem um widget contexto associado");
-                    }
-                }
-
+                self.AdicionaAssociacao();
+                self.ConstroiGrid();
             });
 
         }
@@ -6666,6 +6831,7 @@
 
         }
 
+
         // Atualiza indicadores ao adicionar Associacao
         /// <param name="widgetID"> ID do widget para atualizar os indicadores </param>  
         PropertyGrid.EventoAtualizaIndicadores = function (widgetID) {
@@ -6718,7 +6884,8 @@
             });
         }
 
-        //
+
+        // Guarda Filtros da propertyGrid
         PropertyGrid.propertyGuardaFiltros = function () {
             var self = this,
                 objectoFiltros = [],
@@ -6745,6 +6912,7 @@
             return objectoFiltros;
 
         }
+
 
         // Adiciona um filtro na propertyGrid do widget Filtro
         PropertyGrid.AdicionaFiltro = function () {
@@ -6859,10 +7027,12 @@
         }
 
 
-        // Adiciona Menu Periodo à propertyGrid
+        // Adiciona Menu Periodo ( Componentes filtro por data ) à propertyGrid
         PropertyGrid.AdicionaMenuPeriodo = function () {
             var self = this,
                 valorInicial = "";
+
+            console.log(self.listaWidgetsContexto);
 
             self.inicializaDados["Fixo"] = { name: "Fixo:", group: "Periodo", type: "options", options: FixoPeriodo, description: "Analisar numa data fixa", showHelp: false };
             self.inicializaDados["ComponenteContexto"] = { name: "Componente Data", group: "Periodo", type: "options", options: self.listaWidgetsContexto, description: "Analisar através de um widget", showHelp: false };
@@ -6951,7 +7121,7 @@
 
 
     /// <summary>
-    /// Class Grid, "tabela" que vai conter todos os widgets
+    /// Class Grid, um dashboard, vai conter todos os widgets
     /// Module Pattern
     /// </summary>
     var Grid = (function () {
@@ -6968,7 +7138,7 @@
             idUnico = 0,
             listaWidgets = [],
             // Definição de cada Menu Widget
-            widgetsGrafico = ["GraficoArea", "barras", "GraficoLinhas", "pie"],
+            widgetsGrafico = ["GraficoArea", "GraficoBarras", "GraficoLinhas", "pie"],
             widgetsLabel = [],
             widgetsOutros = ["gauge", "kpi", "tabela"],
             widgetsFiltros = ["datahora_simples", "filtros"];
@@ -6986,7 +7156,7 @@
             self.opcoes = opcoes;
             self.tipoGrid = tipoGrid;
 
-            self.nome = "Dashboard";
+            self.nome = "Novo Dashboard";
             self.descricao = "Dashboard de indicadores";
             self.idUnico = idUnico++;
 
@@ -7176,7 +7346,7 @@
                 case "GraficoArea":
                     self.listaWidgets.push(new GraficoArea(id, "GraficoArea"));
                     break;
-                case "barras":
+                case "GraficoBarras":
                     self.listaWidgets.push(new GraficoBarras(id, "GraficoBarras"));
                     break;
                 case "GraficoLinhas":
@@ -7893,7 +8063,8 @@
         }
 
         /// <summary>
-        /// Substitui o gráfico do widget por uma tabela com todos os dados disponiveis
+        /// Substitui o gráfico do widget por uma tabela com todos os dados disponiveis,
+        /// ou substitui a tabela pelo gráfico do widget
         /// </summary>
         Grid.prototype.VerTabela = function () {
             var self = this;
@@ -7905,17 +8076,15 @@
                     index,
                     dados;
 
+
                 // Função lodash para achar o primeiro index onde a condição seja "true"
                 // Procura na lista de widgets pelo widget com o id equivalente
                 index = _.findIndex(self.listaWidgets, function (item) { return item.id === widget.attr("id"); });
 
-                console.log(self.listaWidgets);
-                console.log(self.listaWidgets[index]);
-
                 // Modifica estado da tabela
                 self.listaWidgets[index].setEstadoTabela();
                 // Caso esteja em formato widget passa para tabela, senão passa para o modo gráfico
-                (self.listaWidgets[index].estadoTabela) ? self.listaWidgets[index].TransformaWidgetTabela() : self.listaWidgets[index].RedesenhaGrafico(self.id);
+                (self.listaWidgets[index].estadoTabela) ? self.listaWidgets[index].TransformaWidgetTabela() : self.listaWidgets[index].RedesenhaGrafico(widget.attr("id"));
                 (self.listaWidgets[index].estadoTabela) ? $(".verTabela-widget").text("Ver Gráfico") : $(".verTabela-widget").text("Ver Tabela");
 
             });
@@ -8462,15 +8631,31 @@
     }
 
 
-
+    // Guarda Dashboard
     $(".dashboard-guarda").click(function () {
+        var nome;
+
         // Verifica se o dashboard já está guardado na base de dados ou não
         if (_.findIndex(Utilizador.getDashboards(), function (objecto) { return objecto.ID === gridPrincipal.idUnico; }) === -1) {
             console.log("nao existe");
-            Utilizador.AdicionaDashboard(gridPrincipal, prompt("Guardar como:"));
-            alert("Dashboard guardado com sucesso!");
-            window.open('db_edicao.html', '_self', false);
-            
+            // Caso o nome seja diferente ao nome por defeito
+            if (!(gridPrincipal.getNome() === "Novo Dashboard")) {
+                alert("Dashboard guardado com sucesso!");
+                window.open('db_edicao.html', '_self', false);
+
+            // Caso seja igual
+            } else {
+                // Pede ao utilizador o nome que deve ser guardado na dashboard
+                nome = prompt("Guardar como:");
+                console.log(nome);
+                // Caso seja diferente de null
+                if(nome !== null){
+                    Utilizador.AdicionaDashboard(gridPrincipal, nome);
+                    alert("Dashboard guardado com sucesso!");
+                    window.open('db_edicao.html', '_self', false);
+
+                }
+            }
         } else {
             console.log("existe");
             Utilizador.GuardaDashboard();
@@ -8479,9 +8664,13 @@
         };
 
     });
+
+    // Remove Dashboard?
     $(".dashboard-remove").click(function () {
         Utilizador.RemoveDashboard();
     });
+
+    // Mostra Dashboard
     $(".dashboard-informa").click(function () {
         console.log(gridPrincipal);
         window.open('db_edicao.html', '_self', false);
