@@ -534,16 +534,25 @@ primerCORE = (function () {
             beforeSend: function () {
                 // Apaga a representação antes de pedir novos dados
                 $("#" + widget.id).find(".wrapper").find("svg").remove();
+                $("#" + widget.id).find(".dataTables_wrapper").remove();
                 $("#" + widget.id).find(".legenda").hide();
 
                 // Constroi o spinner 
                 ConstroiSpinner(widget);
                 // Adicionar class ao spinner
                 $("#" + widget.id).addClass("carregar")
+
+                // Remove opção de selecionar
+                $("#" + widget.id).css("pointer-events", "none");
+
             },
             // Depois do pedido estar completo
             complete: function (event) {
 
+                // Adiciona opção de selecionar
+                $("#" + widget.id).css("pointer-events", "auto");
+
+                // Caso seja um widget do tipo dados
                 if (widget.widgetTipo === "dados") {
                     widget.dados = $.parseJSON(event.responseText);
                     widget.RedesenhaGrafico(widget.id);

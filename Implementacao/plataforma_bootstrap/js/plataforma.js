@@ -27,8 +27,7 @@
         .html(function (d) {
             
             // Caso seja um grafico de area
-            if (d.tipo === "GraficoArea") {
-
+            if (d.tipo === "GraficoArea") {                
                 return "<p>Indicador: <span style='color:green'>" + d.nome  + "</span></p>" +
                     "<p></p>" +
                     "<p>Data: " + moment(d.date).format("DD-MM-YYYY") + "</p>" +
@@ -38,7 +37,6 @@
 
             // Caso seja um grafico de barras
             if (d.tipo === "GraficoBarras") {
-
                 return "<p>Indicador: <span style='color:green'>" + d.nome + "</span></p>" +
                     "<p></p>" +
                     "<p>Data: " + moment(d.date).format("DD-MM-YYYY") + "</p>" +
@@ -655,10 +653,11 @@
                 // caso tenha items para desenhar
                 if (self.dados.dados.Widgets[0].Items.length != 0) {
 
-                    if (self.widgetElemento === "GraficoPie") {
+                    if (self.widgetElemento === "pieChart") {
 
                         self.ConstroiSVG.call(this, id);
                         self.InsereDados.call(this);
+                        self.ConstroiLegenda.call(this);
 
                     } else {
                         // volta a desenhar o gráfico
@@ -816,13 +815,23 @@
             var self = this,
             indicadores = [];
             
+
             if (self.contexto.length <= 0) {
                 return indicadores;
-            } else {
+            // Caso não seja uma Tabela
+            } else if(self.widgetElemento !== "Tabela"){
                 if (self.dadosNormal !== undefined && self.dadosNormal !== null) {
+                    // Para cada tipo de valor adicionar ao array de indicadores
                     self.dadosNormal.forEach(function (indicador) {
                         indicadores.push(indicador.name);
                     });
+                }
+            } else {
+                // Caso os dados da tabela não estejam vazios
+                if (self.dados.dados.Widgets[0].Items[0].Valores !== undefined && self.dados.dados.Widgets[0].Items[0].Valores !== null) {
+                    self.dados.dados.Widgets[0].Items[0].Valores.forEach(function (indicador) {
+                        indicadores.push(indicador.Nome);
+                    })
                 }
             }
 
@@ -836,6 +845,7 @@
         Widget.prototype.AdicionaSerieUtilizada = function (series) {
             var self = this;
 
+            // Limpar seriesUtilizadas
             self.seriesUtilizadas = [];
 
             // Se os dados não foram nulos ou indefinidos
@@ -1137,6 +1147,31 @@
         /// #Region
 
 
+
+        /// #Region  -  Verificações
+
+        /// <summary>
+        /// Verifica se o widget tem series para serem mostradas
+        /// </summary>
+        Widget.prototype.VerificaSeries = function () {
+            var self = this;
+
+            // Aviso caso não existam séries
+            if (self.seriesUtilizadas.length === 0) {
+                // Remove svg
+                $("#" + self.id).find("svg").remove();
+
+                $("#" + self.id).find(".wrapper").prepend("<span class=\"avisoDados-widget\">Não existem Series disponiveis</span>");
+
+            }
+
+        }
+
+
+        /// #Region
+
+
+
         /// Retorna o objeto
         return Widget;
 
@@ -1273,7 +1308,9 @@
                             // Devolve objecto
                             return {
                                 y: +d.Valores[index].Valor,
-                                date: parseDate(d.Data)
+                                date: parseDate(d.Data),
+                                tipo: self.widgetElemento,
+                                nome: name
                             };
                         })
                     }
@@ -1374,7 +1411,7 @@
             });
 
 
-            // Caso esteja em modo normal (diferente de stacked)
+            // Caso esteja em modo normal (Agrupado)
             if (self.modoVisualizacao !== "stacked") {
 
                 // Acrescentar ao SVG
@@ -1396,7 +1433,7 @@
                     // Chamar area() para desenhar de acordo o "path" com os valores
                     .attr("d", function (d) { return self.area(d.values); })
                     // Adiciona tooltips
-                    .style("fill", function (d) { console.log(color(d.Nome)); return color(d.Nome); })
+                    .style("fill", function (d) { return color(d.Nome); })
 
                 // Grupo das tooltips
                 self.pontos = self.svg.append("g")
@@ -1427,8 +1464,6 @@
                         .attr("width", larguraRect)
                         .attr("height", function (d) { return self.altura - self.transformaY(d.y); })
                         .style("opacity", "0");
-
-                    console.log(item.values);
 
                 });
 
@@ -1461,7 +1496,7 @@
                     // Chamar area() para desenhar de acordo o "path" com os valores
                     .attr("d", function (d) { return self.area(d.values); })
                     // Adiciona tooltips
-                    .style("fill", function (d) { console.log(color(d.Nome)); return color(d.Nome); })
+                    .style("fill", function (d) { return color(d.Nome); })
 
 
                 // Grupo das tooltips
@@ -1482,8 +1517,6 @@
                 // Atualizar eixo depois de dados inseridos
                 self.transformaX.domain(d3.extent(dadosEscolhidos[0].values, function (d) {return d.date; }));
 
-                console.log(d3.extent(dadosEscolhidos[0].values, function (d) { return d.date; }));
-
                 console.log(dadosEscolhidos);
 
                 // Para cada objecto ( Ponto )
@@ -1503,6 +1536,9 @@
 
                 });
             }
+
+            // Verifica se existem séries
+            self.VerificaSeries();
 
         }
 
@@ -2188,17 +2224,11 @@
             // Remove as séries anteriores
             $("#" + self.id).find(".series").remove();
 
-            console.log("SERIES UTILIZADAS");
-            console.log(self.seriesUtilizadas);
 
             // Guarda o nome de cada série para "filtrar"
             self.dadosNormal.forEach(function (item) {
                 listaSeries.push(item.name);
             });
-
-            console.log("DADOS NORMAL");
-            console.log(self.dadosNormal);
-
 
             // Como está a ser guardado os dados temporariamente no widget, é necessário limpar sempre que ocorre o desenhaSerie
             self.dadosEscolhidos = [];
@@ -2217,11 +2247,6 @@
 
                 }
             });
-
-
-            console.log("DADOS ESCOLHIDOS");
-            console.log(self.dadosEscolhidos);
-
 
             // Atualizar eixo X
             escalaOriginal
@@ -2269,7 +2294,6 @@
                 // Para cada "serie" criar as barras necessárias para complementar o atributo data
                 // desse elemento
                 self.dadosEscolhidos.forEach(function (item, curIndex) {
-                    console.log(item);
 
                     self.selecao.selectAll(".barra" + curIndex)
                         .data(item.values)
@@ -2288,6 +2312,8 @@
                 })
             }
 
+            // Verifica se existem séries
+            self.VerificaSeries();
 
         }
 
@@ -2744,7 +2770,7 @@
                 legenda.append("text")
                     .attr("x", 30)
                     .attr("y", ((15 + 20 * i) + 5))
-                    .text(self.dadosNormal[i].name);
+                    .text(self.dadosNormal[i].Nome);
 
             }
 
@@ -2949,7 +2975,7 @@
             //    .style("stroke-width", "2px")
             //    .style("fill", "none");
 
-            self.DesenhaSerie();
+            //self.DesenhaSerie();
 
 
         }
@@ -3006,6 +3032,11 @@
                 .style("stroke", function (d) { return color(d.Nome); })
                 .style("stroke-width", "2px")
                 .style("fill", "none");
+
+
+            console.log("verficia series");
+            // Verifica existência de séries
+            self.VerificaSeries();
 
         }
 
@@ -3374,6 +3405,11 @@
             this.objectoServidor["contexto"] = [];
             this.objectoServidor["agregacoes"] = [];
 
+            this.valorMinimo = 0;
+            this.valorMaximo = 0;
+            this.valorAtual = 0;
+            this.valorMeta = 0;
+
         };
 
 
@@ -3472,10 +3508,11 @@
             if (modoVisualizacao === "arco") {
                 self.ConstroiSVGArco();
                 self.DesenhaGauge(0);
-                setInterval(self.Atualiza(), 1500);
-                setInterval(function () {
-                    self.Atualiza();
-                }, 1500);
+                //self.Atualiza();
+                //setInterval(self.Atualiza(), 1500);
+                //setInterval(function () {
+                //    self.Atualiza();
+                //}, 1500);
 
             }
             // Constroi Gráfico Horizontal
@@ -3580,23 +3617,24 @@
             arcStartRad = PercentagemParaRadianos(percentagemInicio);
             // Define angulo final do arco pintado
             // Divisão por dois devido a ser um arco e não uma circunferencia completa
-            arcEndRad = arcStartRad + PercentagemParaRadianos(percentagem / 2);
+            self.arcEndRad = arcStartRad + PercentagemParaRadianos(percentagem / 2);
             // Path do arco pintado calculado
-            arcPintado.startAngle(arcStartRad).endAngle(arcEndRad);
+            arcPintado.startAngle(arcStartRad).endAngle(self.arcEndRad);
 
+            console.log(self.arcEndRad);
 
             /// Definimos o angulo final, neste caso meia circunferencia
-            arcEndRad = PercentagemParaRadianos(0.5 + 0.75);
+            self.arcEndRad = PercentagemParaRadianos(0.5 + 0.75);
             // Path do arco vazio calculado
-            arcVazio.startAngle(arcStartRad).endAngle(arcEndRad);
+            arcVazio.startAngle(arcStartRad).endAngle(self.arcEndRad);
 
 
             //Meta divido por 2, por ser um arco e não uma circunferencia
-            arcStartRad = PercentagemParaRadianos(meta / 2);
+            arcStartRad = PercentagemParaRadianos(self.valorMeta / 2);
             // Adicionamos um valor minimo no angulo final para ser explicito
-            arcEndRad = PercentagemParaRadianos((meta / 2 + 0.005));
+            self.arcEndRad = PercentagemParaRadianos((self.valorMeta / 2 + 0.005));
             // Path do arco meta calculado
-            arcMeta.startAngle(arcStartRad).endAngle(arcEndRad);
+            arcMeta.startAngle(arcStartRad).endAngle(self.arcEndRad);
 
             // Angulo final é guardado como inicio do arco
             arcEndRad = PercentagemParaRadianos(percentagemInicio);
@@ -3621,8 +3659,13 @@
             // Transição customizada para os arcos
             elemento.attrTween("d", function (d) {
                 // Atribuimos o ultimo angulo conhecido ao d.endAngle
-                d.endAngle = arcEndRad
+                d.endAngle = self.arcEndRad
 
+                console.log("ANGULOS");
+                console.log(d.endAngle);
+                console.log(self.arcEndRad);
+                console.log(anguloNovo)
+                
                 // Constroi um novo conjunto de dados a começar no ultimo angulo conhecido até ao novo angulo
                 // O valor do angulo é dividido devido ao desenho ser apenas meia circunferencia
                 // É somado o valor 0.75 para este começar a partir da posição correcta de acordo com a visualização
@@ -3632,7 +3675,7 @@
                     d.endAngle = interpolate(t);
                     arcPintado.endAngle(d.endAngle);
                     // Guardado o ultimo valor caso haja outra tween
-                    arcEndRad = d.endAngle;
+                    self.arcEndRad = d.endAngle;
                     // Retornamos o novo path
                     return arcPintado(d);
                 };
@@ -3645,6 +3688,7 @@
         /// Desenha a meta no gráfico de acordo com os valores introduzidos
         /// </summary>
         Gauge.prototype.DesenhaMeta = function () {
+            var self = this;
 
             // Definir angulos para a meta, adicionado percentagemInicio para se
             // encaixar dentro do arco de forma correta
@@ -3675,10 +3719,13 @@
                 //valorMinimo = $(".valor-minimo").val();
                 //meta = $(".valor-meta").val();
 
-                valorAtual = random;
-                valorMaximo = 100;
-                valorMinimo = 0;
-                meta = 50;
+                valorAtual = self.valorAtual || 1;
+                valorMaximo = self.valorMaximo || 1;
+                valorMinimo = self.valorMinimo || 1;
+                meta = self.valorMeta || 1;
+
+                console.log(self);
+
 
                 // Caso valores não sejam numéricos
                 if (!$.isNumeric(valorMaximo)) {
@@ -3692,10 +3739,12 @@
                 }
 
                 // Calculada percentagem atual de acordo com os valores
-                percentagem = (((valorAtual - valorMinimo) * 100) / (valorMaximo - valorMinimo)) / 100;
+                self.percentagem = (((valorAtual - valorMinimo) * 100) / (valorMaximo - valorMinimo)) / 100;
                 // Calculada meta atual de acordo com os valores
                 meta = (((meta - valorMinimo) * 100) / (valorMaximo - valorMinimo)) / 100;
 
+                console.log("PERCENTAGEM");
+                console.log(self.percentagem);
 
                 // Selecionar gráfico pintado
                 d3.select("#" + self.id).select(".grafico-pintado")
@@ -3703,12 +3752,12 @@
                     .delay(50)
                     .duration(300)
                     // Chama a transição personalizada arcTween para desenhar a transição do arco
-                    .call(self.arcTween, percentagem);
+                    .call(self.arcTween, self.percentagem);
 
                 textTween = function () {
                     // Cria nova interpolação desta vez, entre a atual percentagem, até ao valor final da percentagem
                     // Multiplicação por 100 devido ao angulo estar entre 0 e 1
-                    var textInterpolate = d3.interpolate(parseInt(this.textContent), percentagem * 100);
+                    var textInterpolate = d3.interpolate(parseInt(this.textContent), self.percentagem * 100);
                     // Modifica o valor de acordo com a interpolação
                     return function (t) { this.textContent = Number(textInterpolate(t)).toFixed(0) + "%"; }
                 };
@@ -3724,6 +3773,7 @@
                 // Chamar método para desenhar a nova meta
                 self.DesenhaMeta();
             }
+
 
             if (modoVisualizacao === "horizontal") {
                 // Vamos buscar os valores
@@ -3788,40 +3838,79 @@
         }
 
 
-        ///
-        ///
-        /// to-do
-        Gauge.prototype.MostraOpcoes = function () {
+        /// <summary>
+        /// Atualiza os dados da Gauge conforme o que recebe
+        /// </summary>
+        Gauge.prototype.AtualizaOpcoesProperty = function (dados, geral) {
             var self = this;
 
-            $("body").append("<div id=\"myModal\" class=\"modal fade\">" +
-                "<div class=\"modal-dialog\">" +
-                "<div class=\"modal-content\">" +
-                "<div class=\"modal-header\">" +
-                "<button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-hidden=\"true\">" + "&times;" + "</button>" +
-                "<h4 class=\"modal-title\">" + "Opcoes da Gauge" + "</h4>" +
-            "</div>" +
-            "<div class=\"modal-body\">" +
-                "<p>Selecione as suas opcoes</p>" +
-                "<div class=\"gauge-selecionaOpcoes\">" +
-                "</div>" +
-            "</div>" +
-            "<div class=\"modal-footer\">" +
-                "<button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">" + "Cancelar" + "</button>" +
-                "<button type=\"button\" class=\"btn btn-primary\">" + "Escolher" + "</button>" +
-            "</div>" + "</div>" + "</div>" + "</div>");
+            // Atualiza opções gerais
+            self.titulo = geral.Nome;
+            self.descricao = geral.Descricao;
+            
+            // Atualiza Valores
+            self.valorAtual = dados.ValorAtual;
+            self.valorMaximo = dados.ValorMaximo;
+            self.valorMeta = dados.ValorMeta;
+            self.valorMinimo = dados.ValorMinimo;
 
-            $(".gauge-selecionaOpcoes").load("gauge-tabelaOpcoes.html .gauge-tabelaOpcoes");
 
-            // Ligamos um botão para a "navbar" do widget
-            $("#" + self.id).find(".widget-navbar").append("<button type=\"button\"" + "class=\"gauge-opces\">" +
-                                                           "<i class=\"glyphicon glyphicon-refresh\">" + "</i>" + "</button");
-
-            // Ao pressionar modifica entre donut e não donut
-            $("#" + self.id).on("click", ".gauge-opces", function () {
-                $("#myModal").modal("show");
-            });
+            self.Atualiza();
         }
+
+        /// <summary>
+        /// Retorna um objectoServidor para guardar este widget dentro do servidor 
+        /// </summary>
+        Gauge.prototype.AtualizaObjectoServidor = function () {
+            var self = this,
+                    $elemento = $("#" + self.id).parent(),
+                    objecto = {};
+
+            // Atualização do widget e o Objecto que comunica com o servidor
+            objecto["widgetLargura"] = $elemento.attr("data-gs-width");
+            objecto["widgetAltura"] = $elemento.attr("data-gs-height");
+            objecto["widgetX"] = $elemento.attr("data-gs-x");
+            objecto["widgetY"] = $elemento.attr("data-gs-y");
+            objecto["widgetTipo"] = self.widgetTipo;
+            objecto["widgetElemento"] = self.widgetElemento;
+
+            objecto["id"] = self.id;
+            objecto["descricao"] = self.descricao;
+            objecto["modoVisualizacao"] = self.modoVisualizacao;
+            objecto["visivel"] = self.visivel;
+            objecto["mostraLegenda"] = self.mostraLegenda;
+            objecto["mostraToolTip"] = self.mostraToolTip;
+            objecto["titulo"] = self.titulo;
+            objecto["ultimaAtualizacao"] = self.ultimaAtualizacao;
+            objecto["contexto"] = self.contexto;
+            objecto["agregacoes"] = self.agregacoes;
+
+
+            console.log(self.valorMaximo);
+            console.log(self.valorMinimo);
+            console.log(self.valorMeta);
+            console.log(self.valorAtual);
+
+
+            objecto["valorMaximo"] = self.valorMaximo;
+            objecto["valorMinimo"] = self.valorMinimo;
+            objecto["valorMeta"] = self.valorMeta;
+            objecto["valorAtual"] = self.valorAtual;
+
+
+            if (self.suavizar !== undefined) {
+                console.log(self.suavizar);
+                objecto["suavizar"] = self.suavizar;
+            }
+
+            if (self.widgetTipo === "dados") {
+                objecto["seriesUtilizadas"] = self.getSeriesUtilizadas();
+            }
+
+            return objecto;
+
+        }
+
 
         /// Retorna o objecto criado
         return Gauge;
@@ -3852,7 +3941,7 @@
             // Construtor de Widget é chamado
             Widget.call(this, titulo, widgetAltura, widgetLargura, widgetX, widgetY);
             this.widgetTipo = "dados";
-            this.widgetElemento = "Etiqueta";
+            this.widgetElemento = "kpi";
 
             // Inicializar o raio
             this.raio = Math.min(this.largura, this.altura) / 2;
@@ -4055,6 +4144,64 @@
         }
 
 
+
+        /// <summary>
+        /// Atualiza os dados da Gauge conforme o que recebe
+        /// </summary>
+        KPI.prototype.AtualizaOpcoesProperty = function (dados, geral) {
+            var self = this;
+
+            // Atualiza opções gerais
+            self.setTitulo(geral.Nome);
+            self.setDescricao(geral.Descricao);
+
+            self.Atualiza();
+
+        }
+
+        /// <summary>
+        /// Retorna um objectoServidor para guardar este widget dentro do servidor 
+        /// </summary>
+        KPI.prototype.AtualizaObjectoServidor = function () {
+            var self = this,
+                    $elemento = $("#" + self.id).parent(),
+                    objecto = {};
+
+            // Atualização do widget e o Objecto que comunica com o servidor
+            objecto["widgetLargura"] = $elemento.attr("data-gs-width");
+            objecto["widgetAltura"] = $elemento.attr("data-gs-height");
+            objecto["widgetX"] = $elemento.attr("data-gs-x");
+            objecto["widgetY"] = $elemento.attr("data-gs-y");
+            objecto["widgetTipo"] = self.widgetTipo;
+            objecto["widgetElemento"] = self.widgetElemento;
+
+            objecto["id"] = self.id;
+            objecto["descricao"] = self.descricao;
+            objecto["modoVisualizacao"] = self.modoVisualizacao;
+            objecto["visivel"] = self.visivel;
+            objecto["mostraLegenda"] = self.mostraLegenda;
+            objecto["mostraToolTip"] = self.mostraToolTip;
+            objecto["titulo"] = self.titulo;
+            objecto["ultimaAtualizacao"] = self.ultimaAtualizacao;
+            objecto["contexto"] = self.contexto;
+            objecto["agregacoes"] = self.agregacoes;
+
+
+            if (self.suavizar !== undefined) {
+                console.log(self.suavizar);
+                objecto["suavizar"] = self.suavizar;
+            }
+
+            if (self.widgetTipo === "dados") {
+                objecto["seriesUtilizadas"] = self.getSeriesUtilizadas();
+            }
+
+            return objecto;
+
+        }
+
+
+
         /// <summary>
         /// Get e Set do atributo valor
         /// </summary>
@@ -4122,7 +4269,7 @@
             // Construtor de Widget é chamado
             Widget.call(this, titulo, widgetAltura, widgetLargura, widgetX, widgetY);
             this.widgetTipo = "dados";
-            this.widgetElemento = "GraficoPie";
+            this.widgetElemento = "pieChart";
             // Inicializar o raio
 
             // Inicializar modo donut a false
@@ -4132,6 +4279,8 @@
             this.objectoServidor["widgetElemento"] = "pieChart";
             this.objectoServidor["contexto"] = [];
             this.objectoServidor["agregacoes"] = [];
+
+            this.dadosEscolhidos = [];
 
         };
 
@@ -4149,11 +4298,12 @@
         PieChart.prototype.ConstroiSVG = function (id) {
             var self = this;
 
-
+            $("#" + self.id).find(".wrapper").css("height", "calc(100% - 35px)");
+            
             // Seleciona o wrapper para inserir o svg
             self.svg = d3.select("#" + id).select(".wrapper").insert("svg")
                 // 80% para deixar algum espaço para as tooltip/legenda
-                .attr("width", "100%")
+                .attr("width", "80%")
                 .attr("height", "100%")
                 // Atribuida uma viewBox de acordo com o valor minimo de entro a sua altura ou largura
                 .attr('viewBox', '0 0 ' + (Math.min(self.largura, self.altura)) + ' ' + (Math.min(self.largura, self.altura)))
@@ -4161,7 +4311,47 @@
                 .attr("preserveAspectRatio", "xMidYMid")
               .append("g")
                 // Translação do raio minimo para estar dentro do svg de forma adequada
-                .attr("transform", "translate(" + (Math.min(self.largura, self.altura) / 2 ) + "," + (Math.min(self.largura, self.altura) / 2) + ")");
+                .attr("transform", "translate(" + (Math.min(self.largura, self.altura) / 2) + "," + (Math.min(self.largura, self.altura) / 2) + ")");
+
+            
+            // Se mostra legenda estiver a falso, centra o pie chart
+            if (!self.mostraLegenda) {
+                $("#" + self.id).find(".wrapper").find("svg").css("display", "block")
+                                                             .css("margin", "auto");
+
+                $(".pie > .wrapper").css("width", "100%");
+            } else {
+                $("#" + self.id).find(".wrapper").find("svg").css("display", "inline")
+                                                             .css("margin", "");
+
+                $(".pie > .wrapper").css("width", "80%");
+            }
+
+
+        }
+
+
+        /// <summary>
+        /// Alterna entre legenda ou não legendas
+        /// </summary>
+        PieChart.prototype.AlternaLegendas = function () {
+            var self = this;
+
+            self.mostraLegenda = !self.mostraLegenda;
+
+            // Se msotra legenda estiver a falso, centra o pie chart
+            if (!self.mostraLegenda) {
+                $("#" + self.id).find(".wrapper").find("svg").css("display", "block")
+                                                             .css("margin", "auto");
+            } else {
+                $("#" + self.id).find(".wrapper").find("svg").css("display", "")
+                                                             .css("margin", "");
+
+                $(".pie > .wrapper").css("width", "80%");
+            }
+
+            // TODO legendas
+
         }
 
 
@@ -4183,7 +4373,7 @@
             color.domain(d3.values(self.dados.dados.Widgets[0].Items[0].Valores).map(function (d) { return d.Nome; }));
 
             // Criar novo array de objectos para guardar a informação de uma forma mais fácil de utilizar
-            self.dadosAnalisados = color.domain().map(function (name, curIndex) {
+            self.dadosNormal = color.domain().map(function (name, curIndex) {
                 return {
                     // Atribuir nome a chave (Serie)
                     name: name,
@@ -4205,62 +4395,77 @@
                 }
             });
 
-            // Ciclo para descobrir a soma de todos os valores de uma "Serie"
-            // Para cada "Serie"
-            color.domain().forEach(function (nome, curIndex) {
-                // Definir cada entrada no array a zero
-                ArraySoma[curIndex] = 0;
-                // Fazer soma para essa "Serie"
-                self.dadosAnalisados[curIndex].values.forEach(function (valor) {
-                        ArraySoma[curIndex] += valor.y;
-                })
-            });
+
+            console.log(self.seriesUtilizadas);
 
 
-            // Soma total de elementos
-            ArraySoma.forEach(function (item) {
-                soma += item;
-            });
+            //// Ciclo para descobrir a soma de todos os valores de uma "Serie"
+            //// Para cada "Serie"
+            //color.domain().forEach(function (nome, curIndex) {
+            //    // Definir cada entrada no array a zero
+            //    ArraySoma[curIndex] = 0;
+            //    // Fazer soma para essa "Serie"
+            //    self.dadosNormal[curIndex].values.forEach(function (valor) {
+            //            ArraySoma[curIndex] += valor.y;
+            //    })
+            //});
 
 
-            // Para cada uma da soma dos conjuntos
-            ArraySoma.forEach(function (valorSlice, curIndex) {
-                // Calculamos a percentagem e guardamos
-                percentagemSlice[curIndex] = (valorSlice / soma) * 100;
-            });
+            //// Soma total de elementos
+            //ArraySoma.forEach(function (item) {
+            //    soma += item;
+            //});
 
 
-            // Método d3 que constroi uma função pie
-            pie = d3.layout.pie()
-                // Inserimos os valores de percentagem para proceder a construção
-                .value(function (d, curIndex) { return percentagemSlice[curIndex]; })
-                .sort(null);
-
-            self.raio = Math.min(self.largura, self.altura) / 2;
+            //// Para cada uma da soma dos conjuntos
+            //ArraySoma.forEach(function (valorSlice, curIndex) {
+            //    // Calculamos a percentagem e guardamos
+            //    percentagemSlice[curIndex] = (valorSlice / soma) * 100;
+            //});
 
 
-            // Método d3 que constroi um arco
-            self.arc = d3.svg.arc()
-                // Raio interior ( 0 = circunferência completa )
-                .innerRadius(0)
-                // Raio exterior
-                .outerRadius(self.raio);
+            //// Método d3 que constroi uma função pie
+            //pie = d3.layout.pie()
+            //    // Inserimos os valores de percentagem para proceder a construção
+            //    .value(function (d, curIndex) { return percentagemSlice[curIndex]; })
+            //    .sort(null);
+
+            //self.raio = Math.min(self.largura, self.altura) / 2;
 
 
-            // Seleciona todos os path
-            self.path = self.svg.selectAll("path")
-                // utilizamos o pie para calcular os angulos e atribuimos a data
-                .data(pie(self.dadosAnalisados))
-              // Caso não hajam suficientes elementos para ligar aos dados são adicionados mais
-              .enter().append("path")
-                // Atribuido id a cada "fatia"
-                .attr("id", function (d, i) { return "path" + i; })
-                // Atribuida class slice ao elemento
-                .attr("class", "slice")
-                // Atribuida cor através do método color
-                .attr("fill", function (d, i) { return color(i); })
-                // É criado o path utilizando o método arc do d3
-                .attr("d", self.arc);
+            //// Método d3 que constroi um arco
+            //self.arc = d3.svg.arc()
+            //    // Raio interior ( 0 = circunferência completa )
+            //    .innerRadius(0)
+            //    // Raio exterior
+            //    .outerRadius(self.raio);
+
+
+            //// Seleciona todos os path
+            //self.path = self.svg.selectAll("path")
+            //    // utilizamos o pie para calcular os angulos e atribuimos a data
+            //    .data(pie(self.dadosNormal))
+            //  // Caso não hajam suficientes elementos para ligar aos dados são adicionados mais
+            //  .enter().append("path")
+            //    // Atribuido id a cada "fatia"
+            //    .attr("id", function (d, i) { return "path" + i; })
+            //    // Atribuida class slice ao elemento
+            //    .attr("class", "slice")
+            //    // Atribuida cor através do método color
+            //    .attr("fill", function (d, i) { return color(i); })
+            //    // É criado o path utilizando o método arc do d3
+            //    .attr("d", self.arc);
+
+
+            self.DesenhaSerie();
+
+
+
+
+
+
+
+
 
             // Caso legendas esteja a true
             //self.InsereLegenda(percentagemSlice);
@@ -4338,6 +4543,167 @@
             //// Caso legendas esteja a true
             //self.InsereLegenda(percentagemSlice);
 
+        }
+
+
+        /// <summary>
+        /// Desenha séries para o pie chart
+        /// </summary>
+        PieChart.prototype.DesenhaSerie = function () {
+            var self = this,
+                id = 0,
+                dadosEscolhidos = [],
+                listaSeries = [],
+                ArraySoma = [0],
+                soma = 0,
+                somaAtual = 0,
+                dadosPie = [0],
+                percentagemSlice = [0],
+                color = d3.scale.category10(),
+                parseDate = d3.time.format("%Y-%m-%dT%H:%M:%S").parse;
+
+
+            self.color = d3.scale.category10();
+
+            // Como está a ser guardado os dados temporariamente no widget, é necessário limpar sempre que ocorre o desenhaSerie
+            self.dadosEscolhidos = [];
+
+            // Para cada serie utilizada
+            self.seriesUtilizadas.forEach(function (item) {
+                // Descobrir quais as que têm o valor de indicador correto
+                index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.ComponenteSerie })
+                if (index !== -1) {
+                    // Adiciona um numero a cada série para ser facilmente identificada
+                    self.dadosNormal[index]["Numero"] = id++;
+                    self.dadosNormal[index]["Nome"] = item.Nome;
+
+
+                    self.dadosEscolhidos.push(self.dadosNormal[index]);
+
+                }
+            });
+
+
+            // Controla as keys (Series) que vão estar contidas no gráfico
+            self.color.domain(d3.values(self.dadosEscolhidos).map(function (d) { return d.name; }));
+
+
+            // Ciclo para descobrir a soma de todos os valores de uma "Serie"
+            // Para cada "Serie"
+            self.color.domain().forEach(function (nome, curIndex) {
+                // Definir cada entrada no array a zero
+                ArraySoma[curIndex] = 0;
+                // Fazer soma para essa "Serie"
+                self.dadosEscolhidos[curIndex].values.forEach(function (objecto) {
+                    ArraySoma[curIndex] += objecto.y;
+
+                })
+            });
+
+            // Soma total de elementos
+            ArraySoma.forEach(function (item) {
+                soma += item;
+            });
+
+
+            // Para cada uma da soma dos conjuntos
+            ArraySoma.forEach(function (valorSlice, curIndex) {
+                // Calculamos a percentagem e guardamos
+                percentagemSlice[curIndex] = (valorSlice / soma) * 100;
+            });
+
+
+            // Método d3 que constroi uma função pie
+            pie = d3.layout.pie()
+                // Inserimos os valores de percentagem para proceder a construção
+                .value(function (d, curIndex) { return percentagemSlice[curIndex]; })
+                .sort(null);
+
+            self.raio = Math.min(self.largura, self.altura) / 2;
+
+
+            // Método d3 que constroi um arco
+            self.arc = d3.svg.arc()
+                // Raio interior ( 0 = circunferência completa )
+                .innerRadius(0)
+                // Raio exterior
+                .outerRadius(self.raio);
+
+
+            // Seleciona todos os path
+            self.path = self.svg.selectAll("path")
+                // utilizamos o pie para calcular os angulos e atribuimos a data
+                .data(pie(self.dadosEscolhidos))
+              // Caso não hajam suficientes elementos para ligar aos dados são adicionados mais
+              .enter().append("path")
+                // Atribuido id a cada "fatia"
+                .attr("id", function (d, i) { return "path" + i; })
+                // Atribuida class slice ao elemento
+                .attr("class", "slice")
+                // Atribuida cor através do método color
+                .attr("fill", function (d, i) { return self.color(i); })
+                // É criado o path utilizando o método arc do d3
+                .attr("d", self.arc);
+
+            // Verifica existência de séries
+            self.VerificaSeries();
+
+        }
+
+
+        /// <summary>
+        /// Cria a legenda do gráfico, procura por "desenhos"(gráficos) e para cada um deles cria uma legenda apropriada
+        /// </summary>
+        PieChart.prototype.ConstroiLegenda = function () {
+            var self = this,
+                series = self.dadosEscolhidos.length,
+                legenda;
+
+            //color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
+            legenda = d3.select("#" + self.id).select(".legenda").insert("svg");
+
+            for (var i = 0; i < series; i++) {
+                legenda.append("circle")
+                    .attr("r", 5)
+                    .attr("cx", 15)
+                    .attr("cy", 15 + 20 * i)
+                    .style("fill", self.color(i));
+
+                legenda.append("text")
+                    .attr("x", 30)
+                    .attr("y", ((15 + 20 * i) + 5))
+                    .text(self.dadosEscolhidos[i].Nome);
+
+            }
+
+            // Cria evento para alternar entre legendas visiveis e invisiveis
+            $("#" + self.id).find(".legenda-widget").on("click", function () {
+
+                // Define o widget
+                var $widget = $("#" + self.id);
+
+
+                // Atualiza o estado das legendas
+                self.setLegendas();
+
+
+                // Caso esteja visivel
+                if ($widget.find(".legenda").is(":visible")) {
+                    // Esconder
+                    $widget.find(".legenda").hide();
+                    // Aumentar o conteudo gráfico
+                    $widget.find(".wrapper").css("width", "100%");
+                    self.Atualiza();
+                    // Caso esteja escondida
+                } else {
+                    // Mostra
+                    $widget.find(".legenda").show();
+                    // Diminui a largura
+                    $widget.find(".wrapper").css("width", "80%");
+                    self.Atualiza();
+                }
+
+            });
         }
 
 
@@ -4458,7 +4824,7 @@
             var self = this;
 
             //to-do
-            var atualizaPath = d3.select("#" + self.id).selectAll(".slices").data(pie(self.dadosAnalisados));
+            var atualizaPath = d3.select("#" + self.id).selectAll(".slices").data(pie(self.dadosNormal));
 
             // Update de elementos
             self.path
@@ -4573,6 +4939,7 @@
             this.objectoServidor["widgetElemento"] = "tabela";
             this.objectoServidor["contexto"] = [];
             this.objectoServidor["agregacoes"] = [];
+
             this.dados = dados;
         };
 
@@ -4590,11 +4957,12 @@
             var objectoValores,
                 self = this,
                 dadosAnalisados = [],
-                opcoesData = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                opcoesData = { year: 'numeric', month: 'numeric', day: 'numeric' };
+
+            self.dadosAnalisados = [];
 
             // Passar tudo para opcoes de estilo? to-do
             opcoesEstilo.columnDefs.push({
-                targets: [1, 2],
                 className: "dt-body-center"
             });
 
@@ -4606,31 +4974,37 @@
 
                 // Para cada "serie", chave
                 item.Valores.forEach(function (valor) {
-                    var nomeVerificado = valor.Nome.replace(/\./g, '_');
+                    var index = _.findIndex(self.seriesUtilizadas, function (serie) { return serie.ComponenteSerie === valor.Nome }),
+                        nomeVerificado = valor.Nome.replace(/\./g, '_');
 
-                    //// Guarda valor da "serie" no objecto
-                    objectoValores[nomeVerificado] = valor.Valor.toFixed(3);
+                    if (index !== -1) {
+                        // Guarda valor da "serie" no objecto
+                        objectoValores[nomeVerificado] = valor.Valor.toFixed(3);
+
+                    }
+
                 });
 
-                // Manipular data com o moment
-                //console.log(moment(item.Data).format("YYYY-M-D"));
 
-                // Insere o valor recebido "Chave" (Unix timestamp) e através do moment 
-                // formata para o resultado desejado
-                objectoValores[ValorData] = parseDate(item.Data).toLocaleDateString(getLinguagem());
+                // Utiliza plugin moment para transformar a data num formato facil de sortear
+                objectoValores[ValorData] = moment(item.Data).format("YYYY / MM / DD");
 
                 // Guardar objecto no array
-                dadosAnalisados.push(objectoValores);
+                self.dadosAnalisados.push(objectoValores);
 
             });
+
+            
+            console.log(self.dadosAnalisados);
+
 
             // Selecionado o id da table
             self.tabela = $("#" + self.id).find(".widget-table").DataTable({
                 // Apontar para onde estão os dados
-                data: dadosAnalisados,
+                data: self.dadosAnalisados,
                 // Especificar as colunas to-do
                 columns: self.ConstroiColuna(),
-                order: [[ 3, "desc" ]],
+                //order: [[ 3, "desc" ]],
                 "language": linguagem,
                 // Menu que escolhe o numero de elementos a mostrar
                 "aLengthMenu": [[5, 10, 15, -1], [5, 10, 15, "Todos"]],
@@ -4639,6 +5013,8 @@
                 // Método para ligar as definições aqui to-do
                 columnDefs: opcoesEstilo.columnDefs
             });
+
+            
 
             self.OpcaoMostraDados();
 
@@ -4678,12 +5054,10 @@
                     objectoValores[nomeVerificado] = valor.Valor.toFixed(3);
                 });
 
-                // Manipular data com o moment
-                //console.log(moment(item.Data).format("YYYY-M-D"));
 
-                // Insere o valor recebido "Chave" (Unix timestamp) e através do moment 
-                // formata para o resultado desejado
-                objectoValores[ValorData] = parseDate(item.Data).toLocaleDateString(getLinguagem());
+                // Utiliza plugin moment para transformar a data num formato facil de sortear
+                objectoValores[ValorData] = moment(item.Data).format("YYYY / MM / DD");
+
 
                 // Guardar objecto no array
                 dadosAnalisados.push(objectoValores);
@@ -4719,10 +5093,16 @@
                 // Guarda a informação que vai ser enviada
                 colunasTabela = [];
 
-            // Para cada "serie"/chave de dados
-            d3.values(self.dados.dados.Widgets[0].Items[0].Valores).forEach(function (valorColuna, curIndex) {
+            console.log(self.seriesUtilizadas);
 
-                var nomeVerificado = valorColuna.Nome.replace(/\./g, '_');
+            // Para cada "serie"/chave de dados
+            //d3.values(self.dados.dados.Widgets[0].Items[0].Valores).forEach(function (valorColuna, curIndex) {
+
+            d3.values(self.seriesUtilizadas).forEach(function (valorColuna, curIndex) {
+                console.log(valorColuna);
+
+                // Valor do indicador alterado para ser posssivel comparar
+                var nomeVerificado = valorColuna.ComponenteSerie.replace(/\./g, '_');
 
                 // Adicionar ao array
                 colunasTabela.push({
@@ -4736,7 +5116,10 @@
                 data: ValorData, title: "Data"
             })
 
+            console.log(colunasTabela);
+
             return colunasTabela;
+
         }
 
 
@@ -4774,7 +5157,7 @@
 
             // Inserir dados na tabela
             //self.InsereDados(id);
-            self.OpcaoMostraDados();
+            //self.OpcaoMostraDados();
 
             self.setAtivo();
             self.RemoveAtivo();
@@ -5278,8 +5661,8 @@
                 objecto = {};
 
             // Atualização do widget e o Objecto que comunica com o servidor
-            objecto["widgetLargura"] = $elemento.attr("data-gs-height");
-            objecto["widgetAltura"] = $elemento.attr("data-gs-width");
+            objecto["widgetLargura"] = $elemento.attr("data-gs-width");
+            objecto["widgetAltura"] = $elemento.attr("data-gs-height");
             objecto["widgetX"] = $elemento.attr("data-gs-x");
             objecto["widgetY"] = $elemento.attr("data-gs-y");
             objecto["widgetTipo"] = self.widgetTipo;
@@ -5534,8 +5917,7 @@
             var self = this,
                 opcoes = ["Selecione Indicador"],
                 series;
-                
-
+            
             if (gridPrincipal.getWidget(widgetID).getIndicadores() !== undefined) {
                 gridPrincipal.getWidget(widgetID).getIndicadores().forEach(function (valor) { return opcoes.push(valor); })
             }
@@ -5636,6 +6018,7 @@
 
         /// <summary>
         /// Mostra a propertyGrid
+        /// Cria a propertyGrid de acordo com o widget atualmente selecionado
         /// </summary>
         PropertyGrid.MostraPropertyGrid = function (tipoElemento) {
             var self = this;
@@ -5657,6 +6040,12 @@
                 self.AdicionaGridDashboard();
             } else if (tipoElemento === "filtros"){
                 self.AdicionaGridFiltro();
+                $(".opcoes-propertyGrid").find("[value='dados']").css("display", "");
+            } else if ( tipoElemento === "gauge"){
+                self.AdicionaGridGauge();
+                $(".opcoes-propertyGrid").find("[value='dados']").css("display", "");
+            } else if (tipoElemento === "kpi") {
+                self.AdicionaGridLabel();
                 $(".opcoes-propertyGrid").find("[value='dados']").css("display", "");
             } else {
                 console.log("ADICIONA GRID NORMAL");
@@ -5722,6 +6111,9 @@
             self.listaWidgetsDados = listaWidgetsDados;
             self.listaWidgetsContexto = listaWidgetsContexto;
 
+            console.log(self.listaWidgetsDados);
+            console.log(self.listaWidgetsContexto);
+
             // Inicializa as dropdowns da propertygrid de acordo com os widgets que se encontram disponiveis
             self.inicializaDados.ComponenteContexto = { name: "Componente Data", group: "Periodo", type: "options", options: self.listaWidgetsContexto, description: "Analisar através de um widget", showHelp: false },
             self.inicializaDados.ComponenteDados = { name: "Componente Dados", group: "Componentes", type: "options", options: self.listaWidgetsDados, description: "Widgets a associar", showHelp: false };
@@ -5785,6 +6177,17 @@
                 ComponenteContexto: { name: "Componente Data", group: "Periodo", type: "options", options: [""], description: "Analisar através de um widget", showHelp: false },
                 Quebra: { name: " ", group: "Series", type: "split", showHelp: false },
 
+                // Dados Widget GAUGE 
+                valorAtual: { name: "Valor Atual", group: "Valores", type: "number", options: { min: 0} },
+                valorMinimo: { name: "Valor Minimo", group: "Valores", type: "number", options: { min: 0 } },
+                valorMaximo: { name: "Valor Maximo", group: "Valores", type: "number", options: { min: 0 } },
+                valorMeta: { name: "Valor Meta", group: "Valores", type: "number", options: { min: 0 } },
+
+                // Dados Widget Label 
+                CheckboxValor: { name: "Valor", group: "Tipo Label", type: "boolean", description: "label valor", showHelp: false },
+                CheckboxTexto: { name: "Texto", group: "Tipo Label", type: "boolean", description: "label texto", showHelp: false },
+
+
                 // CONTEXTO
                 CheckboxContexto: { name: " ", group: "Widgets Ligados", type: "checkboxContexto", description: "Grupo de widgets", showHelp: false },
 
@@ -5799,6 +6202,7 @@
                 LabelFiltro: { name: "", group: "Opcoes Disponiveis", type: "filtro", description: "Labels para o widget Filtro", showHelp: false },
                 BotaoFiltro: { name: " ", group: "Opcoes Disponiveis", type: "botaoFiltro", description: "../resources/ic_add_white_24dp_1x.png", showHelp: false },
                 QuebraFiltro: { name: " ", group: "Opcoes Disponiveis", type: "splitFiltro", showHelp: false }
+
             };
             self.inicializaAparencia = {
                 Margem: { name: "Margem:", group: "Aparencia", description: "Margem em volta do gráfico", showHelp: false },
@@ -5827,6 +6231,9 @@
             self.EventoRemoveAssociacao();
 
             self.EventoBotaoAtualizar();
+
+            self.EventoModificaMenuLabel();
+
         }
 
         // Incializa as séries na propertyGrid
@@ -5871,6 +6278,28 @@
 
             self.RemoveBotaoFiltro();
             self.AdicionaBotaoFiltro();
+
+        }
+
+        // Inicializa os parametros da Gauge 
+        PropertyGrid.InicializaGauge = function () {
+            var self = this,
+                parametros = {};
+
+            console.log(gridPrincipal.getWidget($(".widget-ativo").attr("id")));
+
+            parametros["valorAtual"] = gridPrincipal.getWidget($(".widget-ativo").attr("id")).valorAtual;
+            parametros["valorMaximo"] = gridPrincipal.getWidget($(".widget-ativo").attr("id")).valorMaximo;
+            parametros["valorMinimo"] = gridPrincipal.getWidget($(".widget-ativo").attr("id")).valorMinimo;
+            parametros["valorMeta"] = gridPrincipal.getWidget($(".widget-ativo").attr("id")).valorMeta;
+
+            self.PreencheGauge(parametros);
+
+        }
+
+        // Inicializa os parametros da Label
+        PropertyGrid.InicializaLabel = function () {
+            var self = this;
 
         }
 
@@ -6018,6 +6447,23 @@
             }
 
             
+
+        }
+
+        // Preenche parametros da gauge na PropertyGrid
+        PropertyGrid.PreencheGauge = function (parametros) {
+            var self = this;
+
+            //Para cada parametro
+            _.each(parametros, function (index, key, item) {
+                // Adicionar a tabela com o elemento correspondente o seu valor
+                $(".pgTable").find("[element="+ key +"]").val(parametros[key]);
+            });
+
+        }
+
+        PropertyGrid.PreencheLabel = function () {
+            var self = this;
 
         }
 
@@ -6213,6 +6659,85 @@
 
         }
 
+        // PropertyGrid - Widget Tabela
+        // TODO
+
+        // PropertyGrid - Widget Gauge
+        PropertyGrid.AdicionaGridGauge = function () {
+            var self = this;
+
+            self.widgetID = $(".widget-ativo").attr("id");
+
+            self.Inicializa();
+            self.ResetWidgets();
+
+            self.propriedadesGeral = {
+                Nome: gridPrincipal.getWidget(self.widgetID).titulo,
+                Descricao: gridPrincipal.getWidget(self.widgetID).descricao,
+            };
+            self.propriedadesDados = {
+                valorAtual: "",
+                valorMinimo: "",
+                valorMaximo: "",
+                valorMeta: ""
+            };
+            self.propriedadesAparencia = {
+                Margem: "",
+                MargemIgual: "",
+                MargemDiferente: ""
+            }
+
+            self.propertyGridElemento = "gauge";
+
+            self.ConstroiGrid();
+            self.InicializaGauge();
+
+            self.SetGrid("geral");
+            self.SetPropertyGrid("geral");
+
+            self.EventoMostraGridAtual();
+
+            self.TogglePermissao();
+
+        }
+
+        // PropertyGrid - Widget Label
+        PropertyGrid.AdicionaGridLabel = function () {
+            var self = this;
+
+            self.widgetID = $(".widget-ativo").attr("id");
+
+            self.Inicializa();
+            self.ResetWidgets();
+
+            self.propriedadesGeral = {
+                Nome: gridPrincipal.getWidget(self.widgetID).titulo,
+                Descricao: gridPrincipal.getWidget(self.widgetID).descricao,
+            };
+            self.propriedadesDados = {
+                CheckboxValor: "",
+                CheckboxTexto: ""
+            };
+            self.propriedadesAparencia = {
+                Margem: "",
+                MargemIgual: "",
+                MargemDiferente: ""
+            }
+
+            self.propertyGridElemento = "kpi";
+
+            self.ConstroiGrid();
+            self.InicializaLabel();
+
+            self.SetGrid("geral");
+            self.SetPropertyGrid("geral");
+
+            self.EventoMostraGridAtual();
+
+            self.TogglePermissao();
+
+        }
+
 
         /// #Region 
 
@@ -6241,10 +6766,12 @@
                 alert("Erro no tipoComponente");
             }
 
-
+            
 
             // Caso sejam 2 valores diferentes do "default"
             if (valores.WidgetDados !== "Sem componente" && tipoComponente !== "Sem componente") {
+
+                console.log(tipoComponente);
 
                 // Adquire referencia dos widgets a associar
                 widget1 = gridPrincipal.getWidget(tipoComponente);
@@ -6252,7 +6779,7 @@
 
                 // Verificar erro
                 if (widget1 === undefined) {
-                    alert("ERRO - Widget indefinido");
+                    alert("ERRO - (AdicionaAssociacao) Widget indefinido");
                     return;
                 }
 
@@ -6451,6 +6978,40 @@
 
         }
 
+        // widget Gauge
+        PropertyGrid.AtualizaWidgetGauge = function () {
+            var self = this,
+                objPropertyGridGeral = $("#propGridGeral").jqPropertyGrid("get"),
+                objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get"),
+                objPrpertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get"),
+                // Widgets a serem associados
+                widget1;
+
+
+            // ID do widget contexto
+            widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+            widget1.AtualizaOpcoesProperty(objPropertyGridDados, objPropertyGridGeral);
+
+        }
+
+        // widget Label (KPI)
+        PropertyGrid.AtualizaWidgetLabel = function () {
+            var self = this,
+                objPropertyGridGeral = $("#propGridGeral").jqPropertyGrid("get"),
+                objPropertyGridDados = $("#propGridDados").jqPropertyGrid("get"),
+                objPrpertyGridAparencia = $("#propGridAparencia").jqPropertyGrid("get"),
+                // Widgets a serem associados
+                widget1;
+
+
+            // ID do widget contexto
+            widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+            widget1.AtualizaOpcoesProperty(objPropertyGridDados, objPropertyGridGeral);
+
+        }
+
 
         /// Função para associar checkboxes
         /// <param name="widget1"> Objecto widget contexto </param>
@@ -6467,7 +7028,7 @@
 
                 // Verificar erro
                 if (widget1 === undefined) {
-                    alert("ERRO - Widget indefinido");
+                    alert("ERRO - (AssociaCheckBox) Widget indefinido");
                     return;
                 }
 
@@ -6548,6 +7109,10 @@
                 self.AtualizaWidgetData();
             } else if (self.propertyGridElemento === "filtro") {
                 self.AtualizaWidgetFiltro();
+            } else if (self.propertyGridElemento === "gauge") {
+                self.AtualizaWidgetGauge();
+            } else if (self.propertyGridElemento === "kpi") {
+                self.AtualizaWidgetLabel();
             }
         }
 
@@ -6557,6 +7122,43 @@
 
 
         /// #Region - Eventos ----------------------------------
+
+        // TODO ATUAL
+        // Ao modificar as Checkbox num widget Label, os menus modificam
+        PropertyGrid.EventoModificaMenuLabel = function () {
+            var self = this;
+
+            // Ao modificar a checkbox de valor
+            $(".propertyGrid").on("change", '[value="CheckboxValor"]', function () {
+                if ($(this).is(":checked")) {
+                    $(" .propertyGrid").find('[value="CheckboxTexto"]').prop("checked", false);
+                }
+
+                //// Trocar entre Valor / Variavel  e Texto
+                //self.propriedadesDados = {
+                //    CheckboxValor: "",
+                //    CheckboxTexto: "",
+
+                //};
+
+            });
+
+            $(".propertyGrid").on("change", '[value="CheckboxTexto"]', function () {
+                if ($(this).is(":checked")) {
+                    $(" .propertyGrid").find('[value="CheckboxValor"]').prop("checked", false);
+                }
+
+                //// Trocar entre Valor / Variavel  e Texto
+                //self.propriedadesDados = {
+                //    CheckboxValor: "",
+                //    CheckboxTexto: "",
+
+                //};
+
+            });
+
+        }
+
 
         // Altera o estilo dos botões "box" de menu geral/dados/aparencia da propertyGrid
         PropertyGrid.EventoAlteraBotão = function () {
@@ -7005,7 +7607,7 @@
                 widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
 
             // Remove a posição indicada
-            widget.seriesUtilizadas.splice(serie-1, 1);
+            widget.seriesUtilizadas.splice(serie - 1, 1);
 
             // Atualiza o widget
             gridPrincipal.getWidget($(".widget-ativo").attr("id")).AdicionaSerieUtilizada(widget.seriesUtilizadas);
@@ -7138,9 +7740,9 @@
             idUnico = 0,
             listaWidgets = [],
             // Definição de cada Menu Widget
-            widgetsGrafico = ["GraficoArea", "GraficoBarras", "GraficoLinhas", "pie"],
+            widgetsGrafico = ["GraficoArea", "GraficoBarras", "GraficoLinhas", "pieChart"],
             widgetsLabel = [],
-            widgetsOutros = ["gauge", "kpi", "tabela"],
+            widgetsOutros = ["gauge", "kpi", "Tabela"],
             widgetsFiltros = ["datahora_simples", "filtros"];
 
 
@@ -7313,7 +7915,10 @@
 
             // Adiciona o widget criado ao dashboard
             self.AdicionaWidgetLista(tipoWidget, GUID, dados);
-                
+            
+            console.log(self.listaWidgets);
+            console.log(ultimo);
+
             // Atribui ao widget a sua class
             self.listaWidgets[ultimo].setWidgetClass(tipoWidget);
 
@@ -7358,11 +7963,11 @@
                 case "kpi":
                     self.listaWidgets.push(new KPI(id, "KPI"));
                     break;
-                case "tabela":
+                case "Tabela":
                     self.listaWidgets.push(new Tabela(id, "Tabela", dados));
                     break;
-                case "pie":
-                    self.listaWidgets.push(new PieChart(id, "PieChart"));
+                case "pieChart":
+                    self.listaWidgets.push(new PieChart(id, "pieChart"));
                     break;
                 case "filtros":
                     self.listaWidgets.push(new Filtros(id, "Filtros"));
@@ -7598,7 +8203,13 @@
                     //  Definir as dimensões minimas na grid
                     self.DefineLimitesWidget(widgetNovo.id);
 
+                    // Caso seja um widget do tipo gauge
+                    if (widgetNovo.widgetElemento === "gauge") {
+                        widgetNovo.Atualiza();
+                    }
+
                 });
+
 
                 // Filtra de acordo com os contextos e desenha os gráficos
                 gridPrincipal.FiltraContexto();
@@ -7686,10 +8297,11 @@
         Grid.prototype.CarregaListaComponentes = function () {
             var self = this,
                 widgets,
-                listaWidgetsDados = [" Sem componente "],
-                listaWidgetsContexto = [" Sem componente "];
+                listaWidgetsDados = ["Sem componente"],
+                listaWidgetsContexto = ["Sem componente"];
+
             // Adquire ultima class do widget ( Class que identifica o tipo de widget )
-            //tipoWidget = node.children().attr('class').split(' ').pop(),
+            //tipoWidget = node.children().attr('class').split(' ').popwi(),
             // Adquire ID do widget
             //idWidget = node.children().attr("id");
 
@@ -8407,6 +9019,8 @@
                 objectoDashboard["ID"] = gridPrincipal.idUnico;
                 objectoDashboard["Descricao"] = gridPrincipal.descricao;               
                 objectoDashboard["opcoesAparencia"] = " ";
+
+                console.log(gridPrincipal.listaWidgets);
 
                 // Passa os widgets para o formato de configuração 
                 gridPrincipal.listaWidgets.forEach(function (item, curIndex) {

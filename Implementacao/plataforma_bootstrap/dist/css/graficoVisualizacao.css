@@ -531,8 +531,8 @@
     .wrapper {
         float: left;
         width: 80%;
-        /*height: calc(100% - 25px);
-        margin-top: 5px;
+        height: calc(100% - 35px);
+        /*margin-top: 5px;
         margin-left: 5px;
         margin-bottom: 5px;*/
     }

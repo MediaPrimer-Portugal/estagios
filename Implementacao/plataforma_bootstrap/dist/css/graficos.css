@@ -300,6 +300,10 @@
         border: none !important;
     }
 
+    .pgTable span {
+        cursor: pointer;
+    }
+
     .pgGroupCell {
         text-decoration: none !important;
         font-weight: bold;
@@ -331,7 +335,8 @@
     /* Cor do texto dentro das dropdownlist,inputs e botões */
     .pgCell > button,
     .pgCell > select,
-    .pgCell > input {
+    .pgCell > input,
+    .pgCell input {
         color: black;
     }
 
@@ -493,8 +498,8 @@
     .wrapper {
         float: left;
         width: 80%;
-        /*height: calc(100% - 25px);
-        margin-top: 5px;
+        height: calc(100% - 35px);
+        /*margin-top: 5px;
         margin-left: 5px;
         margin-bottom: 5px;*/
     }

@@ -1232,8 +1232,8 @@
     GridStack.prototype.AdicionaWidgetGrid = function (node) {
         var widgets,
             grid = this.opts.gridObject,
-            listaWidgetsDados = [" Sem componente "],
-            listaWidgetsContexto = [" Sem componente "],
+            listaWidgetsDados = ["Sem componente"],
+            listaWidgetsContexto = ["Sem componente"],
             // Adquire ultima class do widget ( Class que identifica o tipo de widget )
             tipoWidget = node.children().attr('class').split(' ').pop(),
             // Adquire ID do widget

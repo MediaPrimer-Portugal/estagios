@@ -229,9 +229,14 @@
 		            return $("#" + elemId);
 		        }
 		    }
-			// If number and a jqueryUI spinner is loaded use it
+		    // If number and a jqueryUI spinner is loaded use it
+		    /*
+             *  ADICIONADO
+             *
+             * Valor no HTML "element" para facilitar a seleção do elemento
+            */
 	    } else if (typeof $.fn.spinner === 'function' && (type === 'number' || (type === '' && typeof value === 'number'))) {
-			valueHTML = '<input type="text" id="' + elemId + '" value="' + value + '" style="width:50px" />';
+			valueHTML = '<input type="text" id="' + elemId + '" element="'+name+'" value="' + value + '" style="width:50px" />';
 			if (postCreateInitFuncs) {
 				postCreateInitFuncs.push(initSpinner(elemId, meta.options));
 			}
