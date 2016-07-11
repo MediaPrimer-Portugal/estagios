@@ -1161,6 +1161,11 @@
                 // Remove svg
                 $("#" + self.id).find("svg").remove();
 
+                // Remove aviso anterior caso exista
+                $("#"+ self.id).find(".avisoDados-widget").remove();
+
+
+                // Adicionar aviso
                 $("#" + self.id).find(".wrapper").prepend("<span class=\"avisoDados-widget\">Não existem Series disponiveis</span>");
 
             }
@@ -2754,7 +2759,7 @@
         /// </summary>
         GraficoBarras.prototype.ConstroiLegenda = function () {
             var self = this,
-                series = self.dadosNormal.length,
+                series = self.seriesUtilizadas.length,
                 legenda;
 
             //color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
@@ -2775,7 +2780,7 @@
             }
 
             // Cria evento para alternar entre legendas visiveis e invisiveis
-            $("#" + self.id).find(".legenda-widget").on("click", function () {
+            $("#" + self.id).find(".legenda").on("click", function () {
 
                 // Define o widget
                 var $widget = $("#" + self.id);
@@ -3928,7 +3933,7 @@
             valorTextTween,
             ligacao,
             cor,
-            valor = 0,
+            valor,
             valorLimite = 50;
 
 
@@ -3951,10 +3956,15 @@
             this.valor = valor;
             this.valorLimite = valorLimite;
 
+            this.tipo = "";
+
             this.objectoServidor["widgetTipo"] = "dados";
             this.objectoServidor["widgetElemento"] = "KPI";
             this.objectoServidor["contexto"] = [];
             this.objectoServidor["agregacoes"] = [];
+            this.objectoServidor["tipo"] = "";
+
+
         };
 
 
@@ -3971,23 +3981,34 @@
             var self = this,
                 textTween;
 
+            // Ciclo para atualizar widget
+
             // Começa o ciclo para atualizar os dados
             setInterval(function () {
 
-                valorTextTween = random;
+                //valorTextTween = self.valor;
 
                 // Seleciona o elemento to-do
-                self.svg.select(".valorAtual")
-                    .transition()
-                    .duration(500)
+                //self.svg.select(".valorAtual")
+                //    .transition()
+                //    .duration(10)
+                //.text(self.valor);
                     // Chama a transição personalizada
-                    .tween("text", self.TextTween);
+                //.tween("text", self.TextTween);
+
+
+                $(".valorLabel").text(self.valor);
 
                 // to-do?
-                self.setValor(random);
-                self.VerificaValor();
+                self.setValor(self.valor);
+                //self.VerificaValor();
 
-            }, 1500);
+            }, 100);
+
+
+            self.setValor(self.valor);
+            $(".valorLabel").text(self.valor);
+
         }
 
 
@@ -4007,7 +4028,7 @@
 
         /// <summary>
         /// Compara o valor atual com o valor Limite, ao comparar pode modificar o elemento valorCompara para
-        /// sinalizar o utilizar de melhor forma
+        /// sinalizar o utilizador de melhor forma
         /// </summary>
         KPI.prototype.VerificaValor = function () {
             var self = this;
@@ -4036,69 +4057,127 @@
             var self = this;
 
 
-            // Seleciona o wrapper para inserir o svg
-            self.svg = d3.select("#" + self.id).select(".wrapper").insert("svg")
-                // 80% para deixar algum espaço para as tooltip/legenda
-                .attr("width", "100%")
-                .attr("height", "100%")
-                // Atribuida uma viewBox de acordo com o valor minimo de entro a sua altura ou largura
-                .attr('viewBox', '0 0 ' + (Math.min(self.largura, self.altura)) + ' ' + (Math.min(self.largura, self.altura)))
-                // Mantém a proporção de imagem independentemente do tamanho, e tenta sempre posiciona-la a meio
-                .attr("preserveAspectRatio", "xMidYMid")
-              .append("g")
-                // Translação do raio minimo para estar dentro do svg de forma adequada
-                .attr("transform", "translate(" + (Math.min(self.largura, self.altura) / 2) + "," + (Math.min(self.largura, self.altura) / 2) + ")");
+            //// Seleciona o wrapper para inserir o svg
+            //self.svg = d3.select("#" + self.id).select(".wrapper").insert("svg")
+            //    // 80% para deixar algum espaço para as tooltip/legenda
+            //    .attr("width", "100%")
+            //    .attr("height", "100%")
+            //    // Atribuida uma viewBox de acordo com o valor minimo de entro a sua altura ou largura
+            //    .attr('viewBox', '0 0 ' + (Math.min(self.largura, self.altura)) + ' ' + (Math.min(self.largura, self.altura)))
+            //    // Mantém a proporção de imagem independentemente do tamanho, e tenta sempre posiciona-la a meio
+            //    .attr("preserveAspectRatio", "xMidYMid")
+            //  .append("g")
+            //    // Translação do raio minimo para estar dentro do svg de forma adequada
+            //    .attr("transform", "translate(" + (Math.min(self.largura, self.altura) / 2) + "," + (Math.min(self.largura, self.altura) / 2) + ")");
 
         }
 
         /// <summary>
         /// Constroi o HTML necessário para mostrar a informação ao utilizador
         /// </summary>
-        KPI.prototype.ConstroiHTML = function (id) {
+        //KPI.prototype.ConstroiHTML = function (id) {
+        //    var self = this;
+
+        //    // Redefinimos a translação dos elementos para se enquadrarem no meio do SVG
+        //    //self.svg.attr("transform", "translate(" + (self.largura / 2) + "," + (self.altura / 2) + ")");
+
+        //    // Atribui class ao SVG
+        //    d3.select("." + id).select(".wrapper").select("svg")
+        //        .attr("class", "labelValor");
+
+        //    // Insere texto que indica o nome do valor observado
+        //    self.svg.insert("text")
+        //        // Atribuir class
+        //        .attr("class", "valorSelecionado")
+        //        .attr("dy", "-2em")
+        //          .style("font-size", "1.5em")
+        //          .style("text-anchor", "middle")
+        //          //  Nome da variável
+        //          .text("Valor ID: ");
+
+        //    // Insere texto que guarda valor atual
+        //    self.svg.insert("text")
+        //        .attr("class", "valorAtual")
+        //          .style("font-size", "3em")
+        //          .style("text-anchor", "middle")
+        //          // to-do?
+        //          .text(valor);
+
+        //    // Insere texto que guarda valor Limite
+        //    self.svg.insert("text")
+        //        .attr("class", "valorLimite")
+        //        .attr("dy", "3em")
+        //          .style("font-size", "1em")
+        //          .style("text-anchor", "middle")
+        //          .text("Valor Limite: " + self.valorLimite);
+
+        //    // Insere circulo para melhor sinalizar estado dos dados
+        //    self.svg.insert("circle")
+        //        .attr("class", "valorCompara")
+        //        .attr("cx", "3em")
+        //        .attr("cy", "-1em")
+        //        .attr("r", "10")
+        //          .style("fill", "grey");
+
+        //}
+
+
+        KPI.prototype.ConstroiHTML = function () {
             var self = this;
 
-            // Redefinimos a translação dos elementos para se enquadrarem no meio do SVG
-            //self.svg.attr("transform", "translate(" + (self.largura / 2) + "," + (self.altura / 2) + ")");
 
-            // Atribui class ao SVG
-            d3.select("." + id).select(".wrapper").select("svg")
-                .attr("class", "labelValor");
+            //if (self.tipo === "texto") {
+            //    // Redefinimos a translação dos elementos para se enquadrarem no meio do SVG
+            //    self.svg.attr("transform", "translate(" + (self.largura / 2) + "," + (self.altura / 2) + ")");
 
-            // Insere texto que indica o nome do valor observado
-            self.svg.insert("text")
-                // Atribuir class
-                .attr("class", "valorSelecionado")
-                .attr("dy", "-2em")
-                  .style("font-size", "1.5em")
-                  .style("text-anchor", "middle")
-                  //  Nome da variável
-                  .text("Valor ID: ");
+            //    // Atribui class ao SVG
+            //    d3.select("." + self.id).select(".wrapper").select("svg")
+            //        .attr("class", "labelValor");
 
-            // Insere texto que guarda valor atual
-            self.svg.insert("text")
-                .attr("class", "valorAtual")
-                  .style("font-size", "3em")
-                  .style("text-anchor", "middle")
-                  // to-do?
-                  .text(valor);
+            //    // Insere texto que indica o nome do valor observado
+            //    self.svg.insert("text")
+            //        // Atribuir class
+            //        .attr("class", "valorSelecionado")
+            //        .attr("dy", "-2em")
+            //          .style("font-size", "1.5em")
+            //          .style("text-anchor", "middle")
+            //          //  Nome da variável
+            //          .text(self.valor);
 
-            // Insere texto que guarda valor Limite
-            self.svg.insert("text")
-                .attr("class", "valorLimite")
-                .attr("dy", "3em")
-                  .style("font-size", "1em")
-                  .style("text-anchor", "middle")
-                  .text("Valor Limite: " + self.valorLimite);
+            //} else {
+            //        // Redefinimos a translação dos elementos para se enquadrarem no meio do SVG
+            //        self.svg.attr("transform", "translate(" + (self.largura / 2) + "," + (self.altura / 2) + ")");
 
-            // Insere circulo para melhor sinalizar estado dos dados
-            self.svg.insert("circle")
-                .attr("class", "valorCompara")
-                .attr("cx", "3em")
-                .attr("cy", "-1em")
-                .attr("r", "10")
-                  .style("fill", "grey");
+            //        // Atribui class ao SVG
+            //        d3.select("." + self.id).select(".wrapper").select("svg")
+            //            .attr("class", "labelValor");
+
+            //        // Insere texto que indica o nome do valor observado
+            //        self.svg.insert("text")
+            //            // Atribuir class
+            //            .attr("class", "valorSelecionado")
+            //            .attr("dy", "-2em")
+            //              .style("font-size", "1.5em")
+            //              .style("text-anchor", "middle")
+            //              //  Nome da variável
+            //              .text("Valor ID: ");
+
+            //        // Insere texto que guarda valor atual
+            //        self.svg.insert("text")
+            //            .attr("class", "valorAtual")
+            //              .style("font-size", "3em")
+            //              .style("text-anchor", "middle")
+            //              // to-do?
+            //              .text(self.valor);
+            //}
+
+
+            $(".wrapper").append("<div class=\"valorLabel\" ></div>")
+
 
         }
+
+
 
 
         /// <summary>
@@ -4141,6 +4220,7 @@
                 self.setValorLimite($(".valor-Limite").val());
                 self.VerificaValor();
             });
+
         }
 
 
@@ -4149,13 +4229,37 @@
         /// Atualiza os dados da Gauge conforme o que recebe
         /// </summary>
         KPI.prototype.AtualizaOpcoesProperty = function (dados, geral) {
-            var self = this;
+            var self = this,
+                objecto;
 
             // Atualiza opções gerais
             self.setTitulo(geral.Nome);
             self.setDescricao(geral.Descricao);
 
-            self.Atualiza();
+            if (dados.CheckboxTexto === true) {
+                console.log("teste");
+                self.tipo = "texto";
+                self.valor = dados.Texto;
+
+            } else if (dados.CheckboxVariavel === true) {
+                self.tipo = "variavel";
+
+            } else if (dados.CheckboxValor === true) {
+                self.tipo = "valor";
+                self.valor = dados.valorAtual 
+
+            }
+
+
+            console.log(dados);
+            console.log(geral);
+
+            // Atualiza objectoServidor ( Guarda os seus dados no servidor )
+            objecto = self.AtualizaObjectoServidor();
+            self.objectoServidor = objecto;
+
+
+            //self.Atualiza();
 
         }
 
@@ -4164,8 +4268,8 @@
         /// </summary>
         KPI.prototype.AtualizaObjectoServidor = function () {
             var self = this,
-                    $elemento = $("#" + self.id).parent(),
-                    objecto = {};
+                $elemento = $("#" + self.id).parent(),
+                objecto = {};
 
             // Atualização do widget e o Objecto que comunica com o servidor
             objecto["widgetLargura"] = $elemento.attr("data-gs-width");
@@ -4186,6 +4290,11 @@
             objecto["contexto"] = self.contexto;
             objecto["agregacoes"] = self.agregacoes;
 
+            // Dados especificos da label
+            // tipo = tipo de label ( Texto ou valor/variavel)
+            // Valor = valor a dispor no widget, seja texto ou valor/variavel
+            objecto["tipo"] = self.tipo;
+            objecto["valor"] = self.valor
 
             if (self.suavizar !== undefined) {
                 console.log(self.suavizar);
@@ -4199,7 +4308,6 @@
             return objecto;
 
         }
-
 
 
         /// <summary>
@@ -5032,7 +5140,7 @@
 
             // Passar tudo para opcoes de estilo? to-do
             opcoesEstilo.columnDefs.push({
-                targets: [1, 2],
+                //targets: [1, 2],
                 className: "dt-body-center"
             });
 
@@ -5071,7 +5179,7 @@
                 data: dadosAnalisados,
                 // Especificar as colunas to-do
                 columns: widgetTabela.ConstroiColuna(),
-                order: [[3, "desc"]],
+                //order: [[3, "desc"]],
                 "language": linguagem,
                 // Menu que escolhe o numero de elementos a mostrar
                 "aLengthMenu": [[5, 10, 15, -1], [5, 10, 15, "Todos"]],
@@ -5083,7 +5191,7 @@
 
         }
 
-
+        
         /// <summary>
         /// "Constroi" as colunas para inserir na tabela
         /// </summary>
@@ -6177,6 +6285,11 @@
                 ComponenteContexto: { name: "Componente Data", group: "Periodo", type: "options", options: [""], description: "Analisar através de um widget", showHelp: false },
                 Quebra: { name: " ", group: "Series", type: "split", showHelp: false },
 
+
+                Campo: { name: "Campo:", group: "Series", type: "options", options: CampoSeries, description: "Campos para ordenar os dados", showHelp: false },
+                Funcao: { name: "Função:", group: "Series", type: "options", options: FuncaoSeries, description: "Funções ordenar os dados", showHelp: false },
+
+
                 // Dados Widget GAUGE 
                 valorAtual: { name: "Valor Atual", group: "Valores", type: "number", options: { min: 0} },
                 valorMinimo: { name: "Valor Minimo", group: "Valores", type: "number", options: { min: 0 } },
@@ -6185,8 +6298,10 @@
 
                 // Dados Widget Label 
                 CheckboxValor: { name: "Valor", group: "Tipo Label", type: "boolean", description: "label valor", showHelp: false },
+                CheckboxVariavel: { name: "Variável", group: "Tipo Label", type: "boolean", description: "label variavel", showHelp: false},
                 CheckboxTexto: { name: "Texto", group: "Tipo Label", type: "boolean", description: "label texto", showHelp: false },
-
+                Texto: { group: "Conteudo Label", name: "Texto: ", description: "", showHelp: false },
+                
 
                 // CONTEXTO
                 CheckboxContexto: { name: " ", group: "Widgets Ligados", type: "checkboxContexto", description: "Grupo de widgets", showHelp: false },
@@ -6703,7 +6818,8 @@
 
         // PropertyGrid - Widget Label
         PropertyGrid.AdicionaGridLabel = function () {
-            var self = this;
+            var self = this,
+                CheckboxEscolhida;
 
             self.widgetID = $(".widget-ativo").attr("id");
 
@@ -6716,6 +6832,7 @@
             };
             self.propriedadesDados = {
                 CheckboxValor: "",
+                CheckboxVariavel: "",
                 CheckboxTexto: ""
             };
             self.propriedadesAparencia = {
@@ -6726,16 +6843,109 @@
 
             self.propertyGridElemento = "kpi";
 
+
+            // Conforme o seu tipo, definir o menu
+            self.DefineMenuLabel(gridPrincipal.getWidget(self.widgetID).tipo)
+
+
+            // Verificar se Label tem um tipo seleccionado
+            if ($(".propertyGrid").find('[value="CheckboxValor"]').is(":checked")) {
+                self.DefineMenuLabel("valor");
+                CheckboxEscolhida = "valor";
+
+            // Caso a Checkbox Variavel seja true ou o tipo seja variavel
+            } else if ($(".propertyGrid").find('[value="CheckboxVariavel"]').is(":checked")) {
+                self.DefineMenuLabel("variavel");
+                CheckboxEscolhida = "variavel";
+
+            // Caso a Checkbox Texto seja true ou o tipo seja texto
+            } else if ($(".propertyGrid").find('[value="CheckboxTexto"]').is(":checked")) {
+                self.DefineMenuLabel("texto");
+                CheckboxEscolhida = "texto";
+
+            }
+
+            // Constroi e inicializa
             self.ConstroiGrid();
             self.InicializaLabel();
-
+            // Passa para o menu inicial
             self.SetGrid("geral");
             self.SetPropertyGrid("geral");
-
             self.EventoMostraGridAtual();
-
             self.TogglePermissao();
 
+
+            // Verificar se Label tem um tipo seleccionado
+            if (CheckboxEscolhida === "valor") {
+                // Faz check ao valor
+                $(" .propertyGrid").find('[value="CheckboxValor"]').prop("checked", true);
+
+                // Caso a Checkbox Variavel seja true ou o tipo seja variavel
+            } else if (CheckboxEscolhida === "variavel") {
+                // Faz check ao valor
+                $(" .propertyGrid").find('[value="CheckboxVariavel"]').prop("checked", true);
+
+                // Caso a Checkbox Texto seja true ou o tipo seja texto
+            } else if (CheckboxEscolhida === "texto") {
+                // Faz check ao valor
+                $(".propertyGrid").find('[value="CheckboxTexto"]').prop("checked", true);
+
+                // Caso nenhum esteja escolhido
+            } else {
+                if (gridPrincipal.getWidget(self.widgetID).tipo === "texto") {
+                    $(" .propertyGrid").find('[value="CheckboxTexto"]').prop("checked", true);
+
+                } else if (gridPrincipal.getWidget(self.widgetID).tipo === "valor") {
+                    $(" .propertyGrid").find('[value="CheckboxValor"]').prop("checked", true);
+
+                } else {
+                    $(" .propertyGrid").find('[value="CheckboxVariavel"]').prop("checked", true);
+
+                }
+
+            }
+
+        }
+
+
+        // Função para definir o menu extra da Label
+        // Dá um valor à variável propriedadesDados, conforme o tipo recebido
+        PropertyGrid.DefineMenuLabel = function (tipo) {
+            var self = this;
+
+            if (tipo === "valor") {
+                self.propriedadesDados = {
+                    CheckboxValor: "",
+                    CheckboxVariavel: "",
+                    CheckboxTexto: "",
+
+                    valorAtual: ""
+
+                }
+
+            } else if (tipo === "variavel") {
+                self.propriedadesDados = {
+                    CheckboxValor: "",
+                    CheckboxVariavel: "",
+                    CheckboxTexto: "",
+                    Pesquisa: "",
+                    ComponenteDados: "",
+                    Campo: "",
+                    Funcao: ""
+
+                }
+
+            } else if (tipo === "texto") {
+                self.propriedadesDados = {
+                    CheckboxValor: "",
+                    CheckboxVariavel: "",
+                    CheckboxTexto: "",
+
+                    Texto: ""
+
+                }
+
+            }
         }
 
 
@@ -7128,32 +7338,56 @@
         PropertyGrid.EventoModificaMenuLabel = function () {
             var self = this;
 
-            // Ao modificar a checkbox de valor
+            // Quando  a checkbox com o valor "CheckboxValor" é modificada
             $(".propertyGrid").on("change", '[value="CheckboxValor"]', function () {
+                // Caso esteja checked
                 if ($(this).is(":checked")) {
+                    // Passar os outros para falso
                     $(" .propertyGrid").find('[value="CheckboxTexto"]').prop("checked", false);
+                    $(" .propertyGrid").find('[value="CheckboxVariavel"]').prop("checked", false);
+                    // Voltar a adicionar a grid
+                    self.AdicionaGridLabel();
+                    // Passar o Atual para verdadeiro 
+                    $(" .propertyGrid").find('[value="CheckboxValor"]').prop("checked", true);
+                    // Passar para o menu correto
+                    self.SetGrid("dados");
+                    self.SetPropertyGrid("dados");
+
                 }
-
-                //// Trocar entre Valor / Variavel  e Texto
-                //self.propriedadesDados = {
-                //    CheckboxValor: "",
-                //    CheckboxTexto: "",
-
-                //};
 
             });
 
-            $(".propertyGrid").on("change", '[value="CheckboxTexto"]', function () {
+            // Quando  a checkbox com o valor "CheckboxVariavel" é modificada
+            $(".propertyGrid").on("change", '[value="CheckboxVariavel"]', function () {
                 if ($(this).is(":checked")) {
+                    // Passar os outros para falso
                     $(" .propertyGrid").find('[value="CheckboxValor"]').prop("checked", false);
+                    $(" .propertyGrid").find('[value="CheckboxTexto"]').prop("checked", false);
+                    // Voltar a adicionar a grid
+                    self.AdicionaGridLabel();
+                    $(" .propertyGrid").find('[value="CheckboxVariavel"]').prop("checked", true);
+                    // Passar para o menu correto
+                    self.SetGrid("dados");
+                    self.SetPropertyGrid("dados");
+
                 }
 
-                //// Trocar entre Valor / Variavel  e Texto
-                //self.propriedadesDados = {
-                //    CheckboxValor: "",
-                //    CheckboxTexto: "",
+            });
 
-                //};
+            // Quando  a checkbox com o valor "CheckboxTexto" é modificada
+            $(".propertyGrid").on("change", '[value="CheckboxTexto"]', function () {
+                if ($(this).is(":checked")) {
+                    // Passar os outros para falso
+                    $(" .propertyGrid").find('[value="CheckboxValor"]').prop("checked", false);
+                    $(" .propertyGrid").find('[value="CheckboxVariavel"]').prop("checked", false);
+                    // Voltar a adicionar a grid
+                    self.AdicionaGridLabel();
+                    $(" .propertyGrid").find('[value="CheckboxTexto"]').prop("checked", true);
+                    // Passar para o menu correto
+                    self.SetGrid("dados");
+                    self.SetPropertyGrid("dados");
+
+                }
 
             });
 

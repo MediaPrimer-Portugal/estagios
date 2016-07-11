@@ -231,18 +231,18 @@
 		    }
 		    // If number and a jqueryUI spinner is loaded use it
 		    /*
-             *  ADICIONADO
+             *  ADICIONADO - HTML -> element
              *
              * Valor no HTML "element" para facilitar a seleção do elemento
             */
 	    } else if (typeof $.fn.spinner === 'function' && (type === 'number' || (type === '' && typeof value === 'number'))) {
-			valueHTML = '<input type="text" id="' + elemId + '" element="'+name+'" value="' + value + '" style="width:50px" />';
+	        valueHTML = '<input type="text" id="' + elemId + '" element="' + name + '" value="' + value + '" style="width:50px" />';
 			if (postCreateInitFuncs) {
 				postCreateInitFuncs.push(initSpinner(elemId, meta.options));
 			}
 
 			if (getValueFuncs) {
-				getValueFuncs[name] = function() {
+			    getValueFuncs[name] = function () {
 					return $('#' + elemId).spinner('value');
 				};
 			}

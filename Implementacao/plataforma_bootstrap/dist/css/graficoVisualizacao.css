@@ -531,7 +531,7 @@
     .wrapper {
         float: left;
         width: 80%;
-        height: calc(100% - 35px);
+        height: calc(100% - 40px);
         /*margin-top: 5px;
         margin-left: 5px;
         margin-bottom: 5px;*/
@@ -559,6 +559,17 @@
     .pie > .wrapper {
         margin: 0;
         width: 100%;
+    }
+
+    /* 
+        Modificações no wrapper do widget KPI (Labels) / Tabela 
+
+    */
+    .Tabela > .wrapper, 
+    .kpi > .wrapper {
+        width: 100%;
+        overflow-y: auto;
+
     }
 
 
