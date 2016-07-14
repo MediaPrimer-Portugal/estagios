@@ -200,16 +200,16 @@
             case "GraficoLinhas":
                 return (new GraficoLinhas(id, "GraficoLinhas"));
                 break;
-            case "Gauge":
+            case "gauge":
                 return (new Gauge(id, "Gauge"));
                 break;
-            case "KPI":
+            case "kpi":
                 return (new KPI(id, "KPI"));
                 break;
             case "Tabela":
                 return(new Tabela(id, "Tabela", dados));
                 break;
-            case "PieChart":
+            case "pieChart":
                 return (new PieChart(id, "PieChart"));
                 break;
             case "Filtros":
@@ -420,20 +420,6 @@
 
 
         /// <summary>
-        /// Verifica se o widget contém algum "contexto", caso não tenha apresenta um aviso
-        /// </summary>
-        /// <returns> Retorna true se > 0, caso contrário retorna false </returns>
-        Widget.prototype.VerificaContexto = function () {
-            var self = this,
-                resposta;
-
-            (self.contexto.length > 0) ? resposta = true : resposta = false;
-
-            return resposta;
-        }
-
-
-        /// <summary>
         /// Associa widget e regista no atributo apropriado
         /// </summary>
         /// <param name="widget"> STRING com o id do widget </param>
@@ -469,9 +455,13 @@
             })
 
             // Caso não tenha nenhum contexto
+            // TODO - nenhum  contexto data??
             if (self.widgetTipo === "dados" && self.contexto.length === 0) {
                 // Dados passam a 0
                 self.dados = {};
+
+                self.seriesUtilizadas = [];
+
                 // Apaga gráfico, pois não tem nenhuma fonte de dados
                 self.RedesenhaGrafico(self.id);
             }
@@ -516,7 +506,6 @@
             objecto["agregacoes"] = self.agregacoes;
             
             if (self.suavizar !== undefined) {
-                console.log(self.suavizar);
                 objecto["suavizar"] = self.suavizar;
             }
 
@@ -572,10 +561,15 @@
 
             if (self.dados !== undefined) {
                 // Constroi tabela dentro do Widget selecionado
+                construtorTabela.seriesUtilizadas = self.seriesUtilizadas;
                 construtorTabela.InsereDadosAlternativo.call(this, self.id, construtorTabela);
 
+                // Adiciona classe para formatar a tabela dentro do widget
+                $("#" + self.id).find(".wrapper").addClass("visualizaTabela");
+
+            // Caso não existam dados disponiveis
             } else {
-                $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">Não existem dados disponiveis</span>");
+                $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">Não existem Dados disponiveis</span>");
 
             }
 
@@ -601,20 +595,37 @@
             self.RemoveExpandir();
 
 
-            console.log(self);
-            
-
             // Cria um objecto para construir o widget em formato ampliado
             widgetExpandido = FabricaClasses("ecraExpandido-widget", self.widgetElemento);
-
             widgetExpandido.modoVisualizacao = self.modoVisualizacao;
 
-            // Copia os dados do original para objecto criado
-            widgetExpandido.dados = self.dados;
-            widgetExpandido.seriesUtilizadas = self.seriesUtilizadas;
 
-            // Desenha o gráfico no widget criado
-            widgetExpandido.RedesenhaGrafico("ecraExpandido-widget");
+            // Caso o widget expandido seja do tipo gauge
+            if (widgetExpandido.widgetElemento === "gauge") {
+                // Passar os valores
+                widgetExpandido.valorAtual = self.valorAtual;
+                widgetExpandido.valorMaximo = self.valorMaximo;
+                widgetExpandido.valorMinimo = self.valorMinimo;
+                widgetExpandido.valorMeta = self.valorMeta;
+
+                // Construir o gráfico
+                widgetExpandido.ConstroiGrafico();
+
+
+            // Senão é tratado como um widget dados
+            } else {
+                // Copia os dados do original para objecto criado
+                widgetExpandido.dados = self.dados;
+                widgetExpandido.seriesUtilizadas = self.seriesUtilizadas;
+                // Desenha o gráfico no widget criado
+                widgetExpandido.RedesenhaGrafico("ecraExpandido-widget");
+
+            }
+
+
+            console.log(widgetExpandido);
+
+
 
             // Reposiciona o gráfico para se adequar a posição da scrollbar
             $("#ecraExpandido-widget").css("position", "absolute").animate({
@@ -647,6 +658,13 @@
 
             // Remove todos os elementos excepto a navbar
             $("#" + self.id).children().not(".widget-navbar").children().remove();
+
+            // Caso seja redesenho de tabela para widget
+            if($("#" + self.id).find(".wrapper").hasClass("visualizaTabela")){
+                // Remover class visualizaTabela
+                $("#" + self.id).find(".wrapper").removeClass("visualizaTabela");
+
+            }
 
             // caso os dados estejam vazios
             if (self.dados.dados !== undefined && self.dados.dados.Widgets[0] !== undefined) {
@@ -690,6 +708,64 @@
                 $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">Não existem dados disponiveis</span>");
             }
 
+        }
+
+
+        /// <summary>
+        /// Verifica se o widget contém algum "contexto", caso não tenha apresenta um aviso
+        /// </summary>
+        /// <returns> Retorna true se > 0, caso contrário retorna false </returns>
+        Widget.prototype.VerificaContexto = function () {
+            var self = this,
+                resposta;
+
+            (self.contexto.length > 0) ? resposta = true : resposta = false;
+
+            return resposta;
+        }
+
+
+        /// <summary>
+        /// Verifica se o widget tem um certo widget no seu contexto
+        /// </summary>
+        /// <param name="widget"> Widget que vai ser comparado </param>
+        /// <returns> Retorna true caso estiver contido no widget, false caso contrário
+        Widget.prototype.PertenceContexto = function (widget) {
+            var self = this,
+                resultado;
+
+            if (widget !== undefined) {
+                self.contexto.forEach(function (item) {
+                    console.log(item);
+                    if (item === widget.id) {
+                        resultado = true;
+                    }
+                });
+            }
+
+            (resultado !== true)? resultado = false: resultado = true;
+            return resultado;
+
+        }
+
+
+        /// <summary>
+        /// Averigua se tem contexto data
+        /// </summary>
+        /// <returns> True se for verdade, false caso contrário, não há contexto data </returns>
+        Widget.prototype.VerificaDataContexto = function () {
+            var self = this,
+                resposta;
+
+            self.contexto.forEach(function (item) {
+                if (gridPrincipal.getWidget(item).widgetElemento === "datahora_simples") {
+                    resposta = true;
+                }
+            });
+
+            (resposta === undefined)? resposta = false : resposta = true;
+
+            return resposta;
         }
 
 
@@ -849,7 +925,7 @@
             self.seriesUtilizadas = [];
 
             // Se os dados não foram nulos ou indefinidos
-            if (self.dados !== undefined && self.dados !== null) {
+            //if (self.dados !== undefined && self.dados !== null) {
                 series.forEach(function (item) {
                     // Caso o objecto não esteja vazio, ter mais que uma chave
                     if (Object.keys(self.dados).length > 0) {
@@ -862,9 +938,9 @@
                         }
                     }
                 })
-            } else {
-                alert("ERRO - Não existem dados")
-            }
+            //} else {
+            //    alert("ERRO - Não existem dados")
+            //}
 
         }
         Widget.prototype.getSeriesUtilizadas = function () {
@@ -3039,7 +3115,6 @@
                 .style("fill", "none");
 
 
-            console.log("verficia series");
             // Verifica existência de séries
             self.VerificaSeries();
 
@@ -3508,6 +3583,7 @@
 
             self.setAtivo();
             self.RemoveAtivo();
+            self.OpcaoExpandir();
 
             // Constroi Gráfico Arco
             if (modoVisualizacao === "arco") {
@@ -3729,8 +3805,6 @@
                 valorMinimo = self.valorMinimo || 1;
                 meta = self.valorMeta || 1;
 
-                console.log(self);
-
 
                 // Caso valores não sejam numéricos
                 if (!$.isNumeric(valorMaximo)) {
@@ -3742,9 +3816,21 @@
                 if (!$.isNumeric(valorAtual)) {
                     valorAtual = 0;
                 }
+                
+                
+                console.log("CALCULO");
+                console.log(valorMaximo - valorMinimo);
+                console.log(self);  
 
-                // Calculada percentagem atual de acordo com os valores
-                self.percentagem = (((valorAtual - valorMinimo) * 100) / (valorMaximo - valorMinimo)) / 100;
+                // Se percentagem for igual a zero, não fazer o calculo
+                if ( (valorMaximo - valorMinimo) !== 0) {
+                    // Calculada percentagem atual de acordo com os valores
+                    self.percentagem = (((valorAtual - valorMinimo) * 100) / (valorMaximo - valorMinimo)) / 100;
+
+                } else {
+                    self.percentagem = 0;
+                }
+
                 // Calculada meta atual de acordo com os valores
                 meta = (((meta - valorMinimo) * 100) / (valorMaximo - valorMinimo)) / 100;
 
@@ -3853,11 +3939,13 @@
             self.titulo = geral.Nome;
             self.descricao = geral.Descricao;
             
+            console.log(dados);
+
             // Atualiza Valores
-            self.valorAtual = dados.ValorAtual;
-            self.valorMaximo = dados.ValorMaximo;
-            self.valorMeta = dados.ValorMeta;
-            self.valorMinimo = dados.ValorMinimo;
+            self.valorAtual = dados.valorAtual;
+            self.valorMaximo = dados.valorMaximo;
+            self.valorMeta = dados.valorMeta;
+            self.valorMinimo = dados.valorMinimo;
 
 
             self.Atualiza();
@@ -3964,6 +4052,13 @@
             this.objectoServidor["agregacoes"] = [];
             this.objectoServidor["tipo"] = "";
 
+            this.opcoes =
+                {
+                    texto: "Inserir texto..",
+                    valor: 0,
+                    variavel: "Inserir parametros.."
+                };
+
 
         };
 
@@ -3996,18 +4091,44 @@
                     // Chama a transição personalizada
                 //.tween("text", self.TextTween);
 
+                if (self.tipo === "valor") {
+                    // Valor numérico, centrar
+                    self.CentrarValor(true);
+                    // Modificar valor
+                    $("#"+self.id).find(".valorLabel").text(self.opcoes.valor);
 
-                $(".valorLabel").text(self.valor);
+                } else if (self.tipo === "texto") {
+                    // Não é um tipo de variável não é necessário centrar
+                    self.CentrarValor(false);
+                    // Modificar valor
+                    $("#" + self.id).find(".valorLabel").text(self.opcoes.texto);
+
+                } else if (self.tipo === "variavel") {
+                    // Valor numérico, centrar
+                    self.CentrarValor(true);
+
+                    // Reset ao valor da label
+                    $("#" + self.id).find(".valorLabel").empty();
+
+                    // Adicionar valores
+                    self.opcoes.variavel.forEach(function (objecto) {
+                        $("#" + self.id).find(".valorLabel").append(objecto.nome + ": " + objecto.valor + "\n");
+                        $("#" + self.id).find(".valorLabel").append("<br />");
+                    })
+                    
+                }
+
 
                 // to-do?
-                self.setValor(self.valor);
+                //self.setValor(self.valor);
+
                 //self.VerificaValor();
 
             }, 100);
 
 
-            self.setValor(self.valor);
-            $(".valorLabel").text(self.valor);
+            //self.setValor(self.valor);
+            //$(".valorLabel").text(self.valor);
 
         }
 
@@ -4172,7 +4293,8 @@
             //}
 
 
-            $(".wrapper").append("<div class=\"valorLabel\" ></div>")
+            // Wrapper para centrar o elemento valor mais facilmente, em caso de valor
+            $("#"+self.id).find(".wrapper").append("<div class=\"kpiWrapper\"><div class=\"valorLabel\"></div></div>")
 
 
         }
@@ -4230,23 +4352,58 @@
         /// </summary>
         KPI.prototype.AtualizaOpcoesProperty = function (dados, geral) {
             var self = this,
-                objecto;
+                objecto,
+                conteudo = [],
+                teste = [{
+                    "valor.valorMax": {
+                        "value": 3424161.2663653945
+                    },
+                    "valor.valorMin": {
+                        "value": 1851488.991908083
+                    },
+                    "valor.valorMed": {
+                        "value": 2483002.726101718
+                    }
+                }];
 
             // Atualiza opções gerais
             self.setTitulo(geral.Nome);
             self.setDescricao(geral.Descricao);
 
+            // Dependente da checkbox que esteja ligada, atualizar os valores contidos
             if (dados.CheckboxTexto === true) {
-                console.log("teste");
                 self.tipo = "texto";
-                self.valor = dados.Texto;
+                self.opcoes.texto = dados.Texto;
 
+            // TODO ATUAL
+                // RECEBE UM ARRAY COM APENAS UM  OBEJCTO
+                // Caso seja maior é apresentado um erro ao utilizador para modificar
+                // os parametrs de pesquisa
             } else if (dados.CheckboxVariavel === true) {
                 self.tipo = "variavel";
+                // Fazer pedido com o parametro dados.Pesquisa ou dados.Componente
+                // Pedido..... TODO
+
+                // Caso opedido só tenha um Item
+                //if (pedido.dados.Widgets[0].Items.length === 1) {
+                if(teste.length === 1){  
+                    teste.forEach(function (item) {
+                        Object.keys(item).forEach(function (key) {
+                            conteudo.push({ nome: key, valor: item[key].value });
+                        })
+                    });
+                    // Definir o parametro "valor" com o objecto conteudo
+                    self.opcoes.variavel = conteudo;
+
+
+                } else {
+                    // Avisar utilizador de erro
+                    alert("[ERRO] Demasiados parametros!");
+                }
 
             } else if (dados.CheckboxValor === true) {
                 self.tipo = "valor";
-                self.valor = dados.valorAtual 
+                self.opcoes.valor = dados.valorAtual;
 
             }
 
@@ -4294,7 +4451,9 @@
             // tipo = tipo de label ( Texto ou valor/variavel)
             // Valor = valor a dispor no widget, seja texto ou valor/variavel
             objecto["tipo"] = self.tipo;
-            objecto["valor"] = self.valor
+
+
+            objecto["opcoes"] = self.opcoes
 
             if (self.suavizar !== undefined) {
                 console.log(self.suavizar);
@@ -4306,6 +4465,19 @@
             }
 
             return objecto;
+
+        }
+
+
+        /// <summary>
+        /// Função para centrar ou retirar o posicionamento
+        /// </summary>
+        /// <param name="estado"> Booleano que indica o estado do posicionamento (true = centrado, false = não centrado</param>
+        KPI.prototype.CentrarValor = function (estado) {
+            var self = this;
+
+            // Adicionar/Remover classe de acordo com o estado
+            (estado === true) ? $("#" + self.id).find(".valorLabel").addClass("centrarValor") : $("#" + self.id).find(".valorLabel").removeClass("centrarValor");
 
         }
 
@@ -5172,7 +5344,6 @@
 
             });
 
-
             // Selecionado o id da table
             self.tabela = $("#" + self.id).find(".widget-table").DataTable({
                 // Apontar para onde estão os dados
@@ -5205,6 +5376,7 @@
 
             // Para cada "serie"/chave de dados
             //d3.values(self.dados.dados.Widgets[0].Items[0].Valores).forEach(function (valorColuna, curIndex) {
+
 
             d3.values(self.seriesUtilizadas).forEach(function (valorColuna, curIndex) {
                 console.log(valorColuna);
@@ -5796,8 +5968,8 @@
         /// </summary>
         /// <param name="widget"> Recebe os dados de um widget </param>
         Data.prototype.FiltraDados = function (widget) {
-            var self = this,
-            
+            var self = this;
+
             // Datas do filtro convertidas para serem comparadas
             dataInicioFiltro = Date.parse(self.opcoes.dataInicio),
             dataFimFiltro = Date.parse(self.opcoes.dataFim);
@@ -5986,8 +6158,7 @@
                 }
 
             });
-
-
+            
             return objectoSeries;
 
         }
@@ -6241,6 +6412,33 @@
         }
 
         /// <summary>
+        /// Verifica se este widget pode ter mais séries
+        /// </summary>
+        /// <param name="widget"> widget que vai ser verificado </param>
+        /// <returns> Retorna true se for possível adicionar novas séries e false se não for </returns>
+        PropertyGrid.VerificaPermissaoSeries = function (widget) {
+            var self = this,
+                permissao = false;
+
+            // Verifica se é possivel adicionar mais séries
+            if (widget.widgetElemento === "GraficoBarras") {
+                if (idSerie <= 3) {
+                    permissao = true;
+                }
+            }
+            if (widget.widgetElemento === "GraficoLinhas" || widget.widgetElemento === "GraficoArea") {
+                if (idSerie <= 5) {
+                    permissao = true;
+                }
+            }
+            if (widget.widgetElemento === "pieChart") {
+                permissao = true;
+            }
+
+            return permissao
+        }
+
+        /// <summary>
         /// Obtem dados da propertyGrid atual
         /// </summary>
         PropertyGrid.getDados = function () {
@@ -6301,7 +6499,7 @@
                 CheckboxVariavel: { name: "Variável", group: "Tipo Label", type: "boolean", description: "label variavel", showHelp: false},
                 CheckboxTexto: { name: "Texto", group: "Tipo Label", type: "boolean", description: "label texto", showHelp: false },
                 Texto: { group: "Conteudo Label", name: "Texto: ", description: "", showHelp: false },
-                
+                UltimoValor: { name: "Só ultimo valor", group: "Periodo", type: "boolean", description: "Mostra só ultimo valor", showHelp: false },
 
                 // CONTEXTO
                 CheckboxContexto: { name: " ", group: "Widgets Ligados", type: "checkboxContexto", description: "Grupo de widgets", showHelp: false },
@@ -6375,6 +6573,64 @@
 
         }
 
+        // Incializa as séries na propertyGrid sem utilizar os dados atuais do widget
+        // TODO APAGAR
+        // Utilizado para inicializar as series de uma propertyGrid sem o widget ter séries guardadas
+        PropertyGrid.InicializaSeriesSemDados = function (seriesUtilizadas) {
+            var self = this,
+                index = 1;
+
+            console.log(seriesUtilizadas);
+            console.log(self.inicializaDados);
+
+            seriesUtilizadas.forEach(function (item, curIndex) {
+                if (curIndex !== seriesUtilizadas.length - 1) {
+                    self.inicializaDados["Nome-" + index] = { name: "Nome:", group: "Series", description: "Nome da série", showHelp: false };
+                    self.inicializaDados["Pesquisa-" + index] = { name: "Pesquisa", group: "Series", description: "Query", showHelp: false };
+                    self.inicializaDados["ComponenteSerie-" + index] = { name: "Indicador:", group: "Series", type: "options", options: self.getIndicadores($(".widget-ativo").attr("id")), description: "Widgets que contêm os gráficos", showHelp: false };
+                    self.inicializaDados["Campo-" + index] = { name: "Campo:", group: "Series", type: "options", options: CampoSeries, description: "Campos para ordenar os dados", showHelp: false };
+                    self.inicializaDados["Funcao-" + index] = { name: "Função:", group: "Series", type: "options", options: FuncaoSeries, description: "Funções ordenar os dados", showHelp: false };
+                    self.inicializaDados["Quebra-" + index] = { name: " ", group: "Series", type: "split", description: index, showHelp: false }
+
+                    index++;
+                }
+
+            });
+
+            // Reset no index
+            index = 1;
+
+            if (seriesUtilizadas !== undefined) {
+                seriesUtilizadas.forEach(function (serie, curIndex) {
+                    if (curIndex !== seriesUtilizadas.length - 1) {
+                        self.propriedadesDados["Nome-" + index] = serie.Nome || "Serie" + index;
+                        self.propriedadesDados["Pesquisa-" + index] = serie.Pesquisa || "";
+                        self.propriedadesDados["ComponenteSerie-" + index] = serie.ComponenteSerie;
+                        self.propriedadesDados["Campo-" + index] = serie.Campo;
+                        self.propriedadesDados["Funcao-" + index] = serie.Funcao;
+                        self.propriedadesDados["Quebra-" + index] = " ";
+
+                        index++;
+                    }
+                });
+            }
+
+            // Igual o idSerie ao index para que este não se perca e a próxima série seja sobreposta
+            idSerie = index
+
+
+            // Constroi a grid
+            $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
+
+            self.SetPropertyGrid("dados");
+            self.SetGrid("dados");
+
+            self.AdicionaBotao();
+
+        }
+
+
+
         // Inicializa os filtros/labels na propertyGrid
         PropertyGrid.InicializaFiltros = function () {
             var self = this;
@@ -6412,11 +6668,6 @@
 
         }
 
-        // Inicializa os parametros da Label
-        PropertyGrid.InicializaLabel = function () {
-            var self = this;
-
-        }
 
 
         /// #Region
@@ -6448,13 +6699,6 @@
 
                 //self.propriedadesDados["Fixo"] = (gridPrincipal.getWidget(self.widgetID).fixo === undefined) ? "" : gridPrincipal.getWidget(self.widgetID).fixo;
                 self.propriedadesDados["ComponenteContexto"] = (valorInicial === "") ? "" : valorInicial;
-
-                //todo
-                //self.propriedadesAparencia = {
-                //    Margem: "" ,
-                //    MargemIgual: "" ,
-                //    MargemDiferente: ""
-                //}
 
             }
 
@@ -6493,9 +6737,6 @@
         PropertyGrid.PreencheSeries = function (series) {
             var self = this,
                 index = 1;
-
-
-            console.log(series);
 
             if (series !== undefined) {
                 series.forEach(function (serie) {
@@ -6537,26 +6778,22 @@
             if (filtros !== undefined) {
                 if (filtros.length > 0) {
                     filtros.forEach(function (item) {
-
-                        console.log(item.valor);
-                        
                         self.propriedadesDados["Filtro-" + index] = item.valor;
                         self.propriedadesDados["QuebraFiltro-" + index] = " ";
 
                         index++;
+
                     });
 
                 } 
             } else {
                 // Para cada filtro
                 gridPrincipal.getWidget($(".widget-ativo").attr("id")).opcoes.forEach(function (filtro) {
-
-                    console.log(filtro.valor);
-
                     self.propriedadesDados["Filtro-" + index] = filtro.valor;
                     self.propriedadesDados["QuebraFiltro-" + index] = " ";
 
                     index++;
+
                 });
 
             }
@@ -6577,8 +6814,29 @@
 
         }
 
-        PropertyGrid.PreencheLabel = function () {
-            var self = this;
+        // Preenche os campos do Label na PropertyGrid
+        // <param name="CheckboxEscolhida"> Opcao escolhida pelo utilizador </param>
+        PropertyGrid.PreencheLabel = function (CheckboxEscolhida) {
+            var self = this,
+                widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+
+            // Caso seja o inicio ( Não haja nenhuma checkboxEscolhida )
+            if (CheckboxEscolhida === undefined) {
+                CheckboxEscolhida = widget.tipo;
+            }
+
+            // Conforme o tipo de label, preenche os dados
+            if (CheckboxEscolhida === "texto") {
+                self.propriedadesDados["Texto"] = widget.opcoes.texto;
+
+            } else if (CheckboxEscolhida === "valor") {
+                self.propriedadesDados["valorAtual"] = widget.opcoes.valor;
+
+            } else if (CheckboxEscolhida === "variavel") {
+                // ...
+                self.propriedadesDados["Pesquisa"] = widget.opcoes.variavel;
+
+            }
 
         }
 
@@ -6673,7 +6931,6 @@
 
             // Inicializar séries
             self.InicializaSeries();
-
 
             self.SetGrid("geral");
             self.SetPropertyGrid("geral");
@@ -6841,8 +7098,8 @@
                 MargemDiferente: ""
             }
 
+            
             self.propertyGridElemento = "kpi";
-
 
             // Conforme o seu tipo, definir o menu
             self.DefineMenuLabel(gridPrincipal.getWidget(self.widgetID).tipo)
@@ -6851,23 +7108,27 @@
             // Verificar se Label tem um tipo seleccionado
             if ($(".propertyGrid").find('[value="CheckboxValor"]').is(":checked")) {
                 self.DefineMenuLabel("valor");
+                // Guarda valor escolhido
                 CheckboxEscolhida = "valor";
 
             // Caso a Checkbox Variavel seja true ou o tipo seja variavel
             } else if ($(".propertyGrid").find('[value="CheckboxVariavel"]').is(":checked")) {
                 self.DefineMenuLabel("variavel");
+                // Guarda valor escolhido
                 CheckboxEscolhida = "variavel";
 
             // Caso a Checkbox Texto seja true ou o tipo seja texto
             } else if ($(".propertyGrid").find('[value="CheckboxTexto"]').is(":checked")) {
                 self.DefineMenuLabel("texto");
+                // Guarda valor escolhido
                 CheckboxEscolhida = "texto";
 
             }
 
             // Constroi e inicializa
+            self.PreencheLabel(CheckboxEscolhida);
             self.ConstroiGrid();
-            self.InicializaLabel();
+
             // Passa para o menu inicial
             self.SetGrid("geral");
             self.SetPropertyGrid("geral");
@@ -6880,17 +7141,17 @@
                 // Faz check ao valor
                 $(" .propertyGrid").find('[value="CheckboxValor"]').prop("checked", true);
 
-                // Caso a Checkbox Variavel seja true ou o tipo seja variavel
+            // Caso a Checkbox Variavel seja true ou o tipo seja variavel
             } else if (CheckboxEscolhida === "variavel") {
                 // Faz check ao valor
                 $(" .propertyGrid").find('[value="CheckboxVariavel"]').prop("checked", true);
 
-                // Caso a Checkbox Texto seja true ou o tipo seja texto
+            // Caso a Checkbox Texto seja true ou o tipo seja texto
             } else if (CheckboxEscolhida === "texto") {
                 // Faz check ao valor
                 $(".propertyGrid").find('[value="CheckboxTexto"]').prop("checked", true);
 
-                // Caso nenhum esteja escolhido
+            // Caso nenhum esteja escolhido, verificar se já há uma opção escolhida anteriormente
             } else {
                 if (gridPrincipal.getWidget(self.widgetID).tipo === "texto") {
                     $(" .propertyGrid").find('[value="CheckboxTexto"]').prop("checked", true);
@@ -6898,7 +7159,7 @@
                 } else if (gridPrincipal.getWidget(self.widgetID).tipo === "valor") {
                     $(" .propertyGrid").find('[value="CheckboxValor"]').prop("checked", true);
 
-                } else {
+                } else if (gridPrincipal.getWidget(self.widgetID).tipo === "variavel") {
                     $(" .propertyGrid").find('[value="CheckboxVariavel"]').prop("checked", true);
 
                 }
@@ -6911,7 +7172,8 @@
         // Função para definir o menu extra da Label
         // Dá um valor à variável propriedadesDados, conforme o tipo recebido
         PropertyGrid.DefineMenuLabel = function (tipo) {
-            var self = this;
+            var self = this,
+                widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
 
             if (tipo === "valor") {
                 self.propriedadesDados = {
@@ -6931,7 +7193,10 @@
                     Pesquisa: "",
                     ComponenteDados: "",
                     Campo: "",
-                    Funcao: ""
+                    Funcao: "",
+                    UltimoValor: "",
+                    Fixo: ""
+
 
                 }
 
@@ -6962,7 +7227,7 @@
             // Widgets a serem associados
             var widget1,
                 widget2,
-                // Define o tipo do componente do widget
+                // ID do componente a ser utilizado como contexto
                 tipoComponente,
                 // Adquire valores da caixa de propriedades em formato Objecto
                 valores = jQuery.parseJSON(JSON.stringify($('#propGridDados').jqPropertyGrid('get'), null, '\t'));
@@ -6976,12 +7241,9 @@
                 alert("Erro no tipoComponente");
             }
 
-            
 
-            // Caso sejam 2 valores diferentes do "default"
+            // Caso sejam 2 valores diferentes do valor por defeito
             if (valores.WidgetDados !== "Sem componente" && tipoComponente !== "Sem componente") {
-
-                console.log(tipoComponente);
 
                 // Adquire referencia dos widgets a associar
                 widget1 = gridPrincipal.getWidget(tipoComponente);
@@ -7003,11 +7265,21 @@
                     // Caso os 2 tenham associado com sucesso
                     if (verifica1 === true & verifica2 === true) {
                         // Apresentar aviso
-                        alert(widget2.titulo + " foi associado com sucesso a " + tipoComponente);
+                        alert(widget2.titulo + " foi associado com sucesso a " + widget1.titulo);
                     }
 
+                    console.log("Associacao - Refresh");
+
                     // Chama função para filtrar e desenhar os dados
-                    gridPrincipal.FiltraContexto();
+
+                    if (widget1.widgetElemento !== "datahora_simples") {
+                        gridPrincipal.RefreshWidget(widget1.id);
+
+                    }
+                    if (widget2.widgetElemento !== "datahora_simples") {
+                        gridPrincipal.RefreshWidget(widget2.id);
+
+                    }
 
                     // Atualiza os indicadores da propertyGrid
                     (widget1.widgetTipo === "contexto") ? self.setIndicadores(widget2.id) : self.setIndicadores(widget1.id);
@@ -7060,12 +7332,27 @@
             // Guarda as series 
             objectoSeries = self.GuardaSeries();
 
-            console.log(objectoSeries);
+            
+            if (objPropertyGridDados.ComponenteContexto === "Sem componente") {
+                widget1.contexto.forEach(function (item) {
+                    if (gridPrincipal.getWidget(item).widgetElemento === "datahora_simples") {
+                        widget1.DesassociaWidget(item);
+                        self.AdicionaGrid();
+                        self.SetGrid("dados");
+                        self.SetPropertyGrid("dados");
+                    }
+                });
+            // Caso se altere o Contexto (escolhido =\= atual)
+            } else if (!(widget1.PertenceContexto(gridPrincipal.getWidget(objPropertyGridDados.ComponenteContexto)))) {
+                // Adicionar nova associação
+                self.AdicionaAssociacao();
+            }
 
-            self.AdicionaAssociacao();
 
             // Atualiza Widget (to-do atualizar dados? // Alerta)
             if (gridPrincipal.getWidget(widget1.id).dados !== undefined) {
+
+                console.log(objectoSeries);
 
                 // Adiciona as opcoes das séries ao objecto principal
                 gridPrincipal.getWidget(widget1.id).AdicionaSerieUtilizada(objectoSeries);
@@ -7076,11 +7363,14 @@
 
             }
 
+            console.log("SELF ATUALIZA WIDGET");
+            console.log(widget1);
+
+            //gridPrincipal.RefreshWidget(widget1.id);
+
+
             // Chama método para atualizar objecto servidor no widget
             gridPrincipal.GuardaInformacao();
-
-            // "Filtra" e desenha
-            //gridPrincipal.FiltraContexto();
 
         }
 
@@ -7181,7 +7471,8 @@
             self.DesassociaCheckBox(widget1);
 
             // Chama função para filtrar e desenhar os dados
-            gridPrincipal.FiltraContexto();
+            gridPrincipal.RefreshWidget(widget1.id);
+            //gridPrincipal.FiltraContexto();
 
             gridPrincipal.getWidget(self.widgetID).AtualizaOpcoesProperty(objPropertyGridGeral, objPropertyGridDados, objPrpertyGridAparencia);
             gridPrincipal.getWidget(self.widgetID).Atualiza();
@@ -7231,42 +7522,60 @@
 
             // Caso estejam checked
             $(".checkboxContexto").find(":checked").each(function (value, item) {
-
+                
                 // Adquire referencia do widgets a associar
                 widget2 = gridPrincipal.getWidget(item.value);
 
+                console.log(widget1);
+                console.log(widget2);
 
-                // Verificar erro
-                if (widget1 === undefined) {
-                    alert("ERRO - (AssociaCheckBox) Widget indefinido");
-                    return;
-                }
-
-                if ((_.findIndex(widget1.contexto, function (contexto) { return gridPrincipal.getWidget(contexto).widgetTipo === "contexto" })) === -1) {
-
-                    // Associa o widget a cada um
-                    verifica1 = widget1.AssociaWidget(widget2.id);;
-                    verifica2 = widget2.AssociaWidget(widget1.id);
-
-
-                    // Caso os 2 tenham associado com sucesso
-                    if (verifica1 === true & verifica2 === true) {
-                        // Apresentar aviso
-                        alert(widget1.titulo + " foi associado com sucesso a " + widget2.titulo);
+                // Caso não pertença já ao widget selecionado
+                if (!(widget1.PertenceContexto(widget2))) {
+                    // Verificar erro
+                    if (widget1 === undefined) {
+                        alert("ERRO - (AssociaCheckBox) Widget indefinido");
+                        return;
                     }
 
-                    // Chama função para filtrar e desenhar os dados
-                    gridPrincipal.FiltraContexto();
+                    if ((_.findIndex(widget1.contexto, function (contexto) { return gridPrincipal.getWidget(contexto).widgetTipo === "contexto" })) === -1) {
 
-                    console.log("teste");
+                        // Associa o widget a cada um
+                        verifica1 = widget1.AssociaWidget(widget2.id);
+                        verifica2 = widget2.AssociaWidget(widget1.id);
 
-                    // Atualiza os indicadores da propertyGrid
-                    (widget1.widgetTipo === "contexto") ? self.setIndicadores(widget2.id) : self.setIndicadores(widget1.id);
 
-                    self.ConstroiGrid();
+                        // Caso os 2 tenham associado com sucesso
+                        if (verifica1 === true & verifica2 === true) {
+                            // Apresentar aviso
+                            alert(widget1.titulo + " foi associado com sucesso a " + widget2.titulo);
+                        }
 
-                } else {
-                    alert("O " + widget1.titulo + " já tem um widget contexto associado");
+                        console.log("Associacao CheckBox- Refresh");
+
+                        console.log(widget1.titulo);
+                        console.log(widget2.titulo);
+
+                        // Chama função para filtrar e desenhar os dados
+                        //gridPrincipal.FiltraContexto();
+
+                        if (widget1.widgetElemento !== "datahora_simples") {
+                            gridPrincipal.RefreshWidget(widget1.id);
+
+                        }
+                        if (widget2.widgetElemento !== "datahora_simples") {
+                            gridPrincipal.RefreshWidget(widget2.id);
+
+                        }
+
+
+                        // Atualiza os indicadores da propertyGrid
+                        (widget1.widgetTipo === "contexto") ? self.setIndicadores(widget2.id) : self.setIndicadores(widget1.id);
+
+                        //self.ConstroiGrid();
+
+                    } else {
+                        alert("O " + widget1.titulo + " já tem um widget contexto associado");
+                    }
                 }
 
             });
@@ -7279,27 +7588,32 @@
             var self = this,
                 widget2;
 
+
             // Caso não estejam checked
             $(".checkboxContexto input").not(":checked").each(function (value, item) {
-
                 // Adquire referencia do widgets a associar
                 widget2 = gridPrincipal.getWidget(item.value);
 
-                // Associa o widget a cada um
-                verifica1 = widget1.DesassociaWidget(widget2.id);
-                verifica2 = widget2.DesassociaWidget(widget1.id);
+                // Caso widget2 pertença a widget1 é possivel fazer a desassociação
+                if (widget1.PertenceContexto(widget2)) {
+                    // Desassocia o widget a cada um
+                    verifica1 = widget1.DesassociaWidget(widget2.id);
+                    verifica2 = widget2.DesassociaWidget(widget1.id);
 
+                    // Caso os 2 tenham desassociado com sucesso
+                    if (verifica1 === true & verifica2 === true) {
+                        // Apresentar aviso
+                        alert(widget1.titulo + " foi desassociado com sucesso a " + widget2.titulo);
 
-                // Caso os 2 tenham desassociado com sucesso
-                if (verifica1 === true & verifica2 === true) {
-                    // Apresentar aviso
-                    alert(widget1.titulo + " foi desassociado com sucesso a " + widget1.titulo);
+                        self.EventoAtualizaIndicadores(widget2.id);
 
-                    self.EventoAtualizaIndicadores(widget2.id);
+                        self.AdicionaCheckboxMenu();
 
-                } else {
-                    // Apresentar aviso
-                    //alert(widget1.titulo + " não está associado com " + widget2.titulo);
+                    } else {
+                        // Apresentar aviso
+                        //alert(widget1.titulo + " não está associado com " + widget2.titulo);
+
+                    }
 
                 }
 
@@ -7333,7 +7647,6 @@
 
         /// #Region - Eventos ----------------------------------
 
-        // TODO ATUAL
         // Ao modificar as Checkbox num widget Label, os menus modificam
         PropertyGrid.EventoModificaMenuLabel = function () {
             var self = this;
@@ -7353,6 +7666,14 @@
                     self.SetGrid("dados");
                     self.SetPropertyGrid("dados");
 
+                } else {
+                    // Caso nenhuma esteja checked
+                    if (!($(".pgTable").find("[type=checkbox]").is(":checked"))) {
+                        // Reset da propertyGrid
+                        self.AdicionaGridLabel();
+                        self.SetPropertyGrid("dados");
+                        self.SetGrid("dados");
+                    }
                 }
 
             });
@@ -7370,6 +7691,14 @@
                     self.SetGrid("dados");
                     self.SetPropertyGrid("dados");
 
+                } else {
+                    // Caso nenhuma esteja checked
+                    if (!($(".pgTable").find("[type=checkbox]").is(":checked"))) {
+                        // Reset da propertyGrid
+                        self.AdicionaGridLabel();
+                        self.SetPropertyGrid("dados");
+                        self.SetGrid("dados");
+                    }
                 }
 
             });
@@ -7386,7 +7715,14 @@
                     // Passar para o menu correto
                     self.SetGrid("dados");
                     self.SetPropertyGrid("dados");
-
+                } else {
+                    // Caso nenhuma esteja checked
+                    if (!($(".pgTable").find("[type=checkbox]").is(":checked"))) {
+                        // Reset da propertyGrid
+                        self.AdicionaGridLabel();
+                        self.SetPropertyGrid("dados");
+                        self.SetGrid("dados");
+                    }
                 }
 
             });
@@ -7454,22 +7790,43 @@
             });
         }
 
+
+
         // Adiciona um botão à grid
         PropertyGrid.EventoAdicionaSerie = function () {
             var self = this;
 
             $(document).on("click", ".adicionaSerie-propertyGrid", function () {
-                self.RemoveBotao();
-                self.RemoveMenuPeriodo();
-                self.AdicionaSerie();
-                self.AdicionaMenuPeriodo();
+                var widget = gridPrincipal.getWidget($(".widget-ativo").attr("id")),
+                    permissao = false;
+
+                permissao = self.VerificaPermissaoSeries(widget);
+
+                // Verifica se o widget tem um contexto Data
+                if (widget.VerificaDataContexto() && permissao === true) {
+                    self.RemoveBotao();
+                    self.RemoveMenuPeriodo();
+                    self.AdicionaSerie();
+                    self.AdicionaMenuPeriodo();
+
+                } else {
+                    if (permissao === false) {
+                        alert("Chegou ao número máximo de séries para este Widget")
+
+                    } else {
+                        alert("Este widget não tem um contexto");
+
+                    }
+
+                }
 
             });
         }
 
         // Remove uma serie da grid
         PropertyGrid.EventoRemoveSerie = function () {
-            var self = this;
+            var self = this,
+                objectoSeries;
 
             
             // Ao clickar no botão para remover propertyGrid
@@ -7478,12 +7835,19 @@
 
                 // Caso não hajam séries guardadas
                 if (widget.seriesUtilizadas.length === 0) {
+                    
+                    //// TODO ATUAL
+                    objectoSeries = self.GuardaSeries();
+
+                    // Remove a posição indicada
+                    objectoSeries.splice($(this).attr("value") - 1, 1);
+
+                    
                     // Volta a desenhar a grid
                     self.AdicionaGrid();
+                    // Inicializa os dados depois da remoção da série escolhida
+                    self.InicializaSeriesSemDados(objectoSeries);
 
-                    // Mete no menu original
-                    self.SetPropertyGrid("dados");
-                    self.SetGrid("dados");  
 
                 } else {
                     if (confirm("Deseja apagar a série - " + widget.seriesUtilizadas[($(this).attr("value")) - 1].Nome + " ?")) {
@@ -7498,7 +7862,8 @@
                         self.SetGrid("dados");
 
                         // Desenha gráfico
-                        gridPrincipal.FiltraContexto();
+                        gridPrincipal.RefreshWidget(widget.id);
+                        //gridPrincipal.FiltraContexto();
                     }
 
                 }
@@ -7536,7 +7901,6 @@
                         self.RemoveFiltro($(this).attr("value"));
                     }
                 }
-
 
                 objectoFiltro.splice($(this).attr("value") - 1, 1);
 
@@ -7653,8 +8017,12 @@
 
                     self.EventoAtualizaIndicadores();
 
+                    console.log("Remove Associacao - Refresh");
+
                     // Chama função para filtrar e desenhar os dados
-                    gridPrincipal.FiltraContexto();
+                    gridPrincipal.RefreshWidget(widget1.id);
+                    gridPrincipal.RefreshWidget(widget2.id);
+                    //gridPrincipal.FiltraContexto();
 
                 } else {
                     // Apresentar aviso
@@ -7687,7 +8055,13 @@
             // Liga o evento de atualização ao botão
             $(".atualiza-propertyGrid").click(function () {
                 self.AtualizaPropertyGrid();
-                gridPrincipal.FiltraContexto();
+                
+                if (gridPrincipal.getWidget($(".widget-ativo").attr("id")).widgetElemento !== "datahora_simples"){
+                    gridPrincipal.RefreshWidget($(".widget-ativo").attr("id"));
+
+                }
+
+                //gridPrincipal.FiltraContexto();
             });
 
         }
@@ -7836,8 +8210,9 @@
         }
 
         // Remove uma série
-        PropertyGrid.RemoveSerie = function(serie){
+        PropertyGrid.RemoveSerie = function(serie, SemDados){
             var self = this,
+                objectoSeries,
                 widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
 
             // Remove a posição indicada
@@ -8569,10 +8944,13 @@
         Grid.prototype.RemoveContexto = function (widget) {
             var self = this;
 
+            // ATUAL MODIFICAR
+
             // Para cada widget dentro do array Contexto
             self.getWidget(widget).contexto.forEach(function (item) {
                 // Desassocia este widget do widget a ser afectado pelo contexto
-                self.getWidget(item).DesassociaWidget(widget);
+                //self.getWidget(item).DesassociaWidget(widget);
+
             });
 
         }
@@ -8722,9 +9100,11 @@
                             // Procura index do widget no contexto
                             index = _.findIndex(self.listaWidgets, function (d) { return widget === d.id });
 
+                        console.log("FILTRA CONTEXTO");
+
                         // Começa o "refresh" e continua o programa
                         setTimeout(function () {
-                            // Adquire os dados filtrados (apagar paraemtro widget?)
+                            // Adquire os dados filtrados (apagar paraemtro widget?) TODO DECIDIR
                             item.FiltraDados(self.listaWidgets[index], widget);
                             //// Redeseha os dados de acordo com os dados adquiridos
                             //self.listaWidgets[index].RedesenhaGrafico(self.listaWidgets[index].id);
@@ -8735,6 +9115,53 @@
                 }
 
             });
+
+        }
+
+        // TODO ATUAL
+        // Faz refresh a apenas um widget ( ou em caso de ser widget contexto, faz refresh aos que estão ligados também
+        Grid.prototype.RefreshWidget = function (widgetID) {
+            var self = this,
+                widget = self.getWidget(widgetID);
+
+            console.log("REFRESH WIDGET-------");
+            console.log(widget);
+
+            // Caso seja widget dados
+            if (widget.widgetTipo === "dados") {
+                // Caso o widget tenha contexto
+                if (widget.contexto.length > 0) {
+                    // Para cada widget no contexto ( Pode ter Filtro e Data )
+                    widget.contexto.forEach(function (item) {
+                        // Se for filtro Data
+                        if (self.getWidget(item).widgetElemento === "datahora_simples") {
+                            console.log("FILTRA CONTEXTO Refresh ");
+                            console.log(widget);
+
+                            self.getWidget(item).FiltraDados(widget);
+                        }
+                    })
+                }
+            // Caso seja um widget do tipo contexto
+            } else if (widget.widgetTipo === "contexto") {
+
+                console.log(widget.contexto);
+
+                widget.contexto.forEach(function (item) {
+                    // Procura index do widget no contexto
+                    index = _.findIndex(self.listaWidgets, function (d) { return item === d.id });
+
+                    console.log("FILTRA CONTEXTO refresh");
+                    console.log(self.listaWidgets[index]);
+
+                    // pie chart? TODO
+                    // Começa o "refresh" e continua o programa
+                    setTimeout(function () {
+                        widget.FiltraDados(self.listaWidgets[index]);
+                    }, 0);
+
+                })
+            }
 
         }
 
@@ -8927,11 +9354,13 @@
                 // Procura na lista de widgets pelo widget com o id equivalente
                 index = _.findIndex(self.listaWidgets, function (item) { return item.id === widget.attr("id"); });
 
+                
+
                 // Modifica estado da tabela
                 self.listaWidgets[index].setEstadoTabela();
                 // Caso esteja em formato widget passa para tabela, senão passa para o modo gráfico
                 (self.listaWidgets[index].estadoTabela) ? self.listaWidgets[index].TransformaWidgetTabela() : self.listaWidgets[index].RedesenhaGrafico(widget.attr("id"));
-                (self.listaWidgets[index].estadoTabela) ? $(".verTabela-widget").text("Ver Gráfico") : $(".verTabela-widget").text("Ver Tabela");
+                (self.listaWidgets[index].estadoTabela) ? $("#" + widget.attr("id")).find(".verTabela-widget").text("Ver Gráfico") : $("#" + widget.attr("id")).find(".verTabela-widget").text("Ver Tabela");
 
             });
 
@@ -9478,7 +9907,6 @@
 
     }
 
-
     // Guarda Dashboard
     $(".dashboard-guarda").click(function () {
         var nome;
@@ -9487,6 +9915,7 @@
         if (_.findIndex(Utilizador.getDashboards(), function (objecto) { return objecto.ID === gridPrincipal.idUnico; }) === -1) {
             console.log("nao existe");
             // Caso o nome seja diferente ao nome por defeito
+            // TODO
             if (!(gridPrincipal.getNome() === "Novo Dashboard")) {
                 alert("Dashboard guardado com sucesso!");
                 window.open('db_edicao.html', '_self', false);
@@ -9619,6 +10048,13 @@
                     return false;
 
                 },
+                // Evento sempre que carrega a tabela
+                onPostBody: function () {
+
+                    // Adicionar um botão para remover o dashboard e remover do header inicial
+                    $(".listaDashboards-botoes").append('<button type="button" style="float:right;" class="removeDashboard"><img src ="../resources/ic_clear_black_24dp_1x.png"/></button>')
+                    $("thead  .listaDashboards-botoes > button").remove();
+                },
                 columns: [
                     {
                         field: 'nome',
@@ -9653,8 +10089,6 @@
                 ]
             });
 
-            $(".listaDashboards-botoes").append('<button type="button" style="float:right;" class="removeDashboard"><img src ="../resources/ic_clear_black_24dp_1x.png"/></button>')
-            $("thead  .listaDashboards-botoes > button").remove();
     }
 
     if (modo === "lista") {

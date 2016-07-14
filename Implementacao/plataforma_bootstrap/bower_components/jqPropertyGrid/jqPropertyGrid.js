@@ -237,7 +237,7 @@
             */
 	    } else if (typeof $.fn.spinner === 'function' && (type === 'number' || (type === '' && typeof value === 'number'))) {
 	        valueHTML = '<input type="text" id="' + elemId + '" element="' + name + '" value="' + value + '" style="width:50px" />';
-			if (postCreateInitFuncs) {
+	        if (postCreateInitFuncs) {
 				postCreateInitFuncs.push(initSpinner(elemId, meta.options));
 			}
 
@@ -389,6 +389,10 @@
 	function onSpinnerChange() {
 		var $spinner = $(this);
 		var value = $spinner.spinner('value');
+
+        // TODO 07/15
+		console.log($spinner.attr("value"));
+		console.log(value);
 
 		// If the value is null and the real value in the textbox is string we empty the textbox
 		if (value === null && typeof $spinner.val() === 'string') {

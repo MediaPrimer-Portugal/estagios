@@ -541,6 +541,30 @@
 
     }
 
+    .visualizaTabela {
+        width: 100% !important;
+        overflow-y: auto !important;
+    }
+
+    /*
+        Wrapper para o widget KPI/Label para poder centrar o widget facilmente
+    */
+    .kpiWrapper {
+        display: table;
+        width: 100%;
+        height: 100%;
+    }
+
+    /*
+        CSS para centrar o valor no Widget
+    */
+    .centrarValor {
+        display: table-cell;
+        text-align: center;
+        vertical-align: middle;
+
+    }
+
 
     .box {
         /*background-color: azure;*/
