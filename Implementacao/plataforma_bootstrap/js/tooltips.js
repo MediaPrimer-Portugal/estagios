@@ -297,6 +297,8 @@
                 x = tbbox.x,
                 y = tbbox.y
 
+            console.log(point);
+
             point.x = x
             point.y = y
             bbox.nw = point.matrixTransform(matrix)

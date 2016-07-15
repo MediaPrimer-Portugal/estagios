@@ -9,8 +9,7 @@
         height: 100%;
     }
 
-    
-
+   
     /*------------------
         Utililidade
     ------------------*/
@@ -535,7 +534,7 @@
 
     */
     .Tabela > .wrapper, 
-    .kpi > .wrapper{
+    .Etiqueta > .wrapper{
         width: 100%;
         overflow-y: auto;
 
@@ -549,7 +548,7 @@
     /*
         Wrapper para o widget KPI/Label para poder centrar o widget facilmente
     */
-    .kpiWrapper {
+    .etiquetaWrapper {
         display: table;
         width: 100%;
         height: 100%;
@@ -744,10 +743,10 @@
 
 
     /*--------------------
-        KPI
+        KPI (Label/Etiqueta)
     --------------------*/
 
-    .KPI > .wrapper {
+    .Etiqueta > .wrapper {
         width: 100% !important;
         margin: 0 !important;
     }

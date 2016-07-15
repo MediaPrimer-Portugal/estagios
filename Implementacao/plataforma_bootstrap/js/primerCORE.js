@@ -495,6 +495,7 @@ primerCORE = (function () {
 
     /// <summary>
     /// Pedido AJAX para um Widget em especifico
+    /// Após completar desenha widget no dashboard (caso seja um widget dados)
     /// </summary>
     /// <param name="widget"> Widget que está a pedir dados </param>
     /// <param name="opcoes"> Opcoes para filtrar o pedido (data inicio, fim) </param>
@@ -502,12 +503,15 @@ primerCORE = (function () {
     objecto.DashboardDevolveWidget = function (widget, opcoes, dashboardID, utilizadorID) {
         // substituir campos na query, funcao e campo????
 
+        console.log(widget);
+        console.log()
+
         var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/valores?sessaoID=sessaoDebug";
 
-        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12", "utilizadorID": "2502", "widgetsDados":'
-                + '[{ "id": "widget0", '
+        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12", "utilizadorID": "'+ utilizadorID +'", "widgetsDados":'
+                + '[{ "id": "'+ widget.id +'", '
                 + '"tipo": "1",'
-                + '"elemento": "GraficoLinhas", '
+                + '"elemento": "'+ widget.widgetElemento +'", '
                 + '"contexto": ["widget3", "widget4", "widget8"], '
                 + '"series": [{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, '
                             +'{ "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, '
@@ -518,6 +522,8 @@ primerCORE = (function () {
                 + '"contextoData": [{ "id": "widget8", "campo": "data", '
                                     + '"dataInicio": \"' + opcoes.dataInicio + '\",  '
                                     + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
+
+        console.log(query);
 
         //query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12","utilizadorID": "2502", "widgetsDados": [ { "id": \"' + widget.id +
         //    '\", "tipo": \"' + widget.widgetTipo +
