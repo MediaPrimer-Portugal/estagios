@@ -133,7 +133,7 @@
 		// We use the name in the meta if available
 		var displayName = meta.name || name;
 		var type = meta.type || '';
-		var elemId = pgId + name;
+		var elemId = /*pgId +*/ name;
 
 		var valueHTML;
 
@@ -146,9 +146,14 @@
 				};
 			}
 
-			// If options create drop-down list
+		    // If options create drop-down list
+		    /*    
+             *      ADICIONADO
+             *      name (parametro na função) -> Adicionado o nome para poder adicionar classe ao dropdown dos indicadores 
+             *                                    para selecionar e trabalhar de forma mais fácil com esse elemento
+             */
 		} else if (type === 'options' && Array.isArray(meta.options)) {
-		    valueHTML = getSelectOptionHtml(elemId, value, meta.options);
+		    valueHTML = getSelectOptionHtml(name, elemId, value, meta.options);
 		    if (getValueFuncs) {
 		        getValueFuncs[name] = function() {
 		            return $('#' + elemId).val();
@@ -161,8 +166,11 @@
              *
             */
 		} else if (type === "filtro") {
-		    displayName = "<input class=" + elemId + " type='text' value=\"" + meta.description + "\" />";
-		    valueHTML = "<input type='text' class='valor" + elemId + "' value=\"" + value + "\" />";
+
+		    console.log(meta);
+
+		    displayName = '<input class="' + elemId + '" type="text" value="' + meta.description + '" />';
+		    valueHTML = '<input type="text" class="valor' + elemId + '" value="' + value + '" />';
 
 		    if (getValueFuncs) {
 		        getValueFuncs[name] = function () {
@@ -301,12 +309,32 @@
 	 * @param {*[]} options - An array of option. An element can be an object with value/text pairs, or just a string which is both the value and text
 	 * @returns {string} The select element html
 	 */
-	function getSelectOptionHtml(id, selectedValue, options) {
+    /**
+    *      ADICIONADO
+    *      name (parametro na função) -> Adicionado o nome para poder adicionar classe ao dropdown dos indicadores 
+    *                                    para selecionar e trabalhar de forma mais fácil com esse elemento
+    */
+	function getSelectOptionHtml(name, id, selectedValue, options) {
 		id = id || '';
 		selectedValue = selectedValue || '';
 		options = options || [];
 
 		var html = '<select';
+
+
+	    /* ------------------- */
+
+
+		if (name.split("-")[0] === "ComponenteSerie") {
+		    html += ' class="dropdownIndicadores"';
+		}
+
+		if (name.split("-")[0] === "Campo") {
+		    html += ' class="dropdownIndicadores-valores"';
+		}
+
+	    /* ------------------- */
+        
 		if (id) {
 			html += ' id="' + id + '"';
 		}

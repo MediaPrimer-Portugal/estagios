@@ -129,8 +129,7 @@ primerCORE = (function () {
 
 
     /// <summary>
-    /// Devolve os dados iniciais de um dashboard  ( Não funciona )
-    /// </summary>
+    /// Devolve os dados iniciais de um dashboard
     /// <returns> Retorna um objecto com os dados de inicialização (dadomedido, indicadores, etc) </returns> 
     objecto.DashboardDadosIniciais = function () {
         var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/iniciais?sessaoID=sessaoDebug",
@@ -174,6 +173,9 @@ primerCORE = (function () {
             },
         }).responseText;
     };
+
+
+
 
     /// ----- #DASHBOARD -----
 
@@ -499,29 +501,72 @@ primerCORE = (function () {
     /// </summary>
     /// <param name="widget"> Widget que está a pedir dados </param>
     /// <param name="opcoes"> Opcoes para filtrar o pedido (data inicio, fim) </param>
+    /// <param name="filtros"> Filtros que estão ligados ao widget </param>
     /// <returns> Devolve um objecto com a informação do  widget  </returns>
-    objecto.DashboardDevolveWidget = function (widget, opcoes, dashboardID, utilizadorID) {
-        // substituir campos na query, funcao e campo????
+    objecto.DashboardDevolveWidget = function (widget, opcoes, filtros, dashboardID, utilizadorID) {
 
-        console.log(widget);
-        console.log()
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/valores?sessaoID=sessaoDebug",
+            series;
 
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/valores?sessaoID=sessaoDebug";
+        //query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12", "utilizadorID": "'+ utilizadorID +'", "widgetsDados":'
+        //        + '[{ "id": "'+ widget.id +'", '
+        //        + '"tipo": "1",'
+        //        + '"elemento": "'+ widget.widgetElemento +'", '
+        //        + '"contexto": ["widget3", "widget4", "widget8"], '
+        //        + '"series": [{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, '
+        //                    +'{ "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, '
+        //                    +'{ "funcao": "media", "campo": "valor.valorMin", "index": "indicadores", "type": "" }], '
+        //        + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "dia" }] }], '
+        //        + '"widgetsContexto": { "contextoPesquisa": [{ "id": "widget3", "tipo": "contexto", "filtro": "_index:indicadores" }, '
+        //                                + '{ "id": "widget4", "tipo": "contexto", "filtro": "_type:dadomedidotriplo" }], '
+        //        + '"contextoData": [{ "id": "widget8", "campo": "data", '
+        //                            + '"dataInicio": \"' + opcoes.dataInicio + '\",  '
+        //                            + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
 
-        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12", "utilizadorID": "'+ utilizadorID +'", "widgetsDados":'
-                + '[{ "id": "'+ widget.id +'", '
-                + '"tipo": "1",'
-                + '"elemento": "'+ widget.widgetElemento +'", '
+
+        // Preparar todas as séries para a query
+        series = '[';
+        widget.seriesUtilizadas.forEach(function (item, index) {
+            console.log(widget.seriesUtilizadas.length);
+            console.log(index);
+            // Para não ir buscar o ultimo campo (proto)
+            if (widget.seriesUtilizadas.length > index) {
+                series += '{ "funcao": "' + item.Funcao + '", "campo": "' + item.Campo + '", "index": "indicadores", "type": "" },';
+            }
+        });
+        series += '],';
+
+
+        // Preparar todas as pesquisas para a query
+        pesquisa = '{ "contextoPesquisa": [';
+        widget.contextoFiltro.forEach(function (item, curIndex) {
+            if (filtros[curIndex] !== undefined) {
+                pesquisa +=  '{ "id": "' + item + '", "tipo": "contexto", "filtro": "' + filtros[curIndex].valor + '" }, ';
+            } else {
+                alert("Erro com um dos filtros");
+            }
+
+        })
+        pesquisa += '],';
+
+
+        console.log(series);
+
+
+        //series = '[{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Somatorio", "campo": "valor.valorMin", "index": "indicadores", "type": "" }],';
+
+        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
+                + '[{ "id": "' + widget.id + '", '
+                + '"tipo": "dados",'
+                + '"elemento": "' + widget.widgetElemento + '", '
                 + '"contexto": ["widget3", "widget4", "widget8"], '
-                + '"series": [{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, '
-                            +'{ "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, '
-                            +'{ "funcao": "media", "campo": "valor.valorMin", "index": "indicadores", "type": "" }], '
+                + '"series":' + series
                 + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "dia" }] }], '
-                + '"widgetsContexto": { "contextoPesquisa": [{ "id": "widget3", "tipo": "contexto", "filtro": "_index:indicadores" }, '
-                                        + '{ "id": "widget4", "tipo": "contexto", "filtro": "_type:dadomedidotriplo" }], '
+                + '"widgetsContexto":' + pesquisa
                 + '"contextoData": [{ "id": "widget8", "campo": "data", '
                                     + '"dataInicio": \"' + opcoes.dataInicio + '\",  '
                                     + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
+
 
         console.log(query);
 
