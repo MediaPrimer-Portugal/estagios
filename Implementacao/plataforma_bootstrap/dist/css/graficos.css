@@ -531,13 +531,21 @@
 
     /* 
         Modificações no wrapper do widget KPI (Labels) / Tabela 
-
     */
+    .datahora_simples > .wrapper,
     .Tabela > .wrapper, 
     .Etiqueta > .wrapper{
         width: 100%;
         overflow-y: auto;
 
+    }
+
+    /* 
+        Alinhar widget data para acomodar o botão atualizar 
+    */
+    .datahora_simples > .wrapper {
+        text-align: center;
+        padding-top: 0 !important;
     }
 
     .visualizaTabela {
@@ -762,4 +770,14 @@
 
     .wrapper-contexto > .container{
         width: 100% !important;
+    }
+
+    
+    /*--------------------
+        Widget Data 
+    --------------------*/
+
+    /* Desenha de forma mais exata as barras do d3*/
+    rect{
+        shape-rendering: crispEdges;
     }

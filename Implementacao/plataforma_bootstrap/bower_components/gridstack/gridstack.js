@@ -582,8 +582,10 @@
              *  
              */
 
+
             gridType: opts.gridType || null,
             gridObject: opts.gridObject || null,
+            platformObject: opts.platformObject || null,
             PropertyGrid: opts.PropertyGrid || null,
             swapGridWidth: opts.swapGridWidth || null,
             swapGridHeight: opts.swapGridHeight || null
@@ -1231,6 +1233,7 @@
      */
     GridStack.prototype.AdicionaWidgetGrid = function (node) {
         var widgets,
+            tipoGrid,
             grid = this.opts.gridObject,
             listaWidgetsDados = ["Sem componente"],
             listaWidgetsContexto = ["Sem componente"],
@@ -1258,17 +1261,35 @@
             }
 
         });
-
+        
         // Define widgets na PropertyGrid
         this.opts.PropertyGrid.setWidgets(listaWidgetsDados, listaWidgetsContexto);
         this.opts.PropertyGrid.AdicionaCheckboxMenu();
 
 
+        tipoGrid = $(".active").children("a").attr("class");
+
+        console.log(tipoGrid);
+
+        // Dependendo do tipo de Grid, vai preencher novamente essa grid
+        if (tipoGrid === "sidedarOutros") {
+            this.opts.platformObject.RefillGrid("gridOutros");
+        } else if (tipoGrid === "sidebarLabels") {
+            this.opts.platformObject.RefillGrid("gridLabels");
+        } else if (tipoGrid === "sidebarGraficos") {
+            this.opts.platformObject.RefillGrid("gridGraficos");
+        } else if (tipoGrid === "sidebarFiltros") {
+            this.opts.platformObject.RefillGrid("gridFiltros");
+        }
+
+
+        
         // Adiciona ao menu "Componente data" nova opção, caso seja possivel
         //this.opts.PropertyGrid.AdicionaMenuPeriodo();
 
     }
 
+    
 
     /**  Adicionado
     *

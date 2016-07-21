@@ -29,6 +29,7 @@
         .offset([0, 0])
         .html(function (d) {
             
+
             // Caso seja um grafico de area
             if (d.tipo === "GraficoArea") {
                 return "<p>Indicador: <span style='color:green'>" + d.nome  + "</span></p>" +
@@ -38,8 +39,18 @@
 
             }
 
+            // Caso seja gráfico de linhas
+            if (d.tipo === "GraficoLinhas") {
+                return "<p>Indicador: <span style='color:green'>" + d.nome + "</span></p>" +
+                    "<p></p>" +
+                    "<p>Data: " + moment(d.date).format("DD-MM-YYYY") + "</p>" +
+                    "<p>Valor: " + ((Number(d.y).toFixed(2))) + "</p>";
+
+            }
+
             // Caso seja um grafico de barras
             if (d.tipo === "GraficoBarras") {
+
                 return "<p>Indicador: <span style='color:green'>" + d.nome + "</span></p>" +
                     "<p></p>" +
                     "<p>Data: " + moment(d.date).format("DD-MM-YYYY") + "</p>" +
@@ -180,7 +191,7 @@
     /// <summary>
     /// Adquire os parametros enviados pelo URL
     /// formato: ?parametro=valor
-    /// <param name="sParam"> Parametro a ser adquirido do URL
+    /// <param name="sParam"> Parametro a ser adquirido do URL </param>
     /// <returns> Retorna o valor dessa parametro </returns>
     var GetURLParameter = function (sParam) {
         var sPageURL = window.location.search.substring(1);
@@ -479,6 +490,9 @@
             var self = this,
                 tamanho = self.contexto.length;
 
+            console.log(widget);
+            console.log(gridPrincipal.getWidget(widget));
+
             // Método lodash, qualquer item que seja equivalente dentro do self.contexto é removido
             _.remove(self.contexto, function (item) {
                 return widget === item;
@@ -600,7 +614,7 @@
 
             // Caso não existam dados disponiveis
             } else {
-                $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">Não existem Dados disponiveis</span>");
+                $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">" + self.dados.dados.Widgets[0].Resultado + "</span>");
 
             }
 
@@ -636,6 +650,7 @@
             // Cria um objecto para construir o widget em formato ampliado
             widgetExpandido = FabricaClasses("ecraExpandido-widget", self.widgetElemento);
             widgetExpandido.modoVisualizacao = self.modoVisualizacao;
+
             // Suavizar linhas
             if (self.suavizar !== undefined) {
                 widgetExpandido.suavizar = self.suavizar;
@@ -663,10 +678,7 @@
 
             }
 
-            // 
-            $(".ecraExpandido-widget")
-
-
+            
             // Reposiciona o gráfico para se adequar a posição da scrollbar
             $("#ecraExpandido-widget").css("position", "absolute").animate({
                 top: $(window).scrollTop() + 20
@@ -741,11 +753,11 @@
                     }
 
                 } else {
-                    $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">Não existem dados disponiveis</span>");
+                    $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">" + self.dados.dados.Widgets[0].Resultado + "</span>");
 
                 }
             } else {
-                $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">Não existem dados disponiveis</span>");
+                $("#" + self.id).find(".wrapper").append("<span class=\"avisoDados-widget\">" + self.dados.dados.Widgets[0].Resultado + "</span>");
             }
 
         }
@@ -846,6 +858,7 @@
             var self = this,
                 filtros = [];
 
+            
             self.contextoFiltro.forEach(function (item) {
                 console.log(gridPrincipal.getWidget(item));
                 gridPrincipal.getWidget(item).opcoes.forEach(function (opcao) {
@@ -856,7 +869,16 @@
                 })
             });
 
-            /*self.dados = $.parseJSON(*/primerCORE.DashboardDevolveWidget(self, opcoes, filtros, gridPrincipal.idUnico, Utilizador.idUtilizador);
+
+
+
+            // Push a "pesqusa" do widget
+            //filtros.push();
+
+            console.log(self);
+
+            // Trata do pedido
+            primerCORE.DashboardDevolveWidget(self, opcoes, filtros, gridPrincipal.idUnico, Utilizador.idUtilizador);
 
         }
 
@@ -1025,16 +1047,15 @@
             //    })
 
 
-            console.log(series);
-
-
             series.forEach(function (item, curIndex) {
                 if (series.length - 1 > curIndex) {
                     // Caso o objecto não esteja vazio, ter mais que uma chave
                     if (Object.keys(self.dados).length > 0) {
-                        if (_.findIndex(self.seriesUtilizadas, function (valor) { return item.ComponenteSerie === valor.ComponenteSerie }) === -1) {
-                            // Adiciona o "valor." ao indicador
-                            item.Campo = "valor." + item.Campo;
+                        // Se não houver um campo igual existente
+                        if (_.findIndex(self.seriesUtilizadas, function (valor) { return item.Campo === valor.Campo }) === -1) {
+                            self.seriesUtilizadas.push(item);
+                        // Caso haja um campo igual existente, se o seu Indicador for diferente
+                        } else if (_.findIndex(self.seriesUtilizadas, function (valor) { return item.ComponenteSerie === valor.ComponenteSerie }) === -1) {
                             self.seriesUtilizadas.push(item);
                         }
                     }
@@ -1044,6 +1065,10 @@
 
         }
 
+
+        /// <summary>
+        /// Retorna as séries utilizadas pelo widget
+        /// </summary>
         Widget.prototype.getSeriesUtilizadas = function () {
             var self = this;
 
@@ -1219,6 +1244,8 @@
         Widget.prototype.setAtivo = function () {
             var self = this;
             
+            console.log(self);
+            console.log("SETATIVO");
             
             // Ao clickar no widget especifico
             $("#" + self.id).click(function () {
@@ -1248,11 +1275,18 @@
                     // Mostra a propertyGrid
                     PropertyGrid.MostraPropertyGrid(self.widgetElemento);
 
+
+                    // "Puxa" widget atual para o topo da lista, por motivos de imposição de CSS
+                    $(".widget-ativo").parent().appendTo($(".widget-ativo").parent().parent());
+
+
                     // Modo Tabela
                     //$(".opcoes-propriedades").css("display", "block");
                 }
 
             });
+
+            console.log("SETATIVO");
 
         }
 
@@ -1340,7 +1374,7 @@
 
 
                 // Adicionar aviso
-                $("#" + self.id).find(".wrapper").prepend("<span class=\"avisoDados-widget\">Não existem Series disponiveis</span>");
+                $("#" + self.id).find(".wrapper").prepend("<span class=\"avisoDados-widget\">" + self.dados.dados.Widgets[0].Resultado + "</span>");
 
             }
 
@@ -1462,11 +1496,6 @@
 
             
 
-            // AJUSTAR OS VALORES PARA PERCENTAGEM 
-            // y0 ?
-            // Descobrir total, passar valores normais para percentagem??
-            // TODO  v 
-
             // Caso esteja em modo Stacked
             if (self.modoVisualizacao === "stacked") {
 
@@ -1583,7 +1612,7 @@
             // Para cada serie utilizada
             self.seriesUtilizadas.forEach(function (item) {
                 // Descobrir quais as que têm o valor de indicador correto
-                index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.ComponenteSerie })
+                index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.Campo })
                 if (index !== -1) {
 
                     // Adiciona um numero a cada série para ser facilmente identificada
@@ -1631,7 +1660,7 @@
                     .style("fill", "none")
                     .style("stroke", "red")
                     .style("stroke-width", "2")
-                    .attr("r", 4)
+                    .attr("r", 20)
                         .style("display", "none");
 
 
@@ -1696,7 +1725,7 @@
                     .style("fill", "none")
                     .style("stroke", "red")
                     .style("stroke-width", "2")
-                    .attr("r", 4)
+                    .attr("r", 20)
                         .style("display", "none");
 
 
@@ -1827,6 +1856,10 @@
             self.escalaX.ticks(self.dados.dados.Widgets[0].length);
 
 
+            // Utiliza um formato compacto (50, 500, 5k, 50k, 500k, 5M, etc.. )
+            self.escalaY.tickFormat(d3.format("s"));
+
+
             // Numero de representações nos eixos de acordo com o tamanho do widget
             if (self.altura > self.TamanhoLimite) {
                 self.escalaY.ticks(10);
@@ -1853,6 +1886,7 @@
                 //escalaX.tickValues(d3.time.months(intervaloData[0], intervaloData[1]));
             }
 
+
             // Atualização do eixo dos X
             self.svg.select(".x.axis")
                 .attr("class", "x axis")
@@ -1863,12 +1897,56 @@
               .attr("dy", ".5em")
               .attr("transform", "rotate(-35)");
 
+            // Atualiza Nome do eixo do X
+            // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
+            if (self.mostraLegenda === true) {
+                self.svg.select(".nomeEixoX")
+                    .attr("dx", self.largura * 0.8 - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            } else {
+                self.svg.select(".nomeEixoX")
+                    .attr("dx", self.largura - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            }
+
             // Atualização do eixo dos Y
             self.svg.select(".y.axis")
                 .attr("class", "y axis")
                 .attr("transform", "translate(0 , 0)")
                 .call(self.escalaY);
+
+
+            // LIMITES PARA INSERIR OS EIXOS
+            // Se a altura do widget for menor
+            if (self.altura <= 180) {
+                // Remover nomeEixo
+                // melhorar a visualização
+                d3.select("#" + self.id).select(".nomeEixoY")
+                    .text("");
+            } else {
+                // Senão, voltar a adicionar o nome
+                d3.select("#" + self.id).select(".nomeEixoY")
+                    .text(nomeEixoY);
+            }
+            // Se a altura do widget for menor
+            if (self.largura <= 250) {
+                // Remover nomeEixo
+                // melhorar a visualização
+                d3.select("#" + self.id).select(".nomeEixoX")
+                    .text("");
+            } else {
+                // Senão, voltar a adicionar o nome
+                d3.select("#" + self.id).select(".nomeEixoX")
+                    .text(nomeEixoX);
+            }
+
         }
+
+
 
 
         /// <summary>
@@ -1885,25 +1963,73 @@
                     .attr("transform", "translate(" + self.margem.esquerda + "," + self.altura + ")")
                     .call(self.escalaX);
 
+                // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
+                if (self.mostraLegenda === true) {
+                    self.svg.append("text")
+                        .attr("class", "nomeEixoX")
+                        .attr("dx", self.largura * 0.8 - 10)
+                        .attr("dy", self.altura - 5)
+                        .style("text-anchor", "end")
+                            .text(nomeEixoX);
+                } else {
+                    self.svg.append("text")
+                        .attr("class", "nomeEixoX")
+                        .attr("dx", self.largura - 10)
+                        .attr("dy", self.altura - 5)
+                        .style("text-anchor", "end")
+                            .text(nomeEixoX);
+                }
+
                 // Insere eixo dos Y (Stacked)
                 self.svg.append("g")
                     .attr("class", "y axis")
-                    .call(self.escalaY);
+                    .call(self.escalaY)
+                .append("text")
+                    .attr("transform", "rotate(-90)")
+                    .attr("y", 6)
+                    .attr("dy", ".71em")
+                    .style("text-anchor", "end")
+                        .text(nomeEixoY);
+
 
             } else {
+
+                // Append Escala do X
                 self.svg.append("g")
                     .attr("class", "x axis")
                     .attr("transform", "translate(0," + self.altura + ")")
                     .call(self.escalaX);
 
+
+                // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
+                if (self.mostraLegenda === true) { 
+                    self.svg.append("text")
+                        .attr("class", "nomeEixoX")
+                        .attr("dx", self.largura * 0.8 - 10)
+                        .attr("dy", self.altura - 5)
+                        .style("text-anchor", "end")
+                            .text(nomeEixoX);
+                } else {
+                    self.svg.append("text")
+                        .attr("class", "nomeEixoX")
+                        .attr("dx", self.largura - 10)
+                        .attr("dy", self.altura - 5)
+                        .style("text-anchor", "end")
+                            .text(nomeEixoX);
+                }
+                
+
+                // Append Escala do Y e Eixo
                 self.svg.append("g")
                     .attr("class", "y axis")
                     .call(self.escalaY)
                   .append("text")
+                    .attr("class", "nomeEixoY")
                     .attr("transform", "rotate(-90)")
                     .attr("y", 6)
                     .attr("dy", ".71em")
                     .style("text-anchor", "end")
+                        .text(nomeEixoY);
 
             }
 
@@ -2328,11 +2454,7 @@
             self.AtualizaEixos();
 
             self.dadosEscolhidos.forEach(function (item, curIndex) {
-
-                console.log(self.selecao.selectAll(".barra" + curIndex));
-
                 self.selecao.selectAll(".barra" + curIndex)
-                    // to-do modificar nome State para um genérico - Contar numero de keys e substituir pelo inteiro
                     .attr("x", function (d, curIndex) { return escalaSecundaria(d.nome); })
                 .transition("grouped")
                     .attr("y", function (d) { return transformaY(d.y); })
@@ -2569,6 +2691,9 @@
             });
 
 
+            // Reset no parametro chave
+            self.chave = [];
+
             // Adquirir valor máximo de cada uma das séries (chave)
             self.dadosNormal.forEach(function (item) {
                 self.chave.push(d3.max(item.values, function (d) { return d.y; }))
@@ -2764,6 +2889,8 @@
                     soma = 0;
                 }
 
+                console.log(listaTotal);
+
 
                 // Atribui valores a Y conforme a sua escala
                 transformaY = d3.scale.linear()
@@ -2785,15 +2912,30 @@
             self.escalaX.scale(escalaOriginal);
             self.escalaY.scale(transformaY);
 
-
-            // Atualizar coordenadas do Eixo do X de acordo com o tamanho do widget
-            d3.select("#" + self.id).select(".nomeEixoX")
-                .attr("x", self.largura - 8)
-                .attr("y", self.altura + self.margem.cima);
+            // Utiliza um formato compacto (50, 500, 5k, 50k, 500k, 5M, etc.. )
+            self.escalaY.tickFormat(d3.format("s"));
 
 
+            // Atualiza Nome do eixo do X
+            // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
+            if (self.mostraLegenda === true) {
+                self.svg.select(".nomeEixoX")
+                    .attr("dx", self.largura * 0.8 - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            } else {
+                self.svg.select(".nomeEixoX")
+                    .attr("dx", self.largura - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            }
+
+
+            // LIMITES PARA INSERIR OS EIXOS
             // Se a altura do widget for menor
-            if (self.altura <= 250) {
+            if (self.altura <= 180) {
                 // Remover nomeEixo
                 // melhorar a visualização
                 d3.select("#" + self.id).select(".nomeEixoY")
@@ -2802,6 +2944,17 @@
                 // Senão, voltar a adicionar o nome
                 d3.select("#" + self.id).select(".nomeEixoY")
                     .text(nomeEixoY);
+            }
+            // Se a altura do widget for menor
+            if (self.largura <= 250) {
+                // Remover nomeEixo
+                // melhorar a visualização
+                d3.select("#" + self.id).select(".nomeEixoX")
+                    .text("");
+            } else {
+                // Senão, voltar a adicionar o nome
+                d3.select("#" + self.id).select(".nomeEixoX")
+                    .text(nomeEixoX);
             }
 
 
@@ -2858,26 +3011,6 @@
         GraficoBarras.prototype.InsereEixos = function () {
             var self = this;
 
-
-            // Acrescentar no g a escala X  e o seu nome
-            self.svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + self.altura + ")")
-              .call(self.escalaX)
-                .selectAll("text")
-                .attr("dx", "-2em")
-                .attr("dy", ".5em")
-                .attr("transform", "rotate(-35)");
-
-            //// Insere nome do eixo do X
-            //self.svg.append("g")
-            //  .append("text")
-            //    .attr("class", "nomeEixoX")
-            //    .attr("x", self.largura - 20)
-            //    .attr("y", self.altura + self.margem.cima)
-            //    .attr("dx", ".71em");
-            //      .text(nomeEixoX);
-
             // Acrescentar no g a escala Y e o seu nome to-do
             self.svg.append("g")
               .attr("class", "y axis")
@@ -2890,6 +3023,34 @@
               .attr("dy", ".71em")
                 .style("text-anchor", "end")
                 .text(nomeEixoY);
+
+
+            // Acrescentar no g a escala X  e o seu nome
+            self.svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + self.altura + ")")
+              .call(self.escalaX)
+                .selectAll("text")
+                .attr("dx", "-2em")
+                .attr("dy", ".5em")
+                .attr("transform", "rotate(-35)");
+
+            // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
+            if (self.mostraLegenda === true) {
+                self.svg.append("text")
+                    .attr("class", "nomeEixoX")
+                    .attr("dx", self.largura * 0.8 - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            } else {
+                self.svg.append("text")
+                    .attr("class", "nomeEixoX")
+                    .attr("dx", self.largura - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            }
 
         }
 
@@ -3111,16 +3272,32 @@
         /// </summary>
         GraficoLinhas.prototype.InsereDados = function () {
             var self = this;
-            // to-do id?
+            
+
+            //self.captura = self.svg.append("g")
+            //    .attr("class", "capturas");
+
+            // Grupo das tooltips
+            self.pontos = self.svg.append("g")
+                .attr("class", "pontos");
+
+            // Circulo que apresenta o "foco" do utilizador
+            self.pontos.append("circle")
+                .attr("class", "circuloFoco")
+                .style("fill", "none")
+                .style("stroke", "red")
+                .style("stroke-width", "2")
+                .attr("r", 20)
+                    .style("display", "none");
 
 
             // Update nos paths do gráfico
             // método d3 que cria um "path" equivalente a uma area de acordo com os dados fornecidos
-            linha = d3.svg.line()
+            self.linha = d3.svg.line()
                 // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
-                .x(function (d) { return transformaX(d.date); })
+                .x(function (d) { return self.transformaX(d.date); })
                 // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
-                .y(function (d) { return transformaY(d.y); });
+                .y(function (d) { return self.transformaY(d.y); });
 
 
             // Inicia controlo de cores padrão to-do
@@ -3153,14 +3330,17 @@
 
                         // Devolve objecto
                         return {
-                            name: name,
+                            nome: name,
                             y: +d.Valores[index].Valor,
+                            tipo: self.widgetElemento,
                             date: parseDate(d.Data)
+
                         };
                     })
                 }
             });
 
+            // "Limpa" a chave para poder recalcular com novos dados
             self.chave = [];
 
             // Adquirir valor máximo de cada uma das chaves
@@ -3200,7 +3380,10 @@
             var self = this,
                 index,
                 id = 0;
-                dadosEscolhidos = [];
+                dadosEscolhidos = [],
+                larguraRect = ($("#" + self.id).width() / self.dados.dados.Widgets[0].Items.length);
+
+                self.dadosEscolhidos = [];
 
 
             // Remove as séries anteriores
@@ -3209,14 +3392,14 @@
             // Para cada serie utilizada
             self.seriesUtilizadas.forEach(function (item) {
                 // Descobrir quais as que têm o valor de indicador correto
-                index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.ComponenteSerie })
+                index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.Campo })
                 if (index !== -1) {
 
                     // Adiciona um numero a cada série para ser facilmente identificada
                     self.dadosNormal[index]["Numero"] = id++;
                     self.dadosNormal[index]["Nome"] = item.Nome;
 
-                    dadosEscolhidos.push(self.dadosNormal[index]);
+                    self.dadosEscolhidos.push(self.dadosNormal[index]);
                 }
             });
 
@@ -3224,7 +3407,7 @@
             // Seleciona todas as series
             series = self.svg.selectAll(".series")
                // Liga os elementos aos dados dataNest
-              .data(dadosEscolhidos)
+              .data(self.dadosEscolhidos)
             // Acrescenta séries, caso não hajam suficientes para representar dataNest
             .enter().append("g")
               .attr("class", "series")
@@ -3233,20 +3416,38 @@
               .attr("numero", function (d) { return d.Numero; });
 
 
-
             // Verificar se os dados existem
-            if (dadosEscolhidos.length > 0) {
+            if (self.dadosEscolhidos.length > 0) {
                 // Para cada série
-                dadosEscolhidos.forEach(function (item) {
-                    self.svg.selectAll("dot")
+                self.dadosEscolhidos.forEach(function (item, curIndex) {
+                    self.pontos.selectAll(".ponto" + curIndex)
                     .data(item.values)
                   .enter().append("circle")
-                    .attr("r", 3.5)
-                    .attr("cx", function (d) { return transformaX(d.date); })
-                    .attr("cy", function (d) { return transformaY(d.y); })
-                    .style("visibility", "hidden");
+                    .attr("class", "sinalizaPonto ponto" + curIndex)
+                    .attr("r", 15)
+                    .attr("cx", function (d) { return self.transformaX(d.date); })
+                    .attr("cy", function (d) { return self.transformaY(d.y); })
+                        .attr('pointer-events', 'all')
+                        .attr("fill", "red")
+                        .style("visibility", "hidden")
+                    .on("mouseover", tip.show)
+                    .on("mouseout", tip.hide)
+
+                    // TODO - Largura rect???
+
+                    //self.captura.selectAll(".rect" + curIndex)
+                    //    .data(item.values)
+                    //.enter().append("rect")
+                    //    .attr("class", "rect" + curIndex)
+                    //    .attr("width", larguraRect)
+                    //    .attr("height", function (d) { return self.altura; })
+                    //    .attr("x", function (d) { return self.transformaX(d.date); })
+                    //    .attr("y", function (d) { return self.transformaY(d.y); })
+                    //        .attr('pointer-events', 'all')
+                    //        .style("opacity", "0");
 
                 });
+
 
             }
 
@@ -3258,7 +3459,7 @@
             series.append("path")
               .attr("class", "linha")
               // Componente D3(area) devolve o path calculado de acordo com os valores
-              .attr("d", function (d) { return linha(d.values); })
+              .attr("d", function (d) { return self.linha(d.values); })
                 // Uma cor é automaticamente escolhida de acordo com o componente color, para cada key
                 .style("stroke", function (d) { return color(d.Nome); })
                 .style("stroke-width", "2px")
@@ -3283,26 +3484,26 @@
             // teste1? valores
 
             // Atribui valores a Y conforme a sua escala
-            transformaX = d3.time.scale()
+            self.transformaX = d3.time.scale()
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
                 .range([0, self.largura])
                 // Mapeia o dominio conforme a a data disponivel nos dad
 
             // Construtor do Eixo dos X
             self.escalaX = d3.svg.axis()
-              .scale(transformaX)
+              .scale(self.transformaX)
               // Orientação da escala
               .orient("bottom");
 
             // Atribui valores a Y conforme a sua escala
-            transformaY = d3.scale.linear()
+            self.transformaY = d3.scale.linear()
               // to-do numero?
               //.domain([0, d3.max(self.dados, function (d) { console.log(d); return d.y; })])
               .range([self.altura, 0]);
 
             // Construtor do Eixo dos Y
             self.escalaY = d3.svg.axis()
-              .scale(transformaY)
+              .scale(self.transformaY)
               .orient("left");
             //.ticks(10);
 
@@ -3316,7 +3517,7 @@
             var self = this;
 
             // Atribui valores a X conforme a sua escala
-            transformaX = d3.time.scale()
+            self.transformaX = d3.time.scale()
                 // Intervalo de valores que podem ser atribuidos, conforme o dominio
                 .range([0, $("#" + self.id).find(".wrapper").width() - self.margem.esquerda])
                 // Mapeia o dominio conforme a data disponivel nos dados
@@ -3324,51 +3525,80 @@
 
 
             // Atribui valores a Y conforme a sua escala
-            transformaY = d3.scale.linear()
+            self.transformaY = d3.scale.linear()
                 .domain([0, d3.max(self.chave)])
                 .range([self.altura, 0]);
 
             // Atualização da escala dos Eixos
-            self.escalaX.scale(transformaX);
-            self.escalaY.scale(transformaY);
+            self.escalaX.scale(self.transformaX);
+            self.escalaY.scale(self.transformaY);
 
     
             // Estabelecer limites para os ticks dos widgets na escala X
             self.escalaX.ticks(self.dados.dados.Widgets[0].length);
 
+            // Utiliza um formato compacto (50, 500, 5k, 50k, 500k, 5M, etc.. )
+            self.escalaY.tickFormat(d3.format("s"));
 
+
+            // Atualiza Nome do eixo do X
+            // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
+            if (self.mostraLegenda === true) {
+                self.svg.select(".nomeEixoX")
+                    .attr("dx", self.largura * 0.8 - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            } else {
+                self.svg.select(".nomeEixoX")
+                    .attr("dx", self.largura - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            }
+
+
+            // LIMITES PARA INSERIR OS EIXOS
             // Se a altura do widget for menor
-            if (self.altura <= 250) {
+            if (self.altura <= 180) {
                 // Remover nomeEixo
                 // melhorar a visualização
                 d3.select("#" + self.id).select(".nomeEixoY")
                     .text("");
-
             } else {
                 // Senão, voltar a adicionar o nome
                 d3.select("#" + self.id).select(".nomeEixoY")
                     .text(nomeEixoY);
-
             }
+            // Se a altura do widget for menor
+            if (self.largura <= 250) {
+                // Remover nomeEixo
+                // melhorar a visualização
+                d3.select("#" + self.id).select(".nomeEixoX")
+                    .text("");
+            } else {
+                // Senão, voltar a adicionar o nome
+                d3.select("#" + self.id).select(".nomeEixoX")
+                    .text(nomeEixoX);
+            }
+
+
 
 
             // Numero de representações nos eixos de acordo com o tamanho do widget
             if (self.altura > self.TamanhoLimite) {
                 self.escalaY.ticks(10);
-
             }
             if (self.altura <= self.TamanhoLimite) {
                 self.escalaY.ticks(6);
-
             }
             if (self.altura <= (self.TamanhoLimite - 100)) {
                 self.escalaY.ticks(4);
-
             }
 
             // Se largura for maior ou igual ao tamanho limite a escala X vai dispor todos os valores do dominio X
             if (self.largura > self.TamanhoLimite) {
-                //self.escalaX.tickValues(transformaX.domain());
+
             }
             // Caso seja menor ou igual, apenas dispões os numeros pares
             if (self.largura <= self.TamanhoLimite) {
@@ -3376,7 +3606,7 @@
             }
             // Caso seja apenas menor que o TamanhoLimite - 100 vai apenas dispor os numeros divisiveis por 5
             if (self.largura < (self.TamanhoLimite - 100)) {
-                //escalaX.tickValues(transformaX.domain().filter(function (d, i) { return !(i % 5); }));
+
             }
 
             // Atualização do eixo dos X
@@ -3413,15 +3643,23 @@
                 .attr("dy", ".5em")
                 .attr("transform", "rotate(-35)");
 
-            // TODO
-            // Insere nome do eixo do X
-            //self.svg.append("g")
-            //  .append("text")
-            //    .attr("class", "nomeEixoX")
-            //    .attr("x", )
-            //    .attr("y", self.altura + self.margem.cima)
-            //    .attr("dx", ".71em")
-            //      .text(nomeEixoX);
+            // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
+            if (self.mostraLegenda === true) {
+                self.svg.append("text")
+                    .attr("class", "nomeEixoX")
+                    .attr("dx", self.largura * 0.8 - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            } else {
+                self.svg.append("text")
+                    .attr("class", "nomeEixoX")
+                    .attr("dx", self.largura - 10)
+                    .attr("dy", self.altura - 5)
+                    .style("text-anchor", "end")
+                        .text(nomeEixoX);
+            }
+
 
             // Acrescentar no g a escala Y e o seu nome to-do
             self.svg.append("g")
@@ -3464,6 +3702,7 @@
             // Liga evento para modificar titulo
             //self.ModificaTitulo();
 
+
             self.setAtivo();
             self.RemoveAtivo();
 
@@ -3501,13 +3740,51 @@
         /// atualiza os elementos dentro do SVG do widget
         /// </summary>
         GraficoLinhas.prototype.Atualiza = function () {
-            var self = this;
-            
+            var self = this,
+                larguraRect = ($("#" + self.id).width() / self.dados.dados.Widgets[0].Items.length);
+
+            console.log("larguraRECT");
+            console.log(larguraRect);
+
             self.Renderiza();
             self.DesenhaSerie();
 
-        }
+            // Para cada objecto ( Ponto )
+            self.dadosEscolhidos.forEach(function (item, curIndex) {
 
+                // Largura de cada rectangulo, de acordo com o tamanho do widget
+
+                //// Para cada "variável"
+                //self.pontos.selectAll(".ponto" + curIndex)
+                //    // Ligar o valor dos pontos
+                //.data(item.values)
+                //    .attr("x", function (d) { return self.transformaX(d.date); })
+                //    .attr("y", function (d) { return self.transformaY(d.y); })
+                //    .attr("height", function (d) { return self.altura; })
+                //    .attr("width", larguraRect);
+
+
+                self.pontos.selectAll(".ponto" + curIndex)
+                    .data(item.values)
+                    .attr("cx", function (d) { return self.transformaX(d.date); })
+                    .attr("cy", function (d) { return self.transformaY(d.y); });
+
+                // Adicionar tooltip
+                if (self.mostraToolTip === true) {
+                    self.pontos.selectAll(".ponto" + curIndex)
+                    .on("mouseover", tip.show )
+                    .on("mouseout", tip.hide);
+
+                } else {
+                    self.pontos.selectAll(".rect" + curIndex)
+                    .on("mouseover", function () { })
+                    .on("mouseout", function () { });
+                }
+
+            });
+
+        }
+            
 
         /// <summary>
         /// Suaviza as linhas do gráfico através da interpolação
@@ -3517,22 +3794,22 @@
 
             if (suavizar === true) {
 
-                // Aplica o método svg.line do d3 à variável linha
-                linha = d3.svg.line()
+                // Aplica o método svg.line do d3 à variável self.linha
+                self.linha = d3.svg.line()
                     // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
-                    .x(function (d) { return transformaX(d.date); })
+                    .x(function (d) { return self.transformaX(d.date); })
                     // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
-                    .y(function (d) { return transformaY(d.y); })
+                    .y(function (d) { return self.transformaY(d.y); })
                     // Faz a interpolação para suavizar as linhas
                     .interpolate("basis");
 
             } else {
                 // Aplica o método svg.line do d3 à variável linha
-                linha = d3.svg.line()
+                self.linha = d3.svg.line()
                     // Devolve o "X" de cada valor "nome" no objecto Dados de acordo com a escala X
-                    .x(function (d) { return transformaX(d.date); })
+                    .x(function (d) { return self.transformaX(d.date); })
                     // Devolve o "Y" de cada valor "teste1" no objecto Dados de acordo com a escala Y
-                    .y(function (d) { return transformaY(d.y); });
+                    .y(function (d) { return self.transformaY(d.y); });
 
             }
 
@@ -3597,6 +3874,7 @@
 
         /// Retorna o objecto criado
         return GraficoLinhas;
+
 
     })();
 
@@ -3948,10 +4226,10 @@
                 //valorMinimo = $(".valor-minimo").val();
                 //meta = $(".valor-meta").val();
 
-                valorAtual = self.valorAtual || 1;
-                valorMaximo = self.valorMaximo || 1;
-                valorMinimo = self.valorMinimo || 1;
-                meta = self.valorMeta || 1;
+                valorAtual = self.valorAtual ;
+                valorMaximo = self.valorMaximo;
+                valorMinimo = self.valorMinimo;
+                meta = self.valorMeta;
 
 
                 // Caso valores não sejam numéricos
@@ -3975,9 +4253,12 @@
                     self.percentagem = 0;
                 }
 
+
                 // Calculada meta atual de acordo com os valores
                 meta = (((meta - valorMinimo) * 100) / (valorMaximo - valorMinimo)) / 100;
 
+                console.log(valorAtual + " - " + valorMinimo + "* 100 / ( " + valorMaximo + " - " + valorMinimo + " )) / 100");
+                console.log(self.percentagem);
 
                 // Selecionar gráfico pintado
                 d3.select("#" + self.id).select(".grafico-pintado")
@@ -4243,6 +4524,8 @@
                     // Reset ao valor da label
                     $("#" + self.id).find(".valorLabel").empty();
 
+                    console.log(self.opcoes.variavel);
+
                     // Adicionar valores
                     self.opcoes.variavel.forEach(function (objecto) {
                         $("#" + self.id).find(".valorLabel").append(objecto.nome + ": " + objecto.valor + "\n");
@@ -4257,7 +4540,7 @@
 
                 //self.VerificaValor();
 
-            }, 100);
+            }, 10000);
 
 
             //self.setValor(self.valor);
@@ -4973,7 +5256,7 @@
             // Para cada serie utilizada
             self.seriesUtilizadas.forEach(function (item) {
                 // Descobrir quais as que têm o valor de indicador correto
-                index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.ComponenteSerie })
+                index = _.findIndex(self.dadosNormal, function (serie) { return serie.name === item.Campo })
                 if (index !== -1) {
                     // Adiciona um numero a cada série para ser facilmente identificada
                     self.dadosNormal[index]["Numero"] = id++;
@@ -5393,7 +5676,7 @@
 
                 // Para cada "serie", chave
                 item.Valores.forEach(function (valor) {
-                    var index = _.findIndex(self.seriesUtilizadas, function (serie) { return serie.ComponenteSerie === valor.Nome }),
+                    var index = _.findIndex(self.seriesUtilizadas, function (serie) { return serie.Campo === valor.Nome }),
                         nomeVerificado = valor.Nome.replace(/\./g, '_');
 
                     if (index !== -1) {
@@ -5435,7 +5718,7 @@
 
             
 
-            self.OpcaoMostraDados();
+            //self.OpcaoMostraDados();
 
         }
 
@@ -5521,7 +5804,7 @@
                 console.log(valorColuna);
 
                 // Valor do indicador alterado para ser posssivel comparar
-                var nomeVerificado = valorColuna.ComponenteSerie.replace(/\./g, '_');
+                var nomeVerificado = valorColuna.Campo.replace(/\./g, '_');
 
                 // Adicionar ao array
                 colunasTabela.push({
@@ -5644,6 +5927,9 @@
 
             this.filtros = [];
 
+            // String que contém o valor por default da dropdownlist
+            this.selecionado = "";
+
         };
 
 
@@ -5687,8 +5973,8 @@
                     console.log(item);
                 // Caso o item esteja activo, por como default
                 if (item.activo === true) {
-                    $("#" + self.id).find(".filtros-opcoes").append("<option value=" + item.valor + ">" + item.label + "</option>");
-                    selecionado = item.valor;
+                    $("#" + self.id).find(".filtros-opcoes").append('<option selected="selected" value="' + item.valor + '">' + item.label + '</option>');
+                    //self.selecionado = item.valor;
                 }
                 else {
                     $("#" + self.id).find(".filtros-opcoes").append("<option value=" + item.valor + ">" + item.label + "</option>");
@@ -5697,10 +5983,10 @@
             });
 
             
-            console.log(selecionado);
+            console.log(self.selecionado);
 
             // Valor por defeito passa a ser o "activo"
-            $("#" + self.id).find(".filtros-opcoes").val(selecionado);
+            //$("#" + self.id).find(".filtros-opcoes").val(self.selecionado);
 
         }
 
@@ -5851,8 +6137,9 @@
         /// <summary>
         /// Set filtro activo
         /// </summary>
-        Filtros.prototype.setActivo = function (label) {
+        Filtros.prototype.setLabelAtivo = function (label) {
             var self = this;
+
 
             // Para cada opção
             self.opcoes.forEach(function (item) {
@@ -5863,11 +6150,8 @@
 
             });
 
-
         }
         
-
-
         return Filtros;
 
     })();
@@ -5896,10 +6180,7 @@
             this.datafinal = "Data Final";
 
             this.contexto = [];
-            this.opcoes = {
-                "dataInicio": "2015-01-01",
-                "dataFim": "2015-01-20"
-            };
+            this.opcoes = {};
 
             this.widgetTipo = "contexto";
             this.widgetElemento = "datahora_simples";
@@ -5941,6 +6222,7 @@
         Data.prototype.ConstroiSVG = function () {
             var self = this;
 
+            console.log(self.objectoServidor);
 
             // Linguagem do browser ( Para motivos de Locale )
             var linguagem = "pt";
@@ -5995,6 +6277,9 @@
                 showClose: true
             });
 
+            self.svg = $("#" + self.id).find(".wrapper").append("<button type=\"button\" class=\"atualizaWidgetData\">Atualizar</button>")
+
+            self.EventoAtualizaWidgets();
 
             // Método que impõe os eventos de limite de data aos "pickers"
             self.LimitaDatas();
@@ -6034,7 +6319,7 @@
 
         //TO-DO
         /// <summary>
-        /// Método que atualiza a tabela, p.ex a sua escala ou os dados
+        /// Método que atualiza o widget
         /// </summary>
         Data.prototype.Atualiza = function () {
             var self = this
@@ -6080,8 +6365,9 @@
                 mes = ("0" + (self.opcoes.dataInicio.getMonth() + 1)).slice(-2);
                 dia = ("0" + self.opcoes.dataInicio.getDate()).slice(-2);
 
+               
                 // Passa o objecto data para o formato ideal para o widget guardar
-                self.opcoes.dataInicio = self.opcoes.dataInicio.getFullYear() + "-" + mes + "-" + self.opcoes.dataInicio.getDate();
+                self.opcoes.dataInicio = self.opcoes.dataInicio.getFullYear() + "-" + mes + "-" + dia;
 
                 self.Atualiza();
             }
@@ -6103,8 +6389,9 @@
 
                 mes = ("0" + (self.opcoes.dataFim.getMonth() + 1)).slice(-2);
                 dia = ("0" + self.opcoes.dataFim.getDate()).slice(-2);
+
                 // Passa o objecto data para o formato ideal para o widget guardar
-                self.opcoes.dataFim = self.opcoes.dataFim.getFullYear() + "-" + mes + "-" + self.opcoes.dataFim.getDate();
+                self.opcoes.dataFim = self.opcoes.dataFim.getFullYear() + "-" + mes + "-" + dia;
                 self.Atualiza();
 
             }
@@ -6161,19 +6448,41 @@
         /// </summary>
         /// <param name="widget"> Recebe os dados de um widget </param>
         Data.prototype.FiltraDados = function (widget) {
-            var self = this;
+            var self = this,
+                opcoes;
 
             // Datas do filtro convertidas para serem comparadas
             dataInicioFiltro = Date.parse(self.opcoes.dataInicio),
             dataFimFiltro = Date.parse(self.opcoes.dataFim);
 
-            console.log("Filtra Dados");
-            console.log(widget);
+            // Adiciona ID ao objecto opcoes para o pedido ao primerCORE
+            opcoes = self.opcoes;
+            opcoes["id"] = self.id;
 
+            if (opcoes.dataInicio === undefined || opcoes.dataFim === undefined) {
+                alert("Data no widget contexto são invalidas");
+            } else {
+                widget.setDados(opcoes);
+            }
             //if (widget.seriesUtilizadas > 0) {
-                widget.setDados(self.opcoes);
 
             //}
+
+        }
+
+
+        /// <summary>
+        /// Atualiza todos os widgets data
+        /// </summary>
+        Data.prototype.EventoAtualizaWidgets = function () {
+            var self = this;
+
+            $("#"+self.id).find(".atualizaWidgetData").click(function () {
+                console.log("ATUALIZA WIDGETS");
+                self.contexto.forEach(function (widgetID) {
+                    gridPrincipal.RefreshWidget(widgetID);
+                });
+            });
 
         }
 
@@ -6284,6 +6593,8 @@
     var PropertyGrid = (function(){
         var widget,
             widgetID,
+            // Compara se está a saltar de widgets equivalentes ( Especial para Labels)
+            flag,
             // Objecto com todos os valores inciais da dashboard ( Indicadores )
             dadosIniciais,
             // Valores que podem ser pesquisados
@@ -6818,6 +7129,9 @@
                         self.propriedadesDados["Nome-" + index] = serie.Nome || "Serie" + index;
                         self.propriedadesDados["Pesquisa-" + index] = serie.Pesquisa || "";
                         self.propriedadesDados["ComponenteSerie-" + index] = serie.ComponenteSerie;
+                        // Preenche o componente do campo
+                        self.PreencheCampo(index, serie.ComponenteSerie);
+
                         self.propriedadesDados["Campo-" + index] = serie.Campo;
                         self.propriedadesDados["Funcao-" + index] = serie.Funcao;
                         self.propriedadesDados["Quebra-" + index] = " ";
@@ -6899,7 +7213,7 @@
                 var valorInicial = "";
                     
 
-                // Encontra valor do componente de dados ques e encontra ligado
+                // Encontra valor do componente de dados que se encontra ligado
                 gridPrincipal.getWidget(widgetID).contexto.forEach(function (valor) {
                     if (gridPrincipal.getWidget(valor).widgetElemento === "datahora_simples") {
                         valorInicial = gridPrincipal.getWidget(valor).id;
@@ -6910,12 +7224,16 @@
                 self.propriedadesGeral["Nome"] = gridPrincipal.getWidget(widgetID).titulo;
                 self.propriedadesGeral["Descricao"] = gridPrincipal.getWidget(widgetID).descricao;
 
+
+
                 //self.propriedadesDados["Fixo"] = (gridPrincipal.getWidget(self.widgetID).fixo === undefined) ? "" : gridPrincipal.getWidget(self.widgetID).fixo;
                 self.propriedadesDados["ComponenteContexto"] = (valorInicial === "") ? "" : valorInicial;
 
             }
 
             if (self.propertyGridElemento === "data") {
+
+                console.log(gridPrincipal.getWidget(self.widgetID));
 
                 //Encontra valor do componente a que está ligado
                 gridPrincipal.getWidget(self.widgetID).contexto.forEach(function (valor) {
@@ -6951,11 +7269,17 @@
             var self = this,
                 index = 1;
 
+
+            console.log(series);
+
             if (series !== undefined) {
                 series.forEach(function (serie) {
                     self.propriedadesDados["Nome-" + index] = serie.Nome || "Serie"+index;
                     self.propriedadesDados["Pesquisa-" + index] = serie.Pesquisa || "";
                     self.propriedadesDados["ComponenteSerie-" + index] = serie.ComponenteSerie;
+                    // Preenche o campo de acordo com a ComponenteSerie
+                    self.PreencheCampo(index, serie.ComponenteSerie);
+
                     self.propriedadesDados["Campo-" + index] = serie.Campo;
                     self.propriedadesDados["Funcao-" + index] = serie.Funcao;
                     self.propriedadesDados["Quebra-" + index] = " ";
@@ -6969,6 +7293,9 @@
                     self.propriedadesDados["Nome-" + index] = serie.Nome;
                     self.propriedadesDados["Pesquisa-" + index] = serie.Pesquisa;
                     self.propriedadesDados["ComponenteSerie-" + index] = serie.ComponenteSerie;
+                    // Preenche o campo de acordo com a ComponenteSerie
+                    self.PreencheCampo(index, serie.ComponenteSerie);
+
                     self.propriedadesDados["Campo-" + index] = serie.Campo;
                     self.propriedadesDados["Funcao-" + index] = serie.Funcao;
                     self.propriedadesDados["Quebra-" + index] = " ";
@@ -6978,7 +7305,7 @@
             });
 
             }
-
+        
         }
 
         // Preenche filtros do widget na PropertyGrid
@@ -7052,6 +7379,30 @@
             }
 
         }
+
+
+        // Preenche Campo conforme o Indicador que foi selecionado
+        PropertyGrid.PreencheCampo = function (valor, indicador) {
+            var self = this,
+                valores = [];
+
+            console.log(self.dadosIniciais.dados[indicador]);
+
+            // Caso o indicador não seja por defeito ou indefinido
+            if (indicador !== "Selecione Indicador" && indicador !== undefined) {
+                // Para todos os dados iniciais desse indicador
+                self.dadosIniciais.dados[indicador].forEach(function (item) {
+                    valores.push("valor."+item.Nome);
+                });
+
+                console.log(valores);
+
+                self.inicializaDados["Campo-"+valor] =  { name: "Campo:", group: "Series", type: "options", options: valores, description: "Campos para ordenar os dados", showHelp: false };
+
+                };          
+
+        }
+
 
         /// #Region
 
@@ -7296,6 +7647,8 @@
 
             self.widgetID = $(".widget-ativo").attr("id");
 
+            
+
             self.Inicializa();
             self.ResetWidgets();
 
@@ -7317,32 +7670,44 @@
             
             self.propertyGridElemento = "Etiqueta";
 
+            console.log(gridPrincipal.getWidget(self.widgetID).tipo);
+
+            console.log(flag === self.widgetID);
+
+
             // Conforme o seu tipo, definir o menu
             self.DefineMenuLabel(gridPrincipal.getWidget(self.widgetID).tipo)
+                        
+            if (flag !== undefined) {
+                if (flag === self.widgetID) {
+                    // Verificar se Label tem um tipo seleccionado
+                    if ($(".propertyGrid").find('[value="CheckboxValor"]').is(":checked")) {
+                        console.log("VALOR");
+                        self.DefineMenuLabel("valor");
+                        // Guarda valor escolhido
+                        gridPrincipal.getWidget(self.widgetID).tipo = "valor";
 
+                        // Caso a Checkbox Variavel seja true ou     o tipo seja variavel
+                    } else if ($(".propertyGrid").find('[value="CheckboxVariavel"]').is(":checked")) {
+                        console.log("VARIAVEL");
+                        self.DefineMenuLabel("variavel");
+                        // Guarda valor escolhido
+                        gridPrincipal.getWidget(self.widgetID).tipo = "variavel";
 
-            // Verificar se Label tem um tipo seleccionado
-            if ($(".propertyGrid").find('[value="CheckboxValor"]').is(":checked")) {
-                self.DefineMenuLabel("valor");
-                // Guarda valor escolhido
-                CheckboxEscolhida = "valor";
+                        // Caso a Checkbox Texto seja true ou o tipo seja texto
+                    } else if ($(".propertyGrid").find('[value="CheckboxTexto"]').is(":checked")) {
+                        console.log("TEXTO");
+                        self.DefineMenuLabel("texto");
+                        // Guarda valor escolhido
+                        gridPrincipal.getWidget(self.widgetID).tipo = "texto";
 
-            // Caso a Checkbox Variavel seja true ou o tipo seja variavel
-            } else if ($(".propertyGrid").find('[value="CheckboxVariavel"]').is(":checked")) {
-                self.DefineMenuLabel("variavel");
-                // Guarda valor escolhido
-                CheckboxEscolhida = "variavel";
-
-            // Caso a Checkbox Texto seja true ou o tipo seja texto
-            } else if ($(".propertyGrid").find('[value="CheckboxTexto"]').is(":checked")) {
-                self.DefineMenuLabel("texto");
-                // Guarda valor escolhido
-                CheckboxEscolhida = "texto";
+                    }
+                }
 
             }
 
             // Constroi e inicializa
-            self.PreencheLabel(CheckboxEscolhida);
+            self.PreencheLabel(gridPrincipal.getWidget(self.widgetID).tipo);
             self.ConstroiGrid();
 
             // Passa para o menu inicial
@@ -7351,6 +7716,9 @@
             self.EventoMostraGridAtual();
             self.TogglePermissao();
 
+
+
+            // Preencher Checkbox de opção
 
             // Verificar se Label tem um tipo seleccionado
             if (CheckboxEscolhida === "valor") {
@@ -7381,6 +7749,9 @@
                 }
 
             }
+
+            // Flag para comparar os widgets no inicio
+            flag = self.widgetID;
 
         }
 
@@ -7430,6 +7801,47 @@
         }
 
 
+        PropertyGrid.EventoMudaCheckBox = function () {
+            var self = this;
+
+
+            $(".propertyGrid").find('[value="CheckboxValor"]').change(function () {
+                gridPrincipal.getWidget($(".widget-ativo").attr(id)).tipo = "valor";
+            });
+            $(".propertyGrid").find('[value="CheckboxVariavel"]').change(function () {
+
+                gridPrincipal.getWidget($(".widget-ativo").attr(id)).tipo = "variavel";
+            });
+            $(".propertyGrid").find('[value="CheckboxTexto"]').change(function () {
+                gridPrincipal.getWidget($(".widget-ativo").attr(id)).tipo = "texto";
+            });
+
+            //// Verificar se Label tem um tipo seleccionado
+            //if ($(".propertyGrid").find('[value="CheckboxValor"]').is(":checked")) {
+            //    console.log("VALOR");
+            //    self.DefineMenuLabel("valor");
+            //    // Guarda valor escolhido
+            //    CheckboxEscolhida = "valor";
+
+            //    // Caso a Checkbox Variavel seja true ou o tipo seja variavel
+            //} else if ($(".propertyGrid").find('[value="CheckboxVariavel"]').is(":checked")) {
+            //    console.log("VARIAVEL");
+            //    self.DefineMenuLabel("variavel");
+            //    // Guarda valor escolhido
+            //    CheckboxEscolhida = "variavel";
+
+            //    // Caso a Checkbox Texto seja true ou o tipo seja texto
+            //} else if ($(".propertyGrid").find('[value="CheckboxTexto"]').is(":checked")) {
+            //    console.log("TEXTO");
+            //    self.DefineMenuLabel("texto");
+            //    // Guarda valor escolhido
+            //    CheckboxEscolhida = "texto";
+
+            //}
+        }
+
+
+
         /// #Region 
 
 
@@ -7470,6 +7882,8 @@
                     alert("ERRO - (AdicionaAssociacao) Widget indefinido");
                     return;
                 }
+
+                console.log(widget1);
 
                 if ((_.findIndex(widget1.contexto, function (contexto) { return gridPrincipal.getWidget(contexto).widgetTipo === "contexto" })) === -1) {
 
@@ -7679,7 +8093,6 @@
                 // Widgets a serem associados
                 widget1;
 
-
             // ID do widget contexto
             widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
 
@@ -7691,9 +8104,16 @@
             gridPrincipal.RefreshWidget(widget1.id);
             //gridPrincipal.FiltraContexto();
 
+
+            // Atualizações
             gridPrincipal.getWidget(self.widgetID).AtualizaOpcoesProperty(objPropertyGridGeral, objPropertyGridDados, objPrpertyGridAparencia);
             gridPrincipal.getWidget(self.widgetID).Atualiza();
 
+            console.log(widget1.opcoes.length);
+            // Caso só haja um filtro, meter esse filtro como activo
+            if(widget1.opcoes.length === 1) {
+                widget1.setLabelAtivo(widget1.opcoes[0].label);
+            }
         }
 
         // widget Gauge
@@ -7705,12 +8125,23 @@
                 // Widgets a serem associados
                 widget1;
 
+            if(objPropertyGridDados.valorAtual > objPropertyGridDados.valorMaximo) {
+                alert("Valor atual é superior ao valor máximo");
+            } else if (objPropertyGridDados.valorMinimo > objPropertyGridDados.valorMaximo) {
+                alert("Valor minimo é superior ao valor máximo");
+            } else if (objPropertyGridDados.valorMinimo > objPropertyGridDados.valorAtual){
+                alert("Valor minimo é superior ao valor atual");
+            } else if (objPropertyGridDados.valorMeta > objPropertyGridDados.valorMáximo) {
+                alert("Valor meta é superior ao valor máximo");
+            } else if (objPropertyGridDados.valorMeta < objPropertyGridDados.valorMinimo) {
+                alert("Valor meta é inferior ao valor minimo");
+            } else {
+                // ID do widget contexto
+                widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
+                widget1.AtualizaOpcoesProperty(objPropertyGridDados, objPropertyGridGeral);
 
-            // ID do widget contexto
-            widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
-
-            widget1.AtualizaOpcoesProperty(objPropertyGridDados, objPropertyGridGeral);
-
+            }
+            
         }
 
         // widget Label (KPI)
@@ -7837,6 +8268,9 @@
         // Atualiza a PropertyGrid de acordo com o tipo de widget
         PropertyGrid.AtualizaPropertyGrid = function () {
             var self = this;
+
+            console.log("PROPERYGRID ELEMENTO");
+            console.log(self.propertyGridElemento);
 
             if (self.propertyGridElemento === "dashboard") {
                 self.AtualizaDashboard();
@@ -8022,6 +8456,8 @@
                     self.AdicionaSerie();
                     self.AdicionaMenuPeriodo();
 
+                    console.log(self.propriedadesDados);
+
                 } else {
                     if (permissao === false) {
                         alert("Chegou ao número máximo de séries para este Widget")
@@ -8046,8 +8482,13 @@
             $(document).on("click", ".removeSerie-propertyGrid", function () {
                 var widget = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
 
+                console.log($(this).attr("value"));
+                console.log(widget.seriesUtilizadas.length);
+
+                console.log($(this).attr("value") <= widget.seriesUtilizadas.length);
+
                 // Caso não hajam séries guardadas
-                if (widget.seriesUtilizadas.length === 0) {
+                if (widget.seriesUtilizadas.length === 0 || $(this).attr("value") > widget.seriesUtilizadas.length ) {
                     
                     //// TODO ATUAL
                     objectoSeries = self.GuardaSeries();
@@ -8291,7 +8732,7 @@
 
                 // Para cada um dos parametros possiveis para o Indicador
                 self.dadosIniciais.dados[$(this).val()].forEach(function (item) {
-                    $("#Campo-" + id).append('<option value="' + item.Nome + '">valor.' + item.Nome + '</option>')
+                    $("#Campo-" + id).append('<option value="valor.' + item.Nome + '">valor.' + item.Nome + '</option>')
 
                 });
 
@@ -8429,6 +8870,7 @@
             // Constroi a grid
             $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
 
+            console.log(objectoSeries);
             self.PreencheSeries(objectoSeries);
 
             // Liga o evento de atualização ao botão
@@ -8475,7 +8917,6 @@
             var self = this,
                 valorInicial = "";
 
-            console.log(self.listaWidgetsContexto);
 
             self.inicializaDados["Fixo"] = { name: "Fixo:", group: "Periodo", type: "options", options: FixoPeriodo, description: "Analisar numa data fixa", showHelp: false };
             self.inicializaDados["ComponenteContexto"] = { name: "Componente Data", group: "Periodo", type: "options", options: self.listaWidgetsContexto, description: "Analisar através de um widget", showHelp: false };
@@ -8485,6 +8926,9 @@
 
             // Preenche valores por defeito
             self.PreencheValores();
+
+            console.log(self.propriedadesDados);
+            console.log(self.inicializaDados);
 
             $('#propGridDados').jqPropertyGrid(self.propriedadesDados, self.inicializaDados);
 
@@ -8603,6 +9047,12 @@
             self.descricao = "Dashboard de indicadores";
             self.idUnico = idUnico++;
 
+            self.aparencia = {
+                grelha: true
+            };
+
+            self.grelha = true;
+
             self.Inicializa();
         }
 
@@ -8623,6 +9073,7 @@
             // Inicialização da "grid" com as opcoes enviadas no construtor
             self.opcoes["gridObject"] = self;
             self.opcoes["PropertyGrid"] = PropertyGrid;
+            self.opcoes["platformObject"] = Utilizador;
             self.grid.gridstack(self.opcoes);
 
             if (self.id === "main-gridstack") {
@@ -8656,6 +9107,7 @@
                 self.VerTabela();
                 self.EventoGridAtiva();
                 self.EventoRemoveGridAtiva();
+                self.EventoToggleGrelha();
             }
 
         }
@@ -8675,6 +9127,9 @@
                 $("#" + self.id).css("background-color", cor);
 
             }
+
+            self.aparencia["cor"] = cor;
+
 
         }
 
@@ -8941,24 +9396,50 @@
             // TODO
             // ATUAL
             
-            
+            //if (tipoGrid === undefined ) {
+                tipo = self.getWidgetsGrid();
 
-            tipo = self.getWidgetsGrid();
 
-            // Caso tenha a class
-            if ($("#" + self.id).closest("li").hasClass("active")) {
-                // Apaga todos os elementos anteriores
-                $("#" + self.id).data("gridstack").removeAll();
+                // Caso tenha a class
+                if ($("#" + self.id).closest("li").hasClass("active")) {
+                    // Apaga todos os elementos anteriores
+                    $("#" + self.id).data("gridstack").removeAll();
 
-                // Para cada widget adiciona
-                tipo.forEach(function (item) {
-                    self.AdicionaWidget(item, item, undefined, 12, 1);
+                    // Para cada widget adiciona
+                    tipo.forEach(function (item) {
+                        self.AdicionaWidget(item, item, undefined, 12, 1);
 
-                });
-            } else {
-                $("#sidebar-gridstack").children().remove()
+                    });
+                } else {
+                    $("#sidebar-gridstack").children().remove()
 
-            }
+                }
+
+            // Caso receba um parametro TipoGrid
+            //} else {
+
+            //    console.log(tipoGrid);
+                
+            //    tipo = tipoGrid + getWidgetsGrid();
+
+            //    tipo = [tipoGrid + "-gridstack"].getWidgetsGrid();
+
+            //    // Caso tenha a class
+            //    if ($("#" + tipoGrid + "-gridstack").closest("li").hasClass("active")) {
+            //        // Apaga todos os elementos anteriores
+            //        $("#" + tipoGrid + "-gridstack").data("gridstack").removeAll();
+
+            //        // Para cada widget adiciona
+            //        tipo.forEach(function (item) {
+            //            [tipoGrid + "-gridstack"].AdicionaWidget(item, item, undefined, 12, 1);
+
+            //        });
+            //    } else {
+            //        $("#sidebar-gridstack").children().remove()
+
+            //    }
+
+            //}
 
         }
 
@@ -9010,44 +9491,49 @@
                     var widgetNovo,
                         idOriginal;
 
+                    if (item !== null) {
+                        // Guardar o id original
+                        idOriginal = item.id;
 
-                    // Guardar o id original
-                    idOriginal = item.id;
+                        // Adicionar um novo widget na grid
+                        self.AdicionaWidget(item.widgetElemento, item.titulo, null, item.widgetLargura, item.widgetAltura, item.widgetX, item.widgetY, true, idOriginal);
 
-                    // Adicionar um novo widget na grid
-                    self.AdicionaWidget(item.widgetElemento, item.titulo, null, item.widgetLargura, item.widgetAltura, item.widgetX, item.widgetY, true, idOriginal);
-
-                    // WidgetNovo é o ultimo  a ser criado
-                    widgetNovo = gridPrincipal.listaWidgets[gridPrincipal.listaWidgets.length - 1];
+                        // WidgetNovo é o ultimo  a ser criado
+                        widgetNovo = gridPrincipal.listaWidgets[gridPrincipal.listaWidgets.length - 1];
 
 
-                    // Para cada propriedade no objecto
-                    $.each(item, function (chave, valor) {
-                        // Caso não seja função
-                        if (typeof valor !== "function") {
-                            widgetNovo[chave] = valor;
+                        // Para cada propriedade no objecto
+                        $.each(item, function (chave, valor) {
+                            // Caso não seja função
+                            if (typeof valor !== "function") {
+                                widgetNovo[chave] = valor;
+                            }
+
+                        });
+
+                        // Caso seja widget do tipo Filtros
+                        if (widgetNovo.widgetElemento === "filtros") {
+                            // Atualizar o widget para que este mostre os filtros 
+                            widgetNovo.Atualiza();
                         }
 
-                    });
+                        // Atualiza o titulo
+                        widgetNovo.setTitulo(widgetNovo.titulo);
 
-                    // Caso seja widget do tipo Filtros
-                    if (widgetNovo.widgetElemento === "filtros") {
-                        // Atualizar o widget para que este mostre os filtros 
-                        widgetNovo.Atualiza();
+                        //  Definir as dimensões minimas na grid
+                        self.DefineLimitesWidget(widgetNovo.id);
+
+                        // Caso seja um widget do tipo gauge
+                        if (widgetNovo.widgetElemento === "gauge") {
+                            widgetNovo.Atualiza();
+                        }
+                        // Caso seja um widget do tipo Data
+                        if (widgetNovo.widgetElemento === "datahora_simples") {
+                            // Atualiza datas nos datetimepickers respectivos
+                            $("#datetimepicker-" + widgetNovo.id).data("DateTimePicker").date(moment(widgetNovo.opcoes.dataInicio));
+                            $("#datetimepicker2-" + widgetNovo.id).data("DateTimePicker").date(moment(widgetNovo.opcoes.dataFim));
+                        }
                     }
-
-
-                    // Atualiza o titulo
-                    widgetNovo.setTitulo(widgetNovo.titulo);
-
-                    //  Definir as dimensões minimas na grid
-                    self.DefineLimitesWidget(widgetNovo.id);
-
-                    // Caso seja um widget do tipo gauge
-                    if (widgetNovo.widgetElemento === "gauge") {
-                        widgetNovo.Atualiza();
-                    }
-
                 });
 
 
@@ -9079,6 +9565,8 @@
                 }
 
             });
+
+
         }
 
         /// <summary>
@@ -9163,6 +9651,28 @@
 
         }
 
+        
+        /// <summary>
+        /// Carrega os componentes de aparencia
+        /// </summary>
+        Grid.prototype.CarregaAparencia = function () {
+            var self = this;
+
+            console.log(self);
+
+            // Caso as opções digam que não existe grelha
+            if (!(self.aparencia.grelha)) {
+                self.ToggleGrelha();
+            }
+
+            
+            console.log(self.aparencia.cor);
+
+            // Verifica cor?
+            
+            // TODO ....
+            
+        }
 
         /// #Region
 
@@ -9202,6 +9712,20 @@
                     // Seleciona o id do widget
                     widget = $(this).closest(".grid-stack-item-content").attr("id");
 
+                // Caso o widget tenha contexto
+                if (self.getWidget(widget).contexto.length > 0) {
+                    // Desassociar o contexto Data do widget
+                    self.getWidget(self.getWidget(widget).contexto[0]).DesassociaWidget(widget);
+                }
+                if (self.getWidget(widget).contextoFiltro.length > 0) {
+                    // Para cada filtro
+                    self.getWidget(widget).contextoFiltro.forEach(function (filtro) {
+                        // Desassociar do widget
+                        self.getWidget(filtro).DesassociaWidget(widget);
+                    });
+                }
+
+                // Remove o widget da lista
                 self.RemoveWidgetLista(widget);
 
                 // Chamar a grid e o método da biblioteca do gridstack para remover o widget
@@ -9278,6 +9802,9 @@
 
                     });
 
+                    // "Puxa" widget atual para o topo da lista, por motivos de imposição de CSS
+                    $(".widget-ativo").parent().appendTo($(".widget-ativo").parent().parent());
+                    
                     // Guarda informação
                     self.GuardaInformacao();
                 }, 20);
@@ -9287,6 +9814,10 @@
             // Sempre que moverem um widget
             $(self.grid).on("dragstop", function (event, items) {
                 setTimeout(function () {
+
+                    // "Puxa" widget atual para o topo da lista, por motivos de imposição de CSS
+                    $(".widget-ativo").parent().appendTo($(".widget-ativo").parent().parent());
+
                     // Guarda informação
                     self.GuardaInformacao();
                 }, 20);
@@ -9296,6 +9827,10 @@
             // Sempre que houver mudanças na grid
             $(self.grid).on("added", function (event, items) {
                 setTimeout(function () {
+
+                    // "Puxa" widget atual para o topo da lista, por motivos de imposição de CSS
+                    $(".widget-ativo").parent().appendTo($(".widget-ativo").parent().parent());
+
                     // Guarda informação
                     self.GuardaInformacao();
                 }, 20);
@@ -9457,12 +9992,41 @@
 
         }
 
+        /// <summary>
+        /// Activa/Desactiva a grelha da gridprincipal
+        Grid.prototype.EventoToggleGrelha = function () {
+            var self = this;
+
+            // Evento para remover/adicionar grelha
+            $(".propriedades-sidebar").on("change", "[value='Grelha']", function () {
+                self.ToggleGrelha();
+
+            });
+        }
+
 
         /// #Region
 
 
 
         /// #Region - UTILS
+
+
+        /// <summary>
+        /// Activa/desactiva a grelha
+        /// </summary>
+        Grid.prototype.ToggleGrelha = function () {
+            var self = this;
+
+            $("#main-gridstack").toggleClass("gridstack-background");
+            if (self.grelha) {
+                gridPrincipal.grelha = false;
+            } else {
+                gridPrincipal.grelha = true;
+            }
+
+        }
+
 
         /// <summary>
         /// Define tamanhos limite dos widgets nesta Grid
@@ -9709,6 +10273,9 @@
             gridPrincipal.setNome(gridPrincipal.nome);
             gridPrincipal.setDescricao(gridPrincipal.descricao);
 
+            // TODO
+            gridPrincipal.CarregaAparencia();
+
         }
         
 
@@ -9763,6 +10330,22 @@
 
 
         /// <summary>
+        /// Volta a repor a grid lateral
+        /// Utiliza função eval() para ir buscar os argumentos 
+        /// </summary>
+        Plataforma.prototype.RefillGrid = function (tipoGrid) {
+            var self = this;
+
+            // REVER !!!!!
+            // TODO
+            // Conforme o tipo de grid, chamar a grid lateral correspondente e chamar o método
+            // PreencheBarraLateral para poder executar 
+            eval(tipoGrid + "." + "PreencheBarraLateral" + "()");
+
+        }
+
+
+        /// <summary>
         /// Cria menu barraSecundária para poder adicionar Widgets ao dashboard
         /// <summary>
         Plataforma.prototype.AdicionaBarraSecundaria = function () {
@@ -9777,6 +10360,7 @@
                 disableResize: true,
                 gridType: "barraSecundaria-gridstack"
             }
+
 
             if (modo === "edicao") {
                 // Criação da grid secundária
@@ -9885,6 +10469,8 @@
             objectoDashboard["Descricao"] = dashboard.descricao;
             objectoDashboard["OpcoesAparencia"] = " ";
 
+            console.log(gridPrincipal);
+            
             // Passa para um objecto
             objectoDashboard["Configuracao"] = JSON.stringify(listaWidgetsDashboard);
 
@@ -9914,7 +10500,7 @@
                 objectoDashboard["Nome"] = gridPrincipal.nome;
                 objectoDashboard["ID"] = gridPrincipal.idUnico;
                 objectoDashboard["Descricao"] = gridPrincipal.descricao;               
-                objectoDashboard["opcoesAparencia"] = " ";
+                objectoDashboard["opcoesAparencia"] = gridPrincipal.aparencia;
 
                 console.log(gridPrincipal.listaWidgets);
 
@@ -9922,6 +10508,13 @@
                 gridPrincipal.listaWidgets.forEach(function (item, curIndex) {
                     listaWidgetsDashboard.push(item.objectoServidor);
                 });
+
+
+                           
+                // TODO ATUAL, Guardar 
+                //var teste1 = listaWidgetsDashboard.push(gridPrincipal.opcoesAparencia);
+
+                //console.log(JSON.stringify(listaWidgetsDashboard));
 
                 // Passa para um objecto
                 objectoDashboard["Configuracao"] = JSON.stringify(listaWidgetsDashboard);
@@ -9985,14 +10578,25 @@
         Plataforma.prototype.RemoveDashboard = function () {
             var self = this;
 
-            // Remove widgets do gridstack
-            $("#main-gridstack").data("gridstack").removeAll();
+            if(GetURLParameter("dashboard") !== "new"){
+            // Caso o utilizador confirme
+                if (confirm("Pretende apagar permanentemente o seu Dashboard ?")) {
 
-            // Limpa lista de widgets da gridPrincipal
-            gridPrincipal.listaWidgets = [];
+                    // Pedido ao servidor para remover a dashboard selecionada
+                    primerCORE.DashboardApaga(Utilizador.dashboardAtual);
+                    window.open('db_lista.html', '_self', false);
 
+                    //// Remove widgets do gridstack
+                    //$("#main-gridstack").data("gridstack").removeAll();
+
+                    //// Limpa lista de widgets da gridPrincipal
+                    //gridPrincipal.listaWidgets = [];
+                }
+            } else {
+                alert("Dashboard não foi guardado ainda");
+            }
             // Remove da lista de dashboards do utilizador o dashboard atual
-            self.listaDashboards =  _.remove(self.listaDashboards, function (dashboard) { return dashboard.Nome === self.listaDashboards[getDashboardAtual()].Nome; });
+            //self.listaDashboards =  _.remove(self.listaDashboards, function (dashboard) { return dashboard.Nome === self.listaDashboards[getDashboardAtual()].Nome; });
 
         }
 
@@ -10190,11 +10794,16 @@
 
 
     // Evento para remover/adicionar grelha
-    $(".propriedades-sidebar").on("change", "[value='Grelha']", function(){
+    //$(".propriedades-sidebar").on("change", "[value='Grelha']", function(){
+    //    $("#main-gridstack").toggleClass("gridstack-background");
 
-        $("#main-gridstack").toggleClass("gridstack-background");
+    //    if (gridPrincipal.grelha) {
+    //        gridPrincipal.grelha = false;
+    //    } else {
+    //        gridPrincipal.grelha = true;
+    //    }
 
-    });
+    //});
     
     
     $(".adicionaTeste").click(function () {

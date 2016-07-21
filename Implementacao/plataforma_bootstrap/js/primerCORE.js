@@ -506,7 +506,12 @@ primerCORE = (function () {
     objecto.DashboardDevolveWidget = function (widget, opcoes, filtros, dashboardID, utilizadorID) {
 
         var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/valores?sessaoID=sessaoDebug",
-            series;
+            series,
+            pesquisa,
+            index = 0,
+            contexto = '',
+            intervaloData = ["seconds", "hours", "minutes", "days", "weeks", "months", "years"],
+            intervaloDataPT = ["Segundo", "Hora", "Minutos", "Dia", "Semana", "Mes", "Ano"];
 
         //query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12", "utilizadorID": "'+ utilizadorID +'", "widgetsDados":'
         //        + '[{ "id": "'+ widget.id +'", '
@@ -524,14 +529,30 @@ primerCORE = (function () {
         //                            + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
 
 
+        // years, months, weeks, days, hours, minutes, and seconds. 
+        
+        // Enquanto a diferença das datas for maior que 30 num determinado intervalo, seja dias, meses, etc
+        // vai avançando no array a testar novos intervalos
+        // Com isto ée pretendido achar o numero ideal de dados a dispor, sem causar grande sobrecarga
+        // nos pedidos/aplicação
+        
+        console.log(moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]));
+
+
+        while (moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]) > 40) {
+            console.log(moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]) > 40);
+            index++;
+        }
+
+
+        console.log(intervaloData[index]);
+
         // Preparar todas as séries para a query
         series = '[';
         widget.seriesUtilizadas.forEach(function (item, index) {
-            console.log(widget.seriesUtilizadas.length);
-            console.log(index);
             // Para não ir buscar o ultimo campo (proto)
             if (widget.seriesUtilizadas.length > index) {
-                series += '{ "funcao": "' + item.Funcao + '", "campo": "' + item.Campo + '", "index": "indicadores", "type": "" },';
+                series += '{ "funcao": "' + item.Funcao + '", "campo": "' + item.Campo + '", "index": "indicadores", "type": "", "query": "' + item.Pesquisa + '" },';
             }
         });
         series += '],';
@@ -539,31 +560,38 @@ primerCORE = (function () {
 
         // Preparar todas as pesquisas para a query
         pesquisa = '{ "contextoPesquisa": [';
+        // Para todos os contextoFiltro
         widget.contextoFiltro.forEach(function (item, curIndex) {
-            if (filtros[curIndex] !== undefined) {
-                pesquisa +=  '{ "id": "' + item + '", "tipo": "contexto", "filtro": "' + filtros[curIndex].valor + '" }, ';
+            console.log(curIndex);
+            console.log(filtros);
+            // Caso o filtro esteja disponivel
+            if (item !== undefined) {
+                pesquisa += '{ "id": "' + item + '", "tipo": "contexto", "filtro": "' + filtros[curIndex].valor + '" }, ';
+                contexto += ', "' + item + '"';
             } else {
-                alert("Erro com um dos filtros");
+                alert("ERRO - Filtro não disponivel para pedido");
             }
 
         })
+
+        // Adicionar pesquisa
+        //widget.seriesU
+        //pesquisa += '{ "id": "' + widget.id + '", "tipo": "contexto", "filtro": "' + filtros[curIndex].valor + '" }, ';
+
         pesquisa += '],';
-
-
-        console.log(series);
 
 
         //series = '[{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Somatorio", "campo": "valor.valorMin", "index": "indicadores", "type": "" }],';
 
-        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
+        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "' + dashboardID + '", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
                 + '[{ "id": "' + widget.id + '", '
                 + '"tipo": "dados",'
                 + '"elemento": "' + widget.widgetElemento + '", '
-                + '"contexto": ["widget3", "widget4", "widget8"], '
+                + '"contexto": ["'+ opcoes.id +'"'+ contexto + '], '
                 + '"series":' + series
-                + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "dia" }] }], '
+                + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "'+ intervaloDataPT[index] + '" }] }], '
                 + '"widgetsContexto":' + pesquisa
-                + '"contextoData": [{ "id": "widget8", "campo": "data", '
+                + '"contextoData": [{ "id": "' + opcoes.id + '", "campo": "data", '
                                     + '"dataInicio": \"' + opcoes.dataInicio + '\",  '
                                     + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
 
