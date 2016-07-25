@@ -104,19 +104,24 @@
 
 
     .dashboard-coluna {
+        box-shadow: -15px 0 15px -15px inset, 15px 0 15px -15px inset;
+
         padding-right: 15px;
-        padding-left: 0 !important;
+        padding-left: 15px;
+
+        background-color: white;
     }
 
 
     #wrapper {
         height: 100%;
         width: 100%;
+
     }
 
 
     #page-wrapper {
-        padding: 0 0 0 20px !important;
+        padding: 0 !important;
         background-color: #fff;
         box-shadow: 3px 0 15px -5px #333333 inset;
     }
@@ -501,6 +506,9 @@
         /*margin-top: 5px;
         margin-left: 5px;
         margin-bottom: 5px;*/
+
+        padding-bottom: 0;
+
     }
 
 

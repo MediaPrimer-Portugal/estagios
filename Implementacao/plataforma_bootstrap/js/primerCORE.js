@@ -536,16 +536,12 @@ primerCORE = (function () {
         // Com isto ée pretendido achar o numero ideal de dados a dispor, sem causar grande sobrecarga
         // nos pedidos/aplicação
         
-        console.log(moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]));
-
 
         while (moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]) > 40) {
             console.log(moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]) > 40);
             index++;
         }
 
-
-        console.log(intervaloData[index]);
 
         // Preparar todas as séries para a query
         series = '[';
@@ -582,6 +578,13 @@ primerCORE = (function () {
 
 
         //series = '[{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Somatorio", "campo": "valor.valorMin", "index": "indicadores", "type": "" }],';
+
+        // CORRIGIR!!!
+        // Modificara parametro para aceitar dashboards não criadas??
+        if (dashboardID === 0) {
+            dashboardID = 12;
+        }
+
 
         query = '{ "sessaoID": "sessaoDebug", "dashboardID": "' + dashboardID + '", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
                 + '[{ "id": "' + widget.id + '", '
