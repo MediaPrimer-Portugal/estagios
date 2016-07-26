@@ -2,7 +2,7 @@
 
     // TESTE - REMOVER
 
-    var idUtilizador = 2058;
+    var idUtilizador = 2508;
     var gridPrincipal;
 
     // Verifica em que modo está a página
@@ -1458,33 +1458,61 @@
         /// <summary>
         /// Passa os dadosEscolhidos de um dado widget para formato CSV, retorna o CSV
         /// </summary>
+        /// <returns> uma string no formato CSV dos valores dos dadosEscolhidos do widget </returns>
         Widget.prototype.ExportaWidget = function () {
             var self = this,
                 dados = [],
                 objArray,
-                array,                
+                array,
+                nomeColunas = "",
                 str = '';
 
+            // Junta todos os dados dentro da variavel dados 
             self.dadosEscolhidos.forEach(function (item) {
                 $.merge(dados, item.values);
             });
 
+            // Converte a data em cada valor do tipo objecto, para um tipo mais legivel
+            dados.forEach(function (valor) {
+                valor.date = valor.date.getFullYear() + "/" + valor.date.getMonth()+1 + "/" + valor.date.getDate() + " " + 
+                             valor.date.getHours()+":"+valor.date.getMinutes()+":"+valor.date.getSeconds();
+            });
+
+            // Adquire o nome das colunas através dos dados escolhidos
+            chave = Object.keys(self.dadosEscolhidos[0].values[0]);
+
             objArray = dados;
 
+            //  Adiciona a uma string, separado por ; cada coluna
+            chave.forEach(function (item) {
+                nomeColunas += item + ";";
+            })
+
+            // Fim de linha
+            nomeColunas += '\r\n';
+
+            // Caso o tipo de dados não esteja num formato objecto
             array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
 
-            for (var i = 0; i < array.length; i++) {
+            // Vai adquirir todos os dados e formata-los para uma unica string, cada linha representa
+            // um "ponto" de informação
+            for (var curIndex = 0; curIndex < array.length; curIndex++) {
                 var line = '';
-                for (var index in array[i]) {
-                    if (line != '') line += ','
 
-                    line += array[i][index];
+                // Para cada parametro dentro do "valor" atual
+                for (var index in array[curIndex]) {
+                    // Caso o valor não esteja vazio, adiciona o separador
+                    if (line != '') line += ';'
+
+                    line += array[curIndex][index];
                 }
 
+                // Adiciona o resultado do valor mais o final de linha
                 str += line + '\r\n';
             }
-
-            return str;
+            
+            // Retorna as colunas mais os seus valores
+            return nomeColunas + str;
         }
 
         /// <summary>
@@ -1508,10 +1536,11 @@
 
 
             if (!csv.match(/^data:text\/csv/i)) {
-                csv = 'data:text/csv;charset=utf-8,' + csv;
+                csv = 'data:text/csv;charset=utf-8,' + 'sep=;\r\n' + csv;
             }
 
             data = encodeURI(csv);
+            console.log(csv)
 
             link = document.createElement('a');
             link.setAttribute('href', data);
@@ -10929,7 +10958,7 @@
             // Carrega a dashboard com o ID especificado
             Utilizador.setDashboardAtual(+dashboardID);
 
-        } else {
+        } else if(modo !== "login"){
             // Procura index do dashboard que está ativo
             var index = _.findIndex(Utilizador.getDashboards(), function (dashboard) { return dashboard.Activo === true; });
 
