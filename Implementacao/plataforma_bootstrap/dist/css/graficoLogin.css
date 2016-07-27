@@ -31,7 +31,8 @@
 
     }
 
-    .input-login {
+    #password,
+    #username {
         width:100%;
         display:block;
         
@@ -47,12 +48,14 @@
         font-size: 1.5em;
     }
 
-    .input-login:hover,
-    .input-login:focus {
+    #password:focus,
+    #password:hover,
+    #username:focus,
+    #username:hover {
         background-color: #bfbebe;
     }
 
-    .botao-login {
+    .buttonLogin {
         display:block;
         width:100%;
         

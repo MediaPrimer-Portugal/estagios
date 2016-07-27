@@ -1269,8 +1269,15 @@
 
         tipoGrid = $(".active").children("a").attr("class");
 
+
+
+        tipoGrid = tipoGrid.split(" ")[0];
         console.log(tipoGrid);
 
+
+
+
+        
         // Dependendo do tipo de Grid, vai preencher novamente essa grid
         if (tipoGrid === "sidedarOutros") {
             this.opts.platformObject.RefillGrid("gridOutros");

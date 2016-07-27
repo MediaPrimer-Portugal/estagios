@@ -1,4 +1,6 @@
-﻿/// <summary>
+﻿var cookie = JSON.parse($.cookie("dashboard"));
+
+/// <summary>
 /// Constroi icon que simbolilza o loading, elemento de suporte para os pedidos ajax
 /// </summary>
 /// <param name="elemento"> Elemento que vai receber o Spinner </param>
@@ -43,12 +45,15 @@ primerCORE = (function () {
     /// </summary>
     /// <returns> Objecto com a informação de todos os dashboards </returns>
     objecto.DashboardsDevolveLista = function () {
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard";
             
         return $.ajax({
             type: "GET",
             async: false,
             cache: false,
+            headers: {
+                'x-primerCORE-sessionID': cookie.sessaoid
+            },
             // Antes de enviar
             beforeSend: function () {
 
@@ -89,12 +94,15 @@ primerCORE = (function () {
     /// <param name="id"> Id do dashboard a ser pedido </param>
     /// <returns> Devolve a dashboard indicada pelo ID do utilizador </returns>
     objecto.DashboardDevolve = function (id) {
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/"+ id +"?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/"+ id;
 
         return $.ajax({
             type: "GET",
             async: false,
             cache: false,
+            headers: {
+                'x-primerCORE-sessionID': cookie.sessaoid
+            },
             // Antes de enviar
             beforeSend: function () {
 
@@ -132,7 +140,7 @@ primerCORE = (function () {
     /// Devolve os dados iniciais de um dashboard
     /// <returns> Retorna um objecto com os dados de inicialização (dadomedido, indicadores, etc) </returns> 
     objecto.DashboardDadosIniciais = function () {
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/iniciais?sessaoID=sessaoDebug",
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/iniciais",
             query = '{}';
 
         return $.ajax({
@@ -140,6 +148,9 @@ primerCORE = (function () {
             data: query,
             async: false,
             cache: false,
+            headers: {
+                'x-primerCORE-sessionID': cookie.sessaoid
+            },
             // Antes de enviar
             beforeSend: function () {
 
@@ -189,12 +200,19 @@ primerCORE = (function () {
     /// <param name="id"> Id do utilizador a pesquisar </param>
     /// <returns> Retorna todos os dashboards ligados ao ID do utilizador que foi enviado </returns>
     objecto.DashboardsUtilizadorLista = function (id) {
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/utilizador/" + id + "?sessaoID=sessaoDebug"
+
+        console.log(cookie.id);
+        console.log("sessaoDebug");
+
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/utilizador/" + id;
 
         return $.ajax({
             type: "GET",
             async: false,
             cache: false,
+            headers: {
+                'x-primerCORE-sessionID': cookie.sessaoid
+            },
             // Antes de enviar
             beforeSend: function () {
 
@@ -240,7 +258,7 @@ primerCORE = (function () {
 
         console.log(dashboard);
 
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/cria?sessaoID=sessaoDebug",
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/cria",
             query = '{'
                 + '"UtilizadorID":' + "'" + idUtilizador + "'" + ','
                 + '"Nome":' + "'" + dashboard.Nome + "'" + ','
@@ -256,6 +274,9 @@ primerCORE = (function () {
             data: query,
             async: false,
             cache: false,
+            headers: {
+                'x-primerCORE-sessionID': cookie.sessaoid
+            },
             // Antes de enviar
             beforeSend: function () {
 
@@ -298,12 +319,15 @@ primerCORE = (function () {
 
         console.log(id);
 
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/" + id + "?sessaoID=sessaoDebug"
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/" + id;
 
         return $.ajax({
             type: "DELETE",
             async: false,
             cache: false,
+            headers: {
+                'x-primerCORE-sessionID': cookie.sessaoid
+            },
             // Antes de enviar
             beforeSend: function () {
 
@@ -344,10 +368,8 @@ primerCORE = (function () {
     /// <param name="id"> Id da dashboard a ser atualizada </param>
     /// <param name="objecto"> Objecto que é utilizado para utilizar o dashboard </param>
     objecto.DashboardAtualiza = function (idUtilizador, dashboard) {
-
-        console.log(dashboard);
-
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/" + dashboard.ID + "?sessaoID=sessaoDebug",
+        
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/" + dashboard.ID,
             query = '{'
                 + '"Nome":' + "'" + dashboard.Nome + "'" + ',' 
                 + '"Descricao":' + "'" + dashboard.Descricao + "'" + ',' 
@@ -363,6 +385,9 @@ primerCORE = (function () {
             data: query,
             async: true,
             cache: false,
+            headers: {
+                'x-primerCORE-sessionID': cookie.sessaoid
+            },
             // Antes de enviar
             beforeSend: function () {
 
@@ -402,12 +427,15 @@ primerCORE = (function () {
     /// <param name="id"> Id do dashboard a ser alterado </param>
     objecto.DashboardAlteraEstado = function (id, estado) {
         
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/"+ id +"/activo/" + estado + "?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/" + id + "/activo/" + estado;
 
         return $.ajax({
             type: "POST",
             async: false,
             cache: false,
+            headers: {
+                'x-primerCORE-sessionID': cookie.sessaoid
+            },
             // Antes de enviar
             beforeSend: function () {
 
@@ -453,13 +481,16 @@ primerCORE = (function () {
     /// </summary>
     /// <returns> </returns>
     objecto.DashboardWidgetsLista = function (query) {
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard?sessaoID=sessaoDebug";
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard";
 
             return $.ajax({
                 type: "POST",
                 data: query,
                 async: false,
                 cache: false,
+                headers: {
+                    'x-primerCORE-sessionID': cookie.sessaoid
+                },
                 // Antes de enviar
                 beforeSend: function () {
 
@@ -505,7 +536,7 @@ primerCORE = (function () {
     /// <returns> Devolve um objecto com a informação do  widget  </returns>
     objecto.DashboardDevolveWidget = function (widget, opcoes, filtros, dashboardID, utilizadorID) {
 
-        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/valores?sessaoID=sessaoDebug",
+        var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/valores",
             series,
             pesquisa,
             index = 0,
@@ -513,7 +544,7 @@ primerCORE = (function () {
             intervaloData = ["seconds", "hours", "minutes", "days", "weeks", "months", "years"],
             intervaloDataPT = ["Segundo", "Hora", "Minutos", "Dia", "Semana", "Mes", "Ano"];
 
-        //query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12", "utilizadorID": "'+ utilizadorID +'", "widgetsDados":'
+        //query = '{ "sessaoID": cookie.sessaoid, "dashboardID": "12", "utilizadorID": "'+ utilizadorID +'", "widgetsDados":'
         //        + '[{ "id": "'+ widget.id +'", '
         //        + '"tipo": "1",'
         //        + '"elemento": "'+ widget.widgetElemento +'", '
@@ -558,11 +589,17 @@ primerCORE = (function () {
         pesquisa = '{ "contextoPesquisa": [';
         // Para todos os contextoFiltro
         widget.contextoFiltro.forEach(function (item, curIndex) {
+            var filtro;
+
             console.log(curIndex);
             console.log(filtros);
+
+            (filtros[curIndex] === undefined) ? valor = "" : valor = filtros[curIndex].valor;
+             
+
             // Caso o filtro esteja disponivel
             if (item !== undefined) {
-                pesquisa += '{ "id": "' + item + '", "tipo": "contexto", "filtro": "' + filtros[curIndex].valor + '" }, ';
+                pesquisa += '{ "id": "' + item + '", "tipo": "contexto", "filtro": "' + valor + '" }, ';
                 contexto += ', "' + item + '"';
             } else {
                 alert("ERRO - Filtro não disponivel para pedido");
@@ -612,6 +649,9 @@ primerCORE = (function () {
             data: query,
             async: true,
             cache: false,
+            headers: {
+                'x-primerCORE-sessionID': cookie.sessaoid
+            },
             // Antes de enviar
             beforeSend: function () {
                 // Apaga a representação antes de pedir novos dados

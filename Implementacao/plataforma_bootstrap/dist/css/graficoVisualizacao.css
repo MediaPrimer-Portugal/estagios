@@ -558,9 +558,10 @@
     /*
         Widget Pie Chart, Wrapper
     */
-    .pie > .wrapper {
+    .GraficoPie > .wrapper {
         margin: 0;
         width: 100%;
+        padding-bottom: 15px !important;
     }
 
         /* 
