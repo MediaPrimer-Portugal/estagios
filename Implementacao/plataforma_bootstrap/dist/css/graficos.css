@@ -374,16 +374,18 @@
     ------------------*/
 
     .legenda {
-        height: 5%;
-        width: 120px;
+        display: inline-block !important;
+
+        /*height: 5%;
+        width: 120px;*/
         position: absolute;
-        right: 0;
+        /*right: 0;
         top: 50px;
-        overflow-wrap: break-word;
+        overflow-wrap: break-word;*/
     }
 
     .legenda > svg{
-        width:100%;
+        width: 100%;
     }
 
 
@@ -541,8 +543,8 @@
     */
     .GraficoPie > .wrapper {
         margin: 0;
-        width: 100%;
-        padding-bottom: 15px !important;
+        
+        padding-bottom: 25px !important;
     }
 
 

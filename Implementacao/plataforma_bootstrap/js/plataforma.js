@@ -1,6 +1,11 @@
 ﻿$("document").ready(function () {
     var cookie = JSON.parse($.cookie("dashboard")),
         baseurl = 'http://localhost:63450/pages/';	//URL base do dashboard
+
+    //id da app que tenta aceder à aplicação
+    var app_id = "primerCORE_Web";
+    var hostAutentica = 'http://prodserver1/MP/primerCORE/db2/web/';
+    var path_cookie = "dashboard";
     
     // Caso exista um cookie
     if (!(cookie === null)) {
@@ -14,7 +19,8 @@
         var gridPrincipal,
         // Verifica em que modo está a página
             modo = document.body.id,
-            idUnico = 0;
+            idUnico = 0,
+            TamanhoLimiteLegenda = 300;
 
 
         /// Constantes
@@ -137,7 +143,7 @@
                     // Parar widget
                     widget.spinner.stop();
 
-                    $("#" + widget.id).find("wrapper").css("display", "block");
+                    $("#" + widget.id).find("wrapper").css("display", "inline-block");
 
                     // Remover class do spinner
                     $("#" + widget.id).removeClass("carregar");
@@ -575,6 +581,8 @@
                     $elemento = $("#" + self.id).parent(),
                     objecto = {};
 
+                
+
                 // Atualização do widget e o Objecto que comunica com o servidor
                 objecto["widgetLargura"] = $elemento.attr("data-gs-width");
                 objecto["widgetAltura"] = $elemento.attr("data-gs-height");
@@ -605,6 +613,9 @@
                     objecto["seriesUtilizadas"] = self.getSeriesUtilizadas();
                 }
 
+                console.log(self.mostraLegenda);
+                console.log(objecto);
+
                 return objecto;
 
             }
@@ -617,6 +628,11 @@
                 var self = this,
                     $elemento = $("#" + self.id).parent(),
                     objecto = {};
+
+                console.log("ATUALIZAOBJECTOWIDGET")
+                console.log(self.widgetElemento);
+                console.log("altura:" + $elemento.height());
+                console.log("largura:" + $elemento.width());
 
                 // Atualizar dimensões do object
                 self.altura = $elemento.height();
@@ -640,6 +656,8 @@
                 self.agregacoes = self.agregacoes;
 
                 $("#" + self.id).find('[data-toggle="tooltip"]').attr("title", self.descricao);
+
+                console.log(self);
 
             }
 
@@ -760,27 +778,31 @@
             Widget.prototype.RedesenhaGrafico = function (id) {
                 var self = this;
 
-                // Remove todos os elementos excepto a navbar
-                $("#" + self.id).children().not(".widget-navbar").children().remove();
-
-                // Caso seja redesenho de tabela para widget
-                if ($("#" + self.id).find(".wrapper").hasClass("visualizaTabela")) {
-                    // Remover class visualizaTabela
-                    $("#" + self.id).find(".wrapper").removeClass("visualizaTabela");
-
-                }
-
+                // Caso o widget seja do tipo dados, e os dados existam
                 if (self.widgetTipo === "dados" && self.dados !== undefined) {
+
+                    // Remove todos os elementos excepto a navbar
+                    $("#" + self.id).children().not(".widget-navbar").children().remove();
+
+                    // Caso seja redesenho de tabela para widget
+                    if ($("#" + self.id).find(".wrapper").hasClass("visualizaTabela")) {
+                        // Remover class visualizaTabela
+                        $("#" + self.id).find(".wrapper").removeClass("visualizaTabela");
+
+                    }
+
                     // caso os dados estejam vazios
                     if (self.dados.dados !== undefined && self.dados.dados.Widgets[0] !== undefined) {
                         // caso tenha items para desenhar
                         if (self.dados.dados.Widgets[0].Items.length != 0) {
 
                             if (self.widgetElemento === "GraficoPie") {
-
                                 self.ConstroiSVG.call(this, id);
                                 self.InsereDados.call(this);
-                                self.ConstroiLegenda.call(this);
+                                if (self.mostraLegenda === true && self.largura > TamanhoLimiteLegenda) {
+                                    self.ConstroiLegenda.call(this);
+                                }
+                                self.setDonut.call(this);
 
                             } else {
                                 // volta a desenhar o gráfico
@@ -792,7 +814,10 @@
                                     self.InsereDados.call(this);
                                     self.InsereEixos.call(this);
                                     self.Atualiza.call(this);
-                                    self.ConstroiLegenda.call(this);
+                                    if (self.mostraLegenda === true && self.largura > TamanhoLimiteLegenda) {
+                                        self.ConstroiLegenda.call(this);
+                                    }
+                                    self.AtualizaLegenda.call(this);
 
                                 } else {
                                     self.ConstroiGrafico.call(this, id);
@@ -1001,8 +1026,11 @@
             Widget.prototype.setLegendas = function () {
                 var self = this;
 
+                // Faz "toggle" na opção
                 self.mostraLegenda = !self.mostraLegenda;
 
+                // Modifica o texto do botão conforme a opção ativa
+                (self.mostraLegenda) ? $("#" + self.id).find(".legenda-widget").text("Desativa legenda") : $("#" + self.id).find(".legenda-widget").text("Ativa legenda");
             }
 
 
@@ -1175,6 +1203,33 @@
             }
 
 
+            /// <summary>
+            /// Atualiza Legenda conforme o que tem guardado 
+            /// </summary>
+            Widget.prototype.AtualizaLegenda = function () {
+                var self = this;
+
+                var $widget = $("#" + self.id);
+
+                // Caso esteja visivel
+                if (!self.mostraLegenda) {
+                    // Esconder
+                    $widget.find(".legenda").hide();
+                    // Aumentar o conteudo gráfico
+                    $widget.find(".wrapper").css("width", "100%");
+                    self.Atualiza();
+
+                    // Caso esteja escondida
+                } else {
+
+                    // Mostra
+                    $widget.find(".legenda").show();
+                    // Diminui a largura
+                    $widget.find(".wrapper").css("width", "80%");
+                    self.Atualiza();
+
+                }
+            }
 
             /// #Region - Botões
 
@@ -1220,33 +1275,44 @@
                 var self = this;
 
                 // Criar botão para simbolizar o "toggle" das legendas
-                $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"legenda-widget\">" + "Ativar Legenda" + "</a></li>");
+                $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"legenda-widget\">" + "Desativa Legenda" + "</a></li>");
 
                 // Cria evento para alternar entre legendas visiveis e invisiveis
                 $("#" + self.id).find(".legenda-widget").on("click", function () {
                     // Define o widget
                     var $widget = $("#" + self.id);
 
-
                     // Atualiza o estado das legendas
                     self.setLegendas();
 
                     // Caso esteja visivel
-                    if ($widget.find(".legenda").is(":visible")) {
+                    if (!self.mostraLegenda) {
                         // Esconder
                         $widget.find(".legenda").hide();
                         // Aumentar o conteudo gráfico
                         $widget.find(".wrapper").css("width", "100%");
+                        self.objectoServidor = self.AtualizaObjectoServidor();
                         self.Atualiza();
 
                         // Caso esteja escondida
                     } else {
 
-                        // Mostra
-                        $widget.find(".legenda").show();
-                        // Diminui a largura
-                        $widget.find(".wrapper").css("width", "80%");
-                        self.Atualiza();
+                        if (self.largura > TamanhoLimiteLegenda) {
+                            // Se a legenda ainda não foi criada
+                            if ($widget.find(".legenda").children().length === 0) {
+                                self.ConstroiLegenda();
+                            }
+
+                            // Mostra a legenda
+                            $widget.find(".legenda").show();
+                            // Diminui a largura
+                            $widget.find(".wrapper").css("width", "80%");
+                            self.objectoServidor = self.AtualizaObjectoServidor();
+                            self.Atualiza();
+
+                        } else {
+                            alert(self.titulo + " tem uma dimensão demasiado reduzida para mostrar legenda");
+                        }
 
                     }
 
@@ -2381,14 +2447,14 @@
                     // Adicionar circulo "legenda"
                     legenda.append("circle")
                         .attr("r", 5)
-                        .attr("cx", 15)
+                        .attr("cx", 5)
                         .attr("cy", 15 + 20 * index)
                         .style("fill", color(nome));
 
                     //$(".legenda").prepend("<span style='float:right; padding-top:4px'>" + nome + "</span>")
 
                     legenda.append("text")
-                        .attr("x", 30)
+                        .attr("x", 15)
                         .attr("y", ((15 + 20 * index) + 5))
                         .text(nome);
 
@@ -2714,7 +2780,7 @@
                 self.dadosEscolhidos.forEach(function (item, curIndex) {
                     self.selecao.selectAll(".barra" + curIndex)
                         .attr("x", function (d, curIndex) { return escalaSecundaria(d.nome); })
-                    .transition("grouped")
+                    //.transition("grouped")
                         .attr("y", function (d) { return transformaY(d.y); })
                         .attr("width", escalaSecundaria.rangeBand())
                         .attr("height", function (d) { return self.altura - transformaY(d.y); })
@@ -3226,21 +3292,31 @@
                     self.escalaY.ticks(2);
                 }
 
+
+                // TODO
+
                 // Se largura for maior ou igual ao tamanho limite a escala X vai dispor todos os valores do dominio X
-                if (self.largura > self.TamanhoLimite) {
+                if (self.largura < self.TamanhoLimite + 350) {
                     //self.escalaX.tickValues(transformaX.domain());
+                    var ticks = escalaOriginal.domain().filter(function (d, i) { return !(i % 2); });
+                    self.escalaX.tickValues(ticks);
                 }
                 // Caso seja menor ou igual, apenas dispões os numeros pares
                 if (self.largura <= self.TamanhoLimite) {
-                    self.escalaX.ticks(4);
+                    //self.escalaX.ticks(4);
+                    var ticks = escalaOriginal.domain().filter(function (d, i) { return !(i % 5); });
+                    self.escalaX.tickValues(ticks);
+                    //console.log(escalaOriginal.domain());
                 }
                 // Caso seja apenas menor que o TamanhoLimite - 100 vai apenas dispor os numeros divisiveis por 5
                 if (self.largura < (self.TamanhoLimite - 100)) {
                     //escalaX.tickValues(transformaX.domain().filter(function (d, i) { return !(i % 5); }));
+                    var ticks = escalaOriginal.domain().filter(function (d, i) { return !(i % 10); });
+                    self.escalaX.tickValues(ticks);
                 }
 
                 // TODO
-                self.escalaX.tickFormat(function (d) { return d.getYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); })
+                self.escalaX.tickFormat(function (d) { return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); })
 
                 // Atualização do eixo dos X
                 self.svg.select(".x.axis")
@@ -3407,34 +3483,34 @@
 
                 }
 
-                // Cria evento para alternar entre legendas visiveis e invisiveis
-                $("#" + self.id).find(".legenda").on("click", function () {
+                //// Cria evento para alternar entre legendas visiveis e invisiveis
+                //$("#" + self.id).find(".legenda").on("click", function () {
 
-                    // Define o widget
-                    var $widget = $("#" + self.id);
-
-
-                    // Atualiza o estado das legendas
-                    self.setLegendas();
+                //    // Define o widget
+                //    var $widget = $("#" + self.id);
 
 
-                    // Caso esteja visivel
-                    if ($widget.find(".legenda").is(":visible")) {
-                        // Esconder
-                        $widget.find(".legenda").hide();
-                        // Aumentar o conteudo gráfico
-                        $widget.find(".wrapper").css("width", "100%");
-                        self.Atualiza();
-                        // Caso esteja escondida
-                    } else {
-                        // Mostra
-                        $widget.find(".legenda").show();
-                        // Diminui a largura
-                        $widget.find(".wrapper").css("width", "80%");
-                        self.Atualiza();
-                    }
+                //    // Atualiza o estado das legendas
+                //    self.setLegendas();
 
-                });
+
+                //    // Caso esteja visivel
+                //    if ($widget.find(".legenda").is(":visible")) {
+                //        // Esconder
+                //        $widget.find(".legenda").hide();
+                //        // Aumentar o conteudo gráfico
+                //        $widget.find(".wrapper").css("width", "100%");
+                //        self.Atualiza();
+                //        // Caso esteja escondida
+                //    } else {
+                //        // Mostra
+                //        $widget.find(".legenda").show();
+                //        // Diminui a largura
+                //        $widget.find(".wrapper").css("width", "80%");
+                //        self.Atualiza();
+                //    }
+
+                //});
             }
 
 
@@ -3954,9 +4030,9 @@
 
                 // Insere botões na navbar
                 //self.OpcaoUpdate();
+                self.OpcaoLegenda();
                 self.OpcaoMostraDados();
                 self.OpcaoSuavizarLinhas();
-                self.OpcaoLegenda();
 
                 //self.OpcaoExportar();
 
@@ -4003,9 +4079,6 @@
             GraficoLinhas.prototype.Atualiza = function () {
                 var self = this,
                     larguraRect = ($("#" + self.id).width() / self.dados.dados.Widgets[0].Items.length);
-
-                console.log("larguraRECT");
-                console.log(larguraRect);
 
                 self.Renderiza();
                 self.DesenhaSerie();
@@ -4186,6 +4259,7 @@
                 this.valorMaximo = 0;
                 this.valorAtual = 0;
                 this.valorMeta = 0;
+
 
             };
 
@@ -4463,10 +4537,16 @@
 
                 // Definir angulos para a meta, adicionado percentagemInicio para se
                 // encaixar dentro do arco de forma correta
-                arcStartRadMeta = PercentagemParaRadianos(meta / 2 + percentagemInicio);
-                arcEndRadMeta = PercentagemParaRadianos((meta / 2 + 0.005 + percentagemInicio));
+                arcStartRadMeta = PercentagemParaRadianos(self.valorMeta / 2 + percentagemInicio);
+                arcEndRadMeta = PercentagemParaRadianos((self.valorMeta / 2 + 0.005 + percentagemInicio));
                 // Path do arco meta calculado
                 arcMeta.startAngle(arcStartRadMeta).endAngle(arcEndRadMeta);
+
+                console.log(meta + "/ 2 +" + percentagemInicio);
+                console.log(arcStartRadMeta);
+
+                console.log(meta + "/ 2 + 0.005" + percentagemInicio);
+                console.log(arcEndRadMeta);
 
                 // Atribuir o valor calculado
                 grafico.select(".meta").attr("d", arcMeta).style("fill", "green");
@@ -5265,7 +5345,7 @@
                 // Seleciona o wrapper para inserir o svg
                 self.svg = d3.select("#" + id).select(".wrapper").insert("svg")
                     // 80% para deixar algum espaço para as tooltip/legenda
-                    .attr("width", "80%")
+                    .attr("width", "100%")
                     .attr("height", "100%")
                     // Atribuida uma viewBox de acordo com o valor minimo de entro a sua altura ou largura
                     .attr('viewBox', '0 0 ' + (Math.min(self.largura, self.altura)) + ' ' + (Math.min(self.largura, self.altura)))
@@ -5278,12 +5358,12 @@
 
                 // Se mostra legenda estiver a falso, centra o pie chart
                 if (!self.mostraLegenda) {
-                    $("#" + self.id).find(".wrapper").find("svg").css("display", "block")
+                    $("#" + self.id).find(".wrapper").find("svg").css("display", "inline-block")
                                                                  .css("margin", "auto");
 
                     $(".pie > .wrapper").css("width", "100%");
                 } else {
-                    $("#" + self.id).find(".wrapper").find("svg").css("display", "inline")
+                    $("#" + self.id).find(".wrapper").find("svg").css("display", "inline-block")
                                                                  .css("margin", "");
 
                     $(".pie > .wrapper").css("width", "80%");
@@ -5304,7 +5384,7 @@
 
                 // Se msotra legenda estiver a falso, centra o pie chart
                 if (!self.mostraLegenda) {
-                    $("#" + self.id).find(".wrapper").find("svg").css("display", "block")
+                    $("#" + self.id).find(".wrapper").find("svg").css("display", "inline-block")
                                                                  .css("margin", "auto");
                 } else {
                     $("#" + self.id).find(".wrapper").find("svg").css("display", "")
@@ -5621,51 +5701,56 @@
                     series = self.dadosEscolhidos.length,
                     legenda;
 
-                //color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
+                color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
                 legenda = d3.select("#" + self.id).select(".legenda").insert("svg");
 
-                for (var i = 0; i < series; i++) {
-                    legenda.append("circle")
-                        .attr("r", 5)
-                        .attr("cx", 15)
-                        .attr("cy", 15 + 20 * i)
-                        .style("fill", self.color(i));
 
-                    legenda.append("text")
-                        .attr("x", 30)
-                        .attr("y", ((15 + 20 * i) + 5))
-                        .text(self.dadosEscolhidos[i].Nome);
+                // Verifica se tem largura minima para apresentar legendas
+                    for (var i = 0; i < series; i++) {
+                        //$("#" + self.id).find(".legenda").append('<div style="float:right; position:relative; right:10%;">' + self.dadosEscolhidos[i].Nome + '</div>');
 
-                }
+                        legenda.append("circle")
+                            .attr("r", 5)
+                            .attr("cx", 15)
+                            .attr("cy", 15 + 20 * i)
+                            .style("fill", self.color(i));
 
-                // Cria evento para alternar entre legendas visiveis e invisiveis
-                $("#" + self.id).find(".legenda-widget").on("click", function () {
+                        legenda.append("text")
+                            .attr("x", 30)
+                            .attr("y", ((15 + 20 * i) + 5))
+                            .text(self.dadosEscolhidos[i].Nome);
 
-                    // Define o widget
-                    var $widget = $("#" + self.id);
-
-
-                    // Atualiza o estado das legendas
-                    self.setLegendas();
-
-
-                    // Caso esteja visivel
-                    if ($widget.find(".legenda").is(":visible")) {
-                        // Esconder
-                        $widget.find(".legenda").hide();
-                        // Aumentar o conteudo gráfico
-                        $widget.find(".wrapper").css("width", "100%");
-                        self.Atualiza();
-                        // Caso esteja escondida
-                    } else {
-                        // Mostra
-                        $widget.find(".legenda").show();
-                        // Diminui a largura
-                        $widget.find(".wrapper").css("width", "80%");
-                        self.Atualiza();
                     }
 
-                });
+                    // Cria evento para alternar entre legendas visiveis e invisiveis
+                    //$("#" + self.id).find(".legenda-widget").on("click", function () {
+
+                    //    // Define o widget
+                    //    var $widget = $("#" + self.id);
+
+
+                    //    // Atualiza o estado das legendas
+                    //    self.setLegendas();
+
+
+                    //    // Caso esteja visivel
+                    //    if ($widget.find(".legenda").is(":visible")) {
+                    //        // Esconder
+                    //        $widget.find(".legenda").hide();
+                    //        // Aumentar o conteudo gráfico
+                    //        $widget.find(".wrapper").css("width", "100%");
+                    //        self.Atualiza();
+                    //        // Caso esteja escondida
+                    //    } else {
+                    //        // Mostra
+                    //        $widget.find(".legenda").show();
+                    //        // Diminui a largura
+                    //        $widget.find(".wrapper").css("width", "80%");
+                    //        self.Atualiza();
+                    //    }
+
+                    //});
+                
             }
 
 
@@ -5729,22 +5814,44 @@
                 // nome
                 // teste1 / numero
 
-                // Update/Adição de elementos
-                path.enter()
-                    .append("path")
-                    // arc calcula o path
-                    .attr("d", arc)
-                    .attr("fill", function (d) {
-                        return color(d.data.nome);
-                    })
+                //// Update/Adição de elementos
+                //path.enter()
+                //    .append("path")
+                //    // arc calcula o path
+                //    .attr("d", arc)
+                //    .attr("fill", function (d) {
+                //        return color(d.data.nome);
+                //    })
+
+                //// Update de elementos
+                //path
+                //    .attr("d", arc);
+
+                //// Remoção de elementos
+                //path.exit()
+                //    .remove();
+            }
+
+            /// <summary>
+            /// Método que atualiza os elementos que representam os dados
+            /// atualiza os elementos dentro do SVG do widget
+            /// </summary>
+            PieChart.prototype.Atualiza = function () {
+                var self = this;
+
+                ////to-do
+                var atualizaPath = d3.select("#" + self.id).selectAll(".slices").data(pie(self.dadosNormal));
 
                 // Update de elementos
-                path
-                    .attr("d", arc);
+                self.path
+                    .attr("d", self.arc);
 
                 // Remoção de elementos
-                path.exit()
-                    .remove();
+                atualizaPath.exit()
+                    .remove()
+
+                self.AtualizaDimensoes();
+
             }
 
 
@@ -5769,8 +5876,10 @@
                 //self.InsereDados();
 
                 // Insere botões
+                self.OpcaoLegenda();
                 self.OpcaoModificaVisualizacao();
                 self.OpcaoMostraDados();
+
 
                 // Exporta Dados
                 //self.OpcaoExportar();
@@ -5781,35 +5890,12 @@
             }
 
 
-            /// <summary>
-            /// Método que atualiza os elementos que representam os dados
-            /// atualiza os elementos dentro do SVG do widget
-            /// </summary>
-            PieChart.prototype.Atualiza = function () {
-                var self = this;
-
-                //to-do
-                var atualizaPath = d3.select("#" + self.id).selectAll(".slices").data(pie(self.dadosNormal));
-
-                // Update de elementos
-                self.path
-                    .attr("d", self.arc);
-
-                // Remoção de elementos
-                atualizaPath.exit()
-                    .remove()
-
-            }
-
 
             /// <summary>
             /// Set da função para definir se PieChart vai ter o formato "donut"
             /// </summary>
             PieChart.prototype.setDonut = function () {
                 var self = this;
-
-
-                self.donut = !self.donut;
 
                 if (self.donut === true) {
 
@@ -5843,8 +5929,60 @@
 
                 // Ao pressionar o botão modificaVisualizacao-widget, troca entre visualizações
                 $("#" + self.id).on("click", ".modificaVisualizacao-widget", function () {
+                    self.donut = !self.donut;
                     self.setDonut();
                 });
+
+            }
+
+
+            /// <summary>
+            /// Atualiza objectoServidor do GraficoPie
+            /// </summary>
+            /// <summary>
+            /// Atualiza o widget com as funções que podem ser alteradas
+            /// </summary>
+            PieChart.prototype.AtualizaObjectoServidor = function () {
+                var self = this,
+                    $elemento = $("#" + self.id).parent(),
+                    objecto = {};
+
+                self.altura = $elemento.height();
+                self.largura = $elemento.width();
+
+                // Atualização do widget e o Objecto que comunica com o servidor
+                objecto["widgetLargura"] = $elemento.attr("data-gs-width");
+                objecto["widgetAltura"] = $elemento.attr("data-gs-height");
+                objecto["widgetX"] = $elemento.attr("data-gs-x");
+                objecto["widgetY"] = $elemento.attr("data-gs-y");
+                objecto["widgetTipo"] = self.widgetTipo;
+                objecto["widgetElemento"] = self.widgetElemento;
+
+                objecto["id"] = self.id;
+                objecto["descricao"] = self.descricao;
+                objecto["modoVisualizacao"] = self.modoVisualizacao;
+                objecto["visivel"] = self.visivel;
+                objecto["mostraLegenda"] = self.mostraLegenda;
+                objecto["mostraToolTip"] = self.mostraToolTip;
+                objecto["titulo"] = self.titulo;
+                objecto["ultimaAtualizacao"] = self.ultimaAtualizacao;
+
+                objecto["contexto"] = self.contexto;
+                objecto["contextoFiltro"] = self.contextoFiltro;
+
+                objecto["donut"] = self.donut;
+
+                objecto["agregacoes"] = self.agregacoes;
+
+                if (self.suavizar !== undefined) {
+                    objecto["suavizar"] = self.suavizar;
+                }
+
+                if (self.widgetTipo === "dados") {
+                    objecto["seriesUtilizadas"] = self.getSeriesUtilizadas();
+                }
+
+                return objecto;
 
             }
 
@@ -7665,7 +7803,6 @@
                 var self = this,
                     valores = [];
 
-                console.log(self.dadosIniciais.dados[indicador]);
 
                 // Caso o indicador não seja por defeito ou indefinido
                 if (indicador !== "Selecione Indicador" && indicador !== undefined) {
@@ -8436,7 +8573,7 @@
                     alert("Valor minimo é superior ao valor máximo");
                 } else if (objPropertyGridDados.valorMinimo > objPropertyGridDados.valorAtual) {
                     alert("Valor minimo é superior ao valor atual");
-                } else if (objPropertyGridDados.valorMeta > objPropertyGridDados.valorMáximo) {
+                } else if (objPropertyGridDados.valorMeta > objPropertyGridDados.valorMaximo) {
                     alert("Valor meta é superior ao valor máximo");
                 } else if (objPropertyGridDados.valorMeta < objPropertyGridDados.valorMinimo) {
                     alert("Valor meta é inferior ao valor minimo");
@@ -9763,6 +9900,7 @@
                 var self = this,
                     listaWidgets;
 
+                console.log("DASHBOARD");
                 console.log(dashboard);
 
                 if (modo !== "lista") {
@@ -9782,7 +9920,6 @@
                     // Carrega os restantes widgets
                     self.CarregaWidgets(listaWidgets);
 
-                    console.log(self);
                 }
             }
 
@@ -9837,6 +9974,9 @@
 
                                 });
 
+                                console.log("NOVO WIDGET");
+                                console.log(widgetNovo);
+
                                 // Caso seja widget do tipo Filtros
                                 if (widgetNovo.widgetElemento === "filtros") {
                                     // Atualizar o widget para que este mostre os filtros 
@@ -9864,7 +10004,8 @@
 
                     });
 
-
+                    console.log("GRID");
+                    console.log(gridPrincipal);
 
                     // Filtra de acordo com os contextos e desenha os gráficos
                     gridPrincipal.FiltraContexto();
@@ -10346,9 +10487,25 @@
             Grid.prototype.EventoResizeEcra = function () {
                 var self = this;
 
-                $(window).resize(function () {
-                    self.listaWidgets.forEach(function (widget) {
-                        widget.RedesenhaGrafico(widget.id);
+
+
+                $(window).bind('resize', function (e) {
+                    window.resizeEvt;
+                    $(window).resize(function () {
+                        clearTimeout(window.resizeEvt);
+                        window.resizeEvt = setTimeout(function () {
+                            // Depois da janela ter feito o resize e passado algum tempo
+                            self.listaWidgets.forEach(function (widget) {
+                                widget.RedesenhaGrafico(widget.id);
+                                // Verificar tamanho por causa das legendas
+                                if (widget.largura < TamanhoLimiteLegenda) {
+                                    $("#" + widget.id).find(".legenda").children().remove();
+
+                                } else if (widget.mostraLegenda === true) {
+                                    $("#" + widget.id).find(".legenda").show();
+                                }
+                            });
+                        }, 250);
                     });
                 });
 
@@ -11304,6 +11461,10 @@
 
         // Ao clickar para criar novo Dashboard
         $(".adicionaDashboard-lista").click(function () {
+            var copia,
+                nome,
+                index = 0,
+                ciclos = 0;
 
             // Para a lista de dashboards do utilizador
             Utilizador.listaDashboards.forEach(function (dashboard) {
@@ -11315,9 +11476,50 @@
 
             });
 
+            // Descobrir se há nomes iguais na lista
+            do {
+                index++
+                copia = false;
+
+                // Para cada Dashboard
+                Utilizador.listaDashboards.forEach(function (dashboard) {
+                    // Caso o nome seja igual, é uma copia
+                    console.log(dashboard);
+                    if (dashboard.Nome === "dashboard " + index) {
+                        copia = true;
+                    }
+                });
+
+                // Caso o total de ciclos seja superior ao tamanho da listaDashboards, dar nome padrão dashboard 0 e sair do ciclo
+                // para impedir ciclos infinitos
+                ciclos++;
+                if(ciclos > Utilizador.listaDashboards.length){
+                    copia === true;
+                    nome = "dashboard 0"
+                }
+            }
+            while (copia === true);
+
+            if(nome === undefined){
+                nome = "dashboard " + index;
+            }
+            console.log(nome);
+
+            Utilizador.AdicionaDashboard(gridPrincipal, nome);
+            window.open('db_edicao.html', '_self', false);
+
+            
             // Abre nova janela com indicação de novo
-            window.open('db_edicao.html' + '?dashboard=new', '_self', false);
+            //window.open('db_edicao.html' + '?dashboard=new', '_self', false);
         });
+
+        // Fazer o logout
+        $(".logoutDashboard").click(function () {
+ 
+            primerCORE.logoff();
+
+        });
+
 
     // Caso o cookie não exista, redirecionar para a página inicial
     } else {

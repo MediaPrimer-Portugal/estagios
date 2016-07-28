@@ -1,4 +1,11 @@
-﻿var cookie = JSON.parse($.cookie("dashboard"));
+﻿var cookie = JSON.parse($.cookie("dashboard")),
+    baseurl = 'http://localhost:63450/pages/';	//URL base do dashboard
+
+//id da app que tenta aceder à aplicação
+var app_id = "primerCORE_Web";
+var hostAutentica = 'http://prodserver1/MP/primerCORE/db2/web/';
+var path_cookie = "dashboard";
+
 
 /// <summary>
 /// Constroi icon que simbolilza o loading, elemento de suporte para os pedidos ajax
@@ -708,6 +715,53 @@ primerCORE = (function () {
     };
 
     /// ----- #WIDGETS -----
+
+
+    /// ----- #LOGOUT ------
+
+    //efectua o logout da aplicação
+    objecto.logoff = function () {
+        var self = this;
+
+        self.verificaSessao();
+
+        $.ajax({
+            type: "POST",
+            url: hostAutentica + "SessaoTermina",
+            data: '{"sessaoID":"' + cookie.sessaoid + '"}',
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            success: function (data) {
+                self.verificaSessaoFim(null);
+                $.cookie('dashboard', null, { path: "/" });
+
+                window.location.replace(baseurl + "db_login.html");
+            },
+            error: function (error) {
+                alert("Ocorreu um erro com a chamada de Ajax.");
+            }
+        });
+    };
+
+    //verifica se a sessao é válida
+    objecto.verificaSessao = function () {
+        if ($.parseJSON($.cookie('dashboard')) == null)
+            window.location.replace(baseurl + "db_login.html");
+    };
+
+    //verifica se depois de uma chamada a um serviço, existe um erro devido à sessão
+    objecto.verificaSessaoFim = function (resultado) {
+
+        if (resultado == null)
+            return;
+
+        if (resultado.Sucesso == false) {
+            if (resultado.Codigo == 2) {
+                $.cookie('dashboard', null, { path: path_cookie });
+                window.location.replace(baseurl + "db_login.html");
+            }
+        }
+    };
 
 
     return objecto;
