@@ -25,7 +25,8 @@
 
         /// Constantes
         /// Valor que simboliza a data no objecto de dados recebido do servidor
-        var ValorData = "Data";
+        var ValorData = "Data",
+            coresPadrão = [d3.scale.category20c(1), d3.scale.category20c(2), d3.scale.category20c(3), d3.scale.category20c(4), d3.scale.category20c(5)];
 
 
 
@@ -262,6 +263,18 @@
         }
 
 
+        /// <summary>
+        /// Junta as propriedades de dois objectos num só
+        /// "Merge" do obj2 para o obj1
+        /// </summary>
+        var Merge = function(obj1, obj2){
+
+            for (var atributo in obj2) { 
+                obj1[atributo] = obj2[atributo]; 
+            }
+
+            return obj1;
+        }
 
 
         /************************* 
@@ -294,8 +307,8 @@
                 spinner,
                 descricao,
                 seriesUtilizadas,
-                TamanhoLimite = 250,
-                margem = { cima: 20, baixo: 50, esquerda: 40, direita: 40 };
+                TamanhoLimite = 250;
+                //margem = { cima: 20, baixo: 50, esquerda: 40, direita: 40 };
 
             /// <summary>
             /// Construtor da class Widget
@@ -326,13 +339,14 @@
                 // Descrição
                 this.setDescricao("Descricao do widget");
 
+                this.margem = { cima: 20, baixo: 50, esquerda: 40, direita: 40 };
 
                 // Inicialização dos dados default
                 this.mostraLegenda = true;
                 this.mostraToolTip = true;
                 this.estadoTabela = false;
                 this.ultimaAtualizacao = $.datepicker.formatDate('yy/mm/dd', new Date());
-                this.margem = margem;
+                //this.margem = margem;
                 this.TamanhoLimite = TamanhoLimite;
 
                 // Boolean que indica se está visivel ou não
@@ -357,7 +371,18 @@
                     mostraToolTip: "",
                     visivel: "",
                     ultimaAtualizacao: ""
-                }
+                };
+
+
+                // Opções de aparencia
+                this.opcoesAparencia = {
+                    fundo: "",
+                    contornoCor: "",
+                    contornoEstilo: "",
+                    visibilidade: new Array(5),
+                    cores: new Array(5)
+                };
+
 
                 // Widgets que estão relacionados com o widget
                 this.contexto = [];
@@ -591,6 +616,8 @@
                 objecto["widgetTipo"] = self.widgetTipo;
                 objecto["widgetElemento"] = self.widgetElemento;
 
+                objecto["margem"] = self.margem;
+
                 objecto["id"] = self.id;
                 objecto["descricao"] = self.descricao;
                 objecto["modoVisualizacao"] = self.modoVisualizacao;
@@ -603,6 +630,7 @@
                 objecto["contexto"] = self.contexto;
                 objecto["contextoFiltro"] = self.contextoFiltro;
 
+                objecto["opcoesAparencia"] = self.opcoesAparencia;
                 objecto["agregacoes"] = self.agregacoes;
 
                 if (self.suavizar !== undefined) {
@@ -612,9 +640,6 @@
                 if (self.widgetTipo === "dados") {
                     objecto["seriesUtilizadas"] = self.getSeriesUtilizadas();
                 }
-
-                console.log(self.mostraLegenda);
-                console.log(objecto);
 
                 return objecto;
 
@@ -628,11 +653,6 @@
                 var self = this,
                     $elemento = $("#" + self.id).parent(),
                     objecto = {};
-
-                console.log("ATUALIZAOBJECTOWIDGET")
-                console.log(self.widgetElemento);
-                console.log("altura:" + $elemento.height());
-                console.log("largura:" + $elemento.width());
 
                 // Atualizar dimensões do object
                 self.altura = $elemento.height();
@@ -652,12 +672,9 @@
 
                 self.contexto = self.contexto;
 
-
                 self.agregacoes = self.agregacoes;
-
+                
                 $("#" + self.id).find('[data-toggle="tooltip"]').attr("title", self.descricao);
-
-                console.log(self);
 
             }
 
@@ -825,6 +842,9 @@
                                     self.Atualiza.call(this);
                                 }
                             }
+
+                            // Desenha a parte personalizavel do gráfico
+                            self.DesenhaAparencia();
 
                             if ($("#" + self.id).find(".expandir-widget").length === 0) {
                                 self.OpcaoExpandir();
@@ -1016,7 +1036,11 @@
             Widget.prototype.setTooltip = function () {
                 var self = this;
 
+                // Faz "toggle" na opção
                 self.mostraToolTip = !self.mostraToolTip;
+
+                // Modifica o texto do botão conforme a opção ativa
+                (self.mostraToolTip)? $("#" + self.id).find(".tooltip-widget").text("Desativa tooltip") : $("#" + self.id).find(".tooltip-widget").text("Ativa tooltip");
             }
 
 
@@ -1030,7 +1054,86 @@
                 self.mostraLegenda = !self.mostraLegenda;
 
                 // Modifica o texto do botão conforme a opção ativa
-                (self.mostraLegenda) ? $("#" + self.id).find(".legenda-widget").text("Desativa legenda") : $("#" + self.id).find(".legenda-widget").text("Ativa legenda");
+                (self.mostraLegenda)? $("#" + self.id).find(".legenda-widget").text("Desativa legenda") : $("#" + self.id).find(".legenda-widget").text("Ativa legenda");
+            }
+
+
+            /// <summary>
+            /// Set o nome dos Eixos X e Y, caso existam
+            /// </summary>
+            /// <param name="eixoX"> Nome do eixo dos X </param>
+            /// <param name="eixoY"> Nome do eixo dos Y </param>
+            Widget.prototype.setNomeEixos = function (eixoX, eixoY) {
+                var self = this;
+
+                // Se existir texto para subsituir e o svg existir
+                if (eixoX !== undefined && self.svg !== undefined)
+                    self.svg.select(".nomeEixoX").text(eixoX);
+
+                // Se existir texto para subsituir e o svg existir
+                if (eixoY !== undefined && self.svg !== undefined)
+                    self.svg.select(".nomeEixoY").text(eixoY);
+
+            }
+
+
+            /// <summary>
+            /// Trata dos eixos de acordo com o parametro recebido
+            /// true = mostra
+            /// false = esconde
+            /// </summary>
+            /// <param name="estadoX"> Estado do eixo Mostrar(true) ou Esconder(false) </param>
+            /// <param name="estadoY"> Estado do eixo Mostrar(true) ou Esconder(false) </param>
+            Widget.prototype.TrataEixos = function (estadoX, estadoY) {
+                var self = this;
+
+                // Caso o estado seja true e o svg esteja criado
+                if (estadoX && self.svg !== undefined) {
+                    self.svg.select(".x.axis").style("visibility", "visible");
+                } else if(self.svg !== undefined) {
+                    self.svg.select(".x.axis").style("visibility", "hidden");
+                }
+
+                // Caso o estado seja true e o svg esteja criado
+                if (estadoY && self.svg !== undefined) {
+                    self.svg.select(".y.axis").style("visibility", "visible");
+                } else if(self.svg !== undefined) {
+                    self.svg.select(".y.axis").style("visibility", "hidden");
+                }
+
+            }
+
+
+            /// <summary>
+            /// Verifica limite para inserir os eixos
+            /// </summary>
+            Widget.prototype.VerificaLimiteEixos = function () {
+                var self = this;
+
+                // LIMITES PARA INSERIR OS EIXOS
+                // Se a altura do widget for menor
+                if (self.altura <= 180) {
+                    // Remover nomeEixo
+                    // melhorar a visualização
+                    d3.select("#" + self.id).select(".nomeEixoY")
+                        .text("");
+                } else {
+                    // Senão, voltar a adicionar o nome
+                    d3.select("#" + self.id).select(".nomeEixoY")
+                        .text(self.nomeEixoY);
+                }
+                // Se a altura do widget for menor
+                if (self.largura <= 250) {
+                    // Remover nomeEixo
+                    // melhorar a visualização
+                    d3.select("#" + self.id).select(".nomeEixoX")
+                        .text("");
+                } else {
+                    // Senão, voltar a adicionar o nome
+                    d3.select("#" + self.id).select(".nomeEixoX")
+                        .text(self.nomeEixoX);
+                }
+
             }
 
 
@@ -1231,6 +1334,131 @@
                 }
             }
 
+            // TODO --------------------
+
+            /// <summary>
+            /// Atualiza o aspecto de um widget conforme o objecto que receb
+            /// </summary>
+            /// <param name="objectAparencia"> objecto que contém as opcoes de aparencia da propertyGrid </param>
+            Widget.prototype.AtualizaAparencia = function (objectoAparencia) {
+                var self = this;
+
+                console.log("ATUALIZA APARENCIA");
+                console.log(objectoAparencia);
+
+                // Atualiza margens
+                self.margem.cima = objectoAparencia.MargemCima;
+                self.margem.baixo = objectoAparencia.MargemBaixo;
+                self.margem.esquerda = objectoAparencia.MargemEsquerda;
+                self.margem.direita = objectoAparencia.MargemDireita;
+
+                // Atualizar opcoes de aparencia
+                self.opcoesAparencia.contornoCor = (objectoAparencia.ContornoCor === "empty" || objectoAparencia.ContornoCor === undefined) ? "" : objectoAparencia.ContornoCor;
+                self.opcoesAparencia.contornoEstilo = objectoAparencia.ContornoEstilo;
+                self.opcoesAparencia.fundo = (objectoAparencia.Fundo === "empty" || objectoAparencia.Fundo === undefined) ? "" : objectoAparencia.Fundo;
+
+                // Opções especificas para gráficos dados com eixos
+                if (self.widgetTipo === "dados" && self.widgetElemento !== "GraficoPie" && self.widgetElemento !== "Tabela") {
+                    self.opcoesAparencia["nomeEixoX"] = objectoAparencia.EixoX;     
+                    self.opcoesAparencia["MostraX"] = objectoAparencia.MostraX;
+
+                    self.opcoesAparencia["nomeEixoY"] = objectoAparencia.EixoY;
+                    self.opcoesAparencia["MostraY"] = objectoAparencia.MostraY;
+                }
+
+                // Procurar os parametros de cada Série (propriedades que começam por Serie)
+                _.each(objectoAparencia, function (valor, key, lista) {
+
+                    // Se a chave começar por Serie
+                    if (key.split("-")[0] === "Serie") {
+                        if (key.split("-")[1] === "Cor") {
+                            self.opcoesAparencia.cores[key.split("-")[2] - 1] = valor;
+                        }
+                        if (key.split("-")[1] === "Mostra") {
+                            self.opcoesAparencia.visibilidade[key.split("-")[2] - 1] = valor;
+                        }
+
+                    }
+
+
+                });
+
+                console.log("APARENCIA SELF");
+                console.log(self);
+
+                self.DesenhaAparencia();
+
+            }
+
+            /// <summary>
+            /// Desenha as opções de aparencia
+            /// </summary>
+            Widget.prototype.DesenhaAparencia = function () {
+                var self = this,
+                    widget = $("#" + self.id);
+
+                //// Procurar os parametros de cada Série (propriedades que começam por Serie)
+                //objectoAparencia.forEach(function (propriedade) {
+
+                //    console.log(propriedade);
+
+                //});
+
+                // Desenhar cor de fundo
+                if (self.opcoesAparencia.fundo === "empty") {
+                    widget.find(".wrapper").parent().css("background-color", "white");
+                } else {
+                    widget.find(".wrapper").parent().css("background-color", self.opcoesAparencia.fundo);
+                }
+
+                // Caso exista um estilo, desenhar o contorno
+                if (self.opcoesAparencia.contornoEstilo !== "Nenhum") {
+                    widget.find(".wrapper").css("border", "1px " + self.opcoesAparencia.contornoEstilo + self.opcoesAparencia.contornoCor);
+                } else {
+                    widget.find(".wrapper").css("border", "");
+                }
+
+                // Pintar no GraficoPie/GraficoArea
+                if (self.widgetElemento === "GraficoPie" || self.widgetElemento === "GraficoArea") {
+                    self.opcoesAparencia.cores.forEach(function (cor, curIndex) {
+                        widget.find("[numero=" + curIndex + "]").css("fill", cor);
+                    });
+                    self.opcoesAparencia.visibilidade.forEach(function (visivel, curIndex) {
+                        (visivel) ? widget.find("[numero=" + curIndex + "]").attr("display", "") : widget.find("[numero=" + curIndex + "]").attr("display", "none");
+                    });
+                }
+
+                // Pintar no GraficoBarras
+                if(self.widgetElemento === "GraficoBarras"){
+                    self.opcoesAparencia.cores.forEach(function (cor, curIndex) {
+                        widget.find(".barra" + curIndex).css("fill", cor);
+                    });
+                    self.opcoesAparencia.visibilidade.forEach(function (visivel, curIndex) {
+                        (visivel) ? widget.find(".barra" + curIndex).attr("display", "") : widget.find(".barra" + curIndex).attr("display", "none");
+                    });
+                }
+
+
+                // Opções especificas para gráficos dados com eixos
+                if (self.widgetTipo === "dados" && self.widgetElemento !== "GraficoPie" && self.widgetElemento !== "Tabela") {
+                    self.nomeEixoX = self.opcoesAparencia.nomeEixoX;
+                    self.nomeEixoY = self.opcoesAparencia.nomeEixoY;
+
+                    // Dá o nome aos Eixos
+                    self.setNomeEixos(self.nomeEixoX, self.nomeEixoY);
+
+                    // Mostra/Esconde Eixos
+                    self.TrataEixos(self.opcoesAparencia.MostraX, self.opcoesAparencia.MostraY);
+
+                    self.VerificaLimiteEixos();
+
+                }
+
+            }
+            
+
+            // ----------------------------
+
             /// #Region - Botões
 
             /// <summary>
@@ -1311,6 +1539,7 @@
                             self.Atualiza();
 
                         } else {
+                            self.setLegendas();
                             alert(self.titulo + " tem uma dimensão demasiado reduzida para mostrar legenda");
                         }
 
@@ -1326,7 +1555,7 @@
                 var self = this;
 
                 // Criar botão para simbolizar o "toggle" das legendas
-                $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"tooltip-widget\">" + "Ativar tooltip" + "</a></li>");
+                $("#" + self.id).find(".dropdown-menu").append("<li><a class=\"tooltip-widget\">" + "Ativa tooltip" + "</a></li>");
 
                 $("#" + self.id).find(".dropdown-menu").on("click", ".tooltip-widget", function () {
                     self.setTooltip();
@@ -1754,10 +1983,13 @@
                 this.objectoServidor["suavizar"] = false;
 
                 this.chave = [];
+                this.dadosEscolhidos = [];
 
                 this.suavizar = false;
 
-                this.dadosEscolhidos = [];
+                this.nomeEixoX = "Eixo X";
+                this.nomeEixoY = "Eixo Y";
+
 
             };
 
@@ -1994,10 +2226,16 @@
                     dados.append("path")
                         .attr("class", "area")
                         .attr("title", "")
+                        .attr("value", function (d) { return d.Nome; })
+                        .attr("numero", function (d) { return d.Numero; })
                         // Chamar area() para desenhar de acordo o "path" com os valores
                         .attr("d", function (d) { return self.area(d.values); })
                         // Adiciona tooltips
-                        .style("fill", function (d) { return color(d.Nome); })
+                        .style("fill", function (d) {
+                            console.log(self.opcoesAparencia.cores[d.Numero]);
+                            return (self.opcoesAparencia.cores[d.Numero] === undefined || self.opcoesAparencia.cores[d.Numero] === "empty") ? color(d.Nome) : self.opcoesAparencia.cores[d.Numero];
+                        })
+
 
 
                     // Caso esteja em modo Stacked
@@ -2067,7 +2305,9 @@
                         // Chamar area() para desenhar de acordo o "path" com os valores
                         .attr("d", function (d) { return self.area(d.values); })
                         // Adiciona tooltips
-                        .style("fill", function (d) { return color(d.Nome); })
+                        .style("fill", function (d) {
+                            return (self.opcoesAparencia.cores[d.Numero] === undefined || self.opcoesAparencia.cores[d.Numero] === "empty") ? color(d.Nome) : self.opcoesAparencia.cores[d.Numero];
+                        });
 
 
                 }
@@ -2222,15 +2462,17 @@
                 if (self.mostraLegenda === true) {
                     self.svg.select(".nomeEixoX")
                         .attr("dx", self.largura * 0.8 - 10)
-                        .attr("dy", self.altura - 5)
+                        .attr("dy", -8/*self.altura - 5*/)
                         .style("text-anchor", "end")
-                            .text(nomeEixoX);
+                        .attr("transform", "")
+                            .text(self.nomeEixoX);
                 } else {
                     self.svg.select(".nomeEixoX")
                         .attr("dx", self.largura - 10)
-                        .attr("dy", self.altura - 5)
+                        .attr("dy", -8/*self.altura - 5*/)
                         .style("text-anchor", "end")
-                            .text(nomeEixoX);
+                        .attr("transform", "")
+                            .text(self.nomeEixoX);
                 }
 
                 // Atualização do eixo dos Y
@@ -2240,33 +2482,10 @@
                     .call(self.escalaY);
 
 
-                // LIMITES PARA INSERIR OS EIXOS
-                // Se a altura do widget for menor
-                if (self.altura <= 180) {
-                    // Remover nomeEixo
-                    // melhorar a visualização
-                    d3.select("#" + self.id).select(".nomeEixoY")
-                        .text("");
-                } else {
-                    // Senão, voltar a adicionar o nome
-                    d3.select("#" + self.id).select(".nomeEixoY")
-                        .text(nomeEixoY);
-                }
-                // Se a altura do widget for menor
-                if (self.largura <= 250) {
-                    // Remover nomeEixo
-                    // melhorar a visualização
-                    d3.select("#" + self.id).select(".nomeEixoX")
-                        .text("");
-                } else {
-                    // Senão, voltar a adicionar o nome
-                    d3.select("#" + self.id).select(".nomeEixoX")
-                        .text(nomeEixoX);
-                }
+                // Verifica se deve mostrar ou não os eixos limite (Eixo X)
+                self.VerificaLimiteEixos();
 
             }
-
-
 
 
             /// <summary>
@@ -2285,14 +2504,14 @@
 
                     // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
                     if (self.mostraLegenda === true) {
-                        self.svg.append("text")
+                        self.svg.select(".x.axis").append("text")
                             .attr("class", "nomeEixoX")
                             .attr("dx", self.largura * 0.8 - 10)
                             .attr("dy", self.altura - 5)
                             .style("text-anchor", "end")
                                 .text(nomeEixoX);
                     } else {
-                        self.svg.append("text")
+                        self.svg.select(".x.axis").append("text")
                             .attr("class", "nomeEixoX")
                             .attr("dx", self.largura - 10)
                             .attr("dy", self.altura - 5)
@@ -2323,14 +2542,14 @@
 
                     // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
                     if (self.mostraLegenda === true) {
-                        self.svg.append("text")
+                        self.svg.select(".x.axis").append("text")
                             .attr("class", "nomeEixoX")
                             .attr("dx", self.largura * 0.8 - 10)
                             .attr("dy", self.altura - 5)
                             .style("text-anchor", "end")
                                 .text(nomeEixoX);
                     } else {
-                        self.svg.append("text")
+                        self.svg.select(".x.axis").append("text")
                             .attr("class", "nomeEixoX")
                             .attr("dx", self.largura - 10)
                             .attr("dy", self.altura - 5)
@@ -2432,9 +2651,10 @@
                 var self = this,
                     series = $("#" + self.id).find(".wrapper").find(".dados").length,
                     legenda,
+                    cores,
                     nomesLegenda = [];
 
-
+                cores = self.opcoesAparencia.cores;
 
                 // Inserir SVG legenda
                 legenda = d3.select("#" + self.id).select(".legenda").insert("svg");
@@ -2444,14 +2664,14 @@
                     // Selecionar o index no DOM
                     var nome = $("#" + self.id + " .wrapper").find(".dados:eq(" + index + ")").attr("value");
 
+
                     // Adicionar circulo "legenda"
                     legenda.append("circle")
                         .attr("r", 5)
                         .attr("cx", 5)
                         .attr("cy", 15 + 20 * index)
-                        .style("fill", color(nome));
+                        .style("fill", (cores[index] === undefined || cores[index] === "empty") ? color(nome) : cores[index]);
 
-                    //$(".legenda").prepend("<span style='float:right; padding-top:4px'>" + nome + "</span>")
 
                     legenda.append("text")
                         .attr("x", 15)
@@ -2498,8 +2718,8 @@
                 // Atualizar os dados
                 // Seleciona todos os elementos com class .area e liga-os aos dados
                 self.svg.selectAll(".area")
-                    .attr("d", function (d) { return self.area(d.values); })
-                    .style("fill", function (d) { return color(d.Nome); });
+                    .attr("d", function (d) { return self.area(d.values); });
+                    //.style("fill", function (d) { return color(d.Nome); });
 
                 // Caso esteja modo visualização stacked
                 if (self.modoVisualizacao === "stacked") {
@@ -2738,7 +2958,10 @@
 
                 this.dadosEscolhidos = [];
 
-                this.chave = []
+                this.chave = [];
+
+                this.nomeEixoX = "Eixo X";
+                this.nomeEixoY = "Eixo Y";
             };
 
 
@@ -2785,8 +3008,8 @@
                         .attr("width", escalaSecundaria.rangeBand())
                         .attr("height", function (d) { return self.altura - transformaY(d.y); })
                         // Translação da data, mais o pequeno desvio do eixo (margem)
-                        .attr("transform", function (d) { return "translate(" + (escalaOriginal(d.date) + self.margem.esquerda / 2) + ",0)"; })
-                        .style("fill", function (d) { return color(d.nome); });
+                        .attr("transform", function (d) { return "translate(" + (escalaOriginal(d.date) + self.margem.esquerda / 2) + ",0)"; });
+                        //.style("fill", function (d) { return color(d.nome); });
 
                 })
 
@@ -3239,48 +3462,6 @@
                 self.escalaY.tickFormat(d3.format("s"));
 
 
-                // Atualiza Nome do eixo do X
-                // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
-                if (self.mostraLegenda === true) {
-                    self.svg.select(".nomeEixoX")
-                        .attr("dx", self.largura * 0.8 - 10)
-                        .attr("dy", self.altura - 5)
-                        .style("text-anchor", "end")
-                            .text(nomeEixoX);
-                } else {
-                    self.svg.select(".nomeEixoX")
-                        .attr("dx", self.largura - 10)
-                        .attr("dy", self.altura - 5)
-                        .style("text-anchor", "end")
-                            .text(nomeEixoX);
-                }
-
-
-                // LIMITES PARA INSERIR OS EIXOS
-                // Se a altura do widget for menor
-                if (self.altura <= 180) {
-                    // Remover nomeEixo
-                    // melhorar a visualização
-                    d3.select("#" + self.id).select(".nomeEixoY")
-                        .text("");
-                } else {
-                    // Senão, voltar a adicionar o nome
-                    d3.select("#" + self.id).select(".nomeEixoY")
-                        .text(nomeEixoY);
-                }
-                // Se a altura do widget for menor
-                if (self.largura <= 250) {
-                    // Remover nomeEixo
-                    // melhorar a visualização
-                    d3.select("#" + self.id).select(".nomeEixoX")
-                        .text("");
-                } else {
-                    // Senão, voltar a adicionar o nome
-                    d3.select("#" + self.id).select(".nomeEixoX")
-                        .text(nomeEixoX);
-                }
-
-
                 // Numero de representações nos eixos de acordo com o tamanho do widget
                 if (self.altura > self.TamanhoLimite) {
                     self.escalaY.ticks(10);
@@ -3329,11 +3510,32 @@
                   .attr("dy", ".5em")
                   .attr("transform", "rotate(-35)");
 
+                // Atualiza Nome do eixo do X
+                // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
+                if (self.mostraLegenda === true) {
+                    self.svg.select(".nomeEixoX")
+                        .attr("dx", self.largura * 0.8 - 10)
+                        .attr("dy", -8/*self.altura - 5*/)
+                        .style("text-anchor", "end")
+                        .attr("transform", "")
+                            .text(self.nomeEixoX);
+                } else {
+                    self.svg.select(".nomeEixoX")
+                        .attr("dx", self.largura - 10)
+                        .attr("dy", -8/*self.altura - 5*/)
+                        .style("text-anchor", "end")
+                        .attr("transform", "")
+                            .text(self.nomeEixoX);
+                }
+
                 // Atualização do eixo dos Y
                 self.svg.select(".y.axis")
                     .attr("class", "y axis")
                     .attr("transform", "translate(" + self.margem.esquerda / 2 + " , 0)")
                   .call(self.escalaY);
+
+                // Verifica se deve mostrar ou não os eixos limite (Eixo X)
+                self.VerificaLimiteEixos();
 
             }
 
@@ -3370,14 +3572,14 @@
 
                 // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
                 if (self.mostraLegenda === true) {
-                    self.svg.append("text")
+                    self.svg.select(".x.axis").append("text")
                         .attr("class", "nomeEixoX")
                         .attr("dx", self.largura * 0.8 - 10)
                         .attr("dy", self.altura - 5)
                         .style("text-anchor", "end")
                             .text(nomeEixoX);
                 } else {
-                    self.svg.append("text")
+                    self.svg.select(".x.axis").append("text")
                         .attr("class", "nomeEixoX")
                         .attr("dx", self.largura - 10)
                         .attr("dy", self.altura - 5)
@@ -3463,8 +3665,11 @@
             /// </summary>
             GraficoBarras.prototype.ConstroiLegenda = function () {
                 var self = this,
+                    cores,
                     series = self.seriesUtilizadas.length,
                     legenda;
+
+                cores = self.opcoesAparencia.cores;
 
                 //color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
                 legenda = d3.select("#" + self.id).select(".legenda").insert("svg");
@@ -3474,7 +3679,7 @@
                         .attr("r", 5)
                         .attr("cx", 15)
                         .attr("cy", 15 + 20 * i)
-                        .style("fill", color(color.domain()[i]));
+                        .style("fill",  (cores[index] === undefined || cores[index] === "empty") ? color(color.domain()[i]) : cores[index]);
 
                     legenda.append("text")
                         .attr("x", 30)
@@ -3593,6 +3798,9 @@
                 this.chave = [];
 
                 this.suavizar = false;
+
+                this.nomeEixoX = "Eixo X";
+                this.nomeEixoY = "Eixo Y";
 
             };
 
@@ -3876,23 +4084,6 @@
                 self.escalaY.tickFormat(d3.format("s"));
 
 
-                // Atualiza Nome do eixo do X
-                // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
-                if (self.mostraLegenda === true) {
-                    self.svg.select(".nomeEixoX")
-                        .attr("dx", self.largura * 0.8 - 10)
-                        .attr("dy", self.altura - 5)
-                        .style("text-anchor", "end")
-                            .text(nomeEixoX);
-                } else {
-                    self.svg.select(".nomeEixoX")
-                        .attr("dx", self.largura - 10)
-                        .attr("dy", self.altura - 5)
-                        .style("text-anchor", "end")
-                            .text(nomeEixoX);
-                }
-
-
                 // LIMITES PARA INSERIR OS EIXOS
                 // Se a altura do widget for menor
                 if (self.altura <= 180) {
@@ -3903,7 +4094,7 @@
                 } else {
                     // Senão, voltar a adicionar o nome
                     d3.select("#" + self.id).select(".nomeEixoY")
-                        .text(nomeEixoY);
+                        .text(self.nomeEixoY);
                 }
                 // Se a altura do widget for menor
                 if (self.largura <= 250) {
@@ -3914,7 +4105,7 @@
                 } else {
                     // Senão, voltar a adicionar o nome
                     d3.select("#" + self.id).select(".nomeEixoX")
-                        .text(nomeEixoX);
+                        .text(self.nomeEixoX);
                 }
 
 
@@ -3954,9 +4145,31 @@
                   .attr("dy", ".5em")
                   .attr("transform", "rotate(-35)");
 
+                // Atualiza Nome do eixo do X
+                // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
+                if (self.mostraLegenda === true) {
+                    self.svg.select(".nomeEixoX")
+                        .attr("dx", self.largura * 0.8 - 10)
+                        .attr("dy", -8/*self.altura - 5*/)
+                        .attr("transform", "")
+                        .style("text-anchor", "end")
+                            .text(self.nomeEixoX);
+                } else {
+                    self.svg.select(".nomeEixoX")
+                        .attr("dx", self.largura - 10)
+                        .attr("dy", -8/*self.altura - 5*/)
+                        .attr("transform", "")
+                        .style("text-anchor", "end")
+                            .text(self.nomeEixoX);
+                }
+
+
                 // Atualização do eixo dos Y
                 self.svg.select(".y.axis")
                   .call(self.escalaY);
+
+                // Verifica se deve mostrar ou não os eixos limite (Eixo X)
+                self.VerificaLimiteEixos();
 
             }
 
@@ -3980,14 +4193,14 @@
 
                 // Append Eixo dos X ( Caso haja legenda a largura vai apenas até aos 80%
                 if (self.mostraLegenda === true) {
-                    self.svg.append("text")
+                    self.svg.select(".x.axis").append("text")
                         .attr("class", "nomeEixoX")
                         .attr("dx", self.largura * 0.8 - 10)
                         .attr("dy", self.altura - 5)
                         .style("text-anchor", "end")
                             .text(nomeEixoX);
                 } else {
-                    self.svg.append("text")
+                    self.svg.select(".x.axis").append("text")
                         .attr("class", "nomeEixoX")
                         .attr("dx", self.largura - 10)
                         .attr("dy", self.altura - 5)
@@ -4160,7 +4373,10 @@
                 var self = this,
                     series = $("#" + self.id).find(".wrapper").find(".series").length,
                     legenda,
+                    cores,
                     nomesLegenda = [];
+
+                cores = self.opcoesAparencia.cores;
 
                 // Inserir SVG legenda
                 legenda = d3.select("#" + self.id).select(".legenda").insert("svg");
@@ -4175,7 +4391,7 @@
                         .attr("r", 5)
                         .attr("cx", 15)
                         .attr("cy", 15 + 20 * index)
-                        .style("fill", color(nome));
+                        .style("fill",  (cores[index] === undefined || cores[index] === "empty") ? color(nome) : cores[index]);
 
                     //$(".legenda").prepend("<span style='float:right; padding-top:4px'>" + nome + "</span>")
 
@@ -5684,6 +5900,9 @@
                     .attr("fill", function (d, i) { return self.color(i); })
                     // É criado o path utilizando o método arc do d3
                     .attr("d", self.arc)
+                    // Introduzir dados para facilitar a identificação de cada "path"
+                    .attr("value", function (d) { return d.data.Nome; })
+                    .attr("numero", function (d) { return d.data.Numero; })
                     .on("mouseover", tip.show)
                     .on("mouseout", tip.hide);
 
@@ -5698,8 +5917,11 @@
             /// </summary>
             PieChart.prototype.ConstroiLegenda = function () {
                 var self = this,
+                    cores,
                     series = self.dadosEscolhidos.length,
                     legenda;
+
+                cores = self.opcoesAparencia.cores;
 
                 color.domain(d3.keys(self.dados[0]).filter(function (key) { return key !== "date"; }));
                 legenda = d3.select("#" + self.id).select(".legenda").insert("svg");
@@ -5713,7 +5935,7 @@
                             .attr("r", 5)
                             .attr("cx", 15)
                             .attr("cy", 15 + 20 * i)
-                            .style("fill", self.color(i));
+                            .style("fill", (cores[index] === undefined || cores[index] === "empty") ? self.color(i) : cores[index]);
 
                         legenda.append("text")
                             .attr("x", 30)
@@ -6998,7 +7220,7 @@
                 Componente = [],
                 CampoSeries = ["Vazio"],
                 FuncaoSeries = ["Vazio", "Media", "Somatorio", "Minimo", "Maximo", "Contagem", "ContagemUnica"],
-                Estilos = ["Continuo", "Descontinuo", "Pontos"],
+                Estilos = ["Nenhum", "solid", "dashed", "dotted"],
                 Angulos = [180, 45, 90, 135],
                 FixoPeriodo = ["Selecione um periodo", "Ano", "Dia", "Hora", "Mes", "Minuto", "Segundo", "Semana", "Trimestre"];
 
@@ -7422,6 +7644,7 @@
                     valorMaximo: { name: "Valor Maximo", group: "Valores", type: "number", options: { min: 0 } },
                     valorMeta: { name: "Valor Meta", group: "Valores", type: "number", options: { min: 0 } },
 
+
                     // Dados Widget Label 
                     CheckboxValor: { name: "Valor", group: "Tipo Label", type: "boolean", description: "label valor", showHelp: false },
                     CheckboxVariavel: { name: "Variável", group: "Tipo Label", type: "boolean", description: "label variavel", showHelp: false },
@@ -7446,21 +7669,35 @@
 
                 };
                 self.inicializaAparencia = {
+                    // Margens do gráfico
                     MargemCima: { name: "Cima", group: "Margem", type: "number", options: { min: 0 } },
                     MargemBaixo: { name: "Baixo", group: "Margem", type: "number", options: { min: 0 } },
                     MargemEsquerda: { name: "Esquerda", group: "Margem", type: "number", options: { min: 0 } },
                     MargemDireita: { name: "Direita", group: "Margem", type: "number", options: { min: 0 } },
 
+                    // Contorno do gráfico (Border)
                     ContornoCor: { name: "Cor:", group: "Contorno", type: "color", options: { preferredFormat: "hex" }, description: modo, showHelp: false },
-                    ContornoEstilo: { name: "Estilo:", group: "Contorno", type: "options", options: Estilos, description: "tipos possiveis para o estilo do contorno", showHelp: false },
+                    ContornoEstilo: { name: "Contorno:", group: "Contorno", type: "options", options: Estilos, description: "tipos possiveis para o estilo do contorno", showHelp: false },
 
+                    // Eixo dos X
+                    EixoX: { name: "Nome:", group: "Eixo X", description: "Nome do eixo dos X", showHelp: false },
+                    MostraX: { name: "Mostrar Eixo", group: "Eixo X", type: "boolean", description: "Mostra Eixo", showHelp: false },
+
+                    // Eixo dos Y
+                    EixoY: { name: "Nome:", group: "Eixo Y", description: "Nome do eixo dos Y", showHelp: false },
+                    MostraY: { name: "Mostrar Eixo", group: "Eixo Y", type: "boolean", description: "Mostra Eixo", showHelp: false },
+
+                    // Angulos
                     MostraEixo: { name: "Mostra/Oculta:", group: "Eixos", type: "boolean", description: "label variavel", showHelp: false },
                     LinhasEixo: { name: "Numero Linhas:", group: "Eixos", type: "number", options: { min: 0 } },
                     AnguloEixo: { name: "Angulo:", group: "Eixos", type: "options", options: Estilos, description: "Angulos que a legenda dos eixos podem tomar", showHelp: false },
 
-                    Margem: { name: "Margem:", group: "Aparencia", description: "Margem em volta do gráfico", showHelp: false },
-                    MargemIgual: { name: "Aplicar Todos:", group: "Aparencia", description: "Aplicar a mesma margem a todos", showHelp: false },
-                    MargemDiferente: { name: "Margens:", group: "Aparencia", description: "Aplicar diferentes margens", showHelp: false },
+                    // Séries
+                    CorSerie: { name: "Cor:", group: "Series", type: "color", options: { preferredFormat: "hex" }, description: modo, showHelp: false },
+                    MostraSerie: { name: "Mostrar", group: "Series", type: "boolean", description: "Mostra Serie", showHelp: false },
+                    EstiloSerie: { name: "Estilo:", group: "Series", type: "options", options: Estilos, description: "tipos possiveis para o estilo do contorno", showHelp: false },
+
+                    // Fundo + Grelha(Grid)
                     Fundo: { name: "Fundo:", group: "Fundo", type: "color", options: { preferredFormat: "hex" }, description: modo, showHelp: false },
                     Grelha: { name: "Esconder Grelha:", group: "Aparencia", type: "boolean", description: "Revelar ou ocultar a grelha", showHelp: false }
                 };
@@ -7686,9 +7923,6 @@
                 var self = this,
                     index = 1;
 
-
-                console.log(series);
-
                 if (series !== undefined) {
                     series.forEach(function (serie) {
                         self.propriedadesDados["Nome-" + index] = serie.Nome || "Serie" + index;
@@ -7798,7 +8032,7 @@
             }
 
 
-            // Preenche Campo conforme o Indicador que foi selecionado
+            // Preenche campo conforme o Indicador que foi selecionado
             PropertyGrid.PreencheCampo = function (valor, indicador) {
                 var self = this,
                     valores = [];
@@ -7817,6 +8051,103 @@
 
                 };
 
+            }
+
+
+            // Preenche campo de aparencia
+            PropertyGrid.PreencheAparencia = function (widget) {
+                var self = this,
+                    propriedadesSerie = {};
+
+                // Inicializar propriedadesAparencia
+                self.propriedadesAparencia = {};
+
+                //console.log("PROP APARENCIA!!")
+                //console.log(widget.opcoesAparencia);
+
+                // Se não é grafico Pie, tem que ter opções dos eixos
+                if (widget.widgetElemento !== "Tabela") {
+                    var index = 1;
+
+                    // Inciar aparencia das séries
+                    // INICIALIZAR
+                    widget.seriesUtilizadas.forEach(function (serie) {
+                        // Para cada série iniciar um "menu" de aparencia
+                        self.inicializaAparencia["Serie-Cor-" + index] = { name: "Cor:", group: serie.Nome, type: "color", options: { preferredFormat: "hex" }, description: modo, showHelp: false };
+                        self.inicializaAparencia["Serie-Mostra-" + index] = { name: "Mostrar", group: serie.Nome, type: "boolean", description: "Mostra Serie", showHelp: false };
+                        if (widget.widgetElemento === "GraficoLinhas") {
+                            self.inicializaAparencia["Serie-Estilo-" + index] = { name: "Estilo:", group: serie.Nome, type: "options", options: Estilos, description: "tipos possiveis para o estilo do contorno", showHelp: false };
+                        }
+
+                        index++;
+                    });
+
+                    //Reset do index
+                    index = 1;
+
+                    // TODO
+                    // PREENCHE
+                    widget.seriesUtilizadas.forEach(function (serie, curIndex) {
+                        // Para cada série preencher o seu "menu" de aparencia
+                        propriedadesSerie["Serie-Cor-" + index] = "";
+                        propriedadesSerie["Serie-Mostra-" + index] = (widget.opcoesAparencia.visibilidade[curIndex] === undefined || widget.opcoesAparencia.visibilidade[curIndex] === null) ? true : widget.opcoesAparencia.visibilidade[curIndex];
+                        if (widget.widgetElemento === "GraficoLinhas") {
+                            propriedadesSerie["Serie-Estilo-" + index] = "";
+                        }
+
+                        index++;
+                    });
+
+                    // merge entre ambos os objectos
+                    self.propriedadesAparencia = Merge(self.propriedadesAparencia, propriedadesSerie);
+
+                    if (widget.widgetElemento !== "GraficoPie") {
+                        var propriedades;
+
+                        propriedades = {
+                            EixoX: widget.nomeEixoX,
+                            MostraX: (widget.opcoesAparencia.MostraX === undefined) ? true : widget.opcoesAparencia.MostraX,
+
+                            EixoY: widget.nomeEixoY,
+                            MostraY: (widget.opcoesAparencia.MostraY === undefined) ? true : widget.opcoesAparencia.MostraY,
+
+                            MargemCima: widget.margem.cima,
+                            MargemBaixo: widget.margem.baixo,
+                            MargemEsquerda: widget.margem.esquerda,
+                            MargemDireita: widget.margem.direita,
+
+                            ContornoCor: widget.opcoesAparencia.contornoCor,
+                            ContornoEstilo: widget.opcoesAparencia.contornoEstilo,
+
+                            Fundo: widget.opcoesAparencia.fundo
+                        }
+
+                        // merge entre ambos os objectos
+                        self.propriedadesAparencia = Merge(self.propriedadesAparencia, propriedades);
+
+                        // Caso seja, não mostrar opçao eixos
+                    } else {
+                        var propriedades;
+
+                        propriedades = {
+                            MargemCima: widget.margem.cima,
+                            MargemBaixo: widget.margem.baixo,
+                            MargemEsquerda: widget.margem.esquerda,
+                            MargemDireita: widget.margem.direita,
+
+                            ContornoCor: widget.opcoesAparencia.contornoCor,
+                            ContornoEstilo: widget.opcoesAparencia.contornoEstilo,
+
+                            Fundo: widget.opcoesAparencia.fundo
+                        }
+
+                        // merge entre ambos os objectos
+                        self.propriedadesAparencia = Merge(self.propriedadesAparencia, propriedades);
+
+                    }
+
+                }
+                
             }
 
 
@@ -7889,15 +8220,6 @@
                     Nome: widget.titulo,
                     Descricao: widget.descricao,
                 };
-
-
-                //// Caso tenha series utilizadas inicia sem botão
-                //if(gridPrincipal.getWidget($(".widget-ativo").attr("id")).seriesUtilizadas.length > 0 ){
-                //    self.propriedadesDados = {
-                //        Fixo: "",
-                //        ComponenteContexto: (valorInicial === "") ? "" : valorInicial
-                //    };
-                //} else {
                 // Inicia apenas com  o botão
                 self.propriedadesDados = {
                     Botao: "",
@@ -7905,22 +8227,10 @@
                     ComponenteContexto: (valorInicial === "") ? "" : valorInicial
 
                 };
-                //}
+                // Prenche propriedadesAparencia da propertyGrid, conforme o objecto opcoesAparencia do widget
+                self.PreencheAparencia(widget);
 
-
-                self.propriedadesAparencia = {
-                    MargemCima: widget.margem.cima,
-                    MargemBaixo: widget.margem.baixo,
-                    MargemEsquerda: widget.margem.esquerda,
-                    MargemDireita: widget.margem.direita,
-
-                    ContornoCor: "",
-                    ContornoEstilo: "",
-
-                    Fundo: ""
-                }
-
-
+                
                 // Define o tipo de elemento a representar pela propertyGrid
                 self.propertyGridElemento = "dados";
 
@@ -8397,8 +8707,8 @@
                 widget1 = gridPrincipal.getWidget($(".widget-ativo").attr("id"));
 
                 // Atualiza os widgets com a sua informação
-                gridPrincipal.getWidget(widget1.id).setTitulo(objPropertyGridGeral.Nome);
-                gridPrincipal.getWidget(widget1.id).setDescricao(objPropertyGridGeral.Descricao);
+                widget1.setTitulo(objPropertyGridGeral.Nome);
+                widget1.setDescricao(objPropertyGridGeral.Descricao);
 
 
                 // Guarda as series 
@@ -8425,15 +8735,17 @@
 
 
                 // Atualiza Widget (to-do atualizar dados? // Alerta)
-                if (gridPrincipal.getWidget(widget1.id).dados !== undefined) {
+                if (widget1.dados !== undefined) {
 
-                    console.log(objectoSeries);
-
+                    
                     // Adiciona as opcoes das séries ao objecto principal
-                    gridPrincipal.getWidget(widget1.id).AdicionaSerieUtilizada(objectoSeries);
+                    widget1.AdicionaSerieUtilizada(objectoSeries);
 
-                    // Atualiza
-                    gridPrincipal.getWidget(widget1.id).objectoServidor = gridPrincipal.getWidget(widget1.id).AtualizaObjectoServidor();
+                    // Atualiza aparencia
+                    widget1.AtualizaAparencia(objPropertyGridAparencia);
+
+                    // Atualiza objecto servidor
+                    widget1.objectoServidor = widget1.AtualizaObjectoServidor();
                     //gridPrincipal.getWidget(widget1.id).Atualiza();
 
                 }
@@ -9943,16 +10255,13 @@
                         var widgetNovo,
                             idOriginal;
 
-
-
                         // Caso o index esteja a 1, significa que temos que recolher as opções de aparencia do dashboard
                         if (curIndex === 0) {
-                            console.log(item);
 
                             gridPrincipal.aparencia.grelha = item.grelha;
                             gridPrincipal.aparencia.cor = item.cor;
 
-                            // Senão temos que carregar os widgets
+                        // Senão temos que carregar os widgets
                         } else {
                             if (item !== null) {
                                 // Guardar o id original
@@ -9973,9 +10282,6 @@
                                     }
 
                                 });
-
-                                console.log("NOVO WIDGET");
-                                console.log(widgetNovo);
 
                                 // Caso seja widget do tipo Filtros
                                 if (widgetNovo.widgetElemento === "filtros") {
@@ -10505,7 +10811,7 @@
                                     $("#" + widget.id).find(".legenda").show();
                                 }
                             });
-                        }, 250);
+                        }, 10);
                     });
                 });
 
@@ -10842,6 +11148,9 @@
             /// </summary>
             Plataforma.prototype.RefillGrid = function (tipoGrid) {
                 var self = this;
+
+
+                console.log(tipoGrid);
 
                 // REVER !!!!!
                 // TODO

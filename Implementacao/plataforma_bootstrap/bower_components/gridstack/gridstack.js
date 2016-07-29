@@ -1270,16 +1270,13 @@
         tipoGrid = $(".active").children("a").attr("class");
 
 
-
         tipoGrid = tipoGrid.split(" ")[0];
         console.log(tipoGrid);
 
 
 
-
-        
         // Dependendo do tipo de Grid, vai preencher novamente essa grid
-        if (tipoGrid === "sidedarOutros") {
+        if (tipoGrid === "sidebarOutros") {
             this.opts.platformObject.RefillGrid("gridOutros");
         } else if (tipoGrid === "sidebarLabels") {
             this.opts.platformObject.RefillGrid("gridLabels");
