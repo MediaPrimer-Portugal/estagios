@@ -549,7 +549,7 @@ primerCORE = (function () {
             index = 0,
             contexto = '',
             intervaloData = ["seconds", "hours", "minutes", "days", "weeks", "months", "years"],
-            intervaloDataPT = ["Segundo", "Hora", "Minutos", "Dia", "Semana", "Mes", "Ano"];
+            intervaloDataPT = ["Segundo", "Hora", "Minuto", "Dia", "Semana", "Mes", "Ano"];
 
         //query = '{ "sessaoID": cookie.sessaoid, "dashboardID": "12", "utilizadorID": "'+ utilizadorID +'", "widgetsDados":'
         //        + '[{ "id": "'+ widget.id +'", '
@@ -573,8 +573,6 @@ primerCORE = (function () {
         // vai avançando no array a testar novos intervalos
         // Com isto ée pretendido achar o numero ideal de dados a dispor, sem causar grande sobrecarga
         // nos pedidos/aplicação
-        
-
         while (moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]) > 40) {
             console.log(moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]) > 40);
             index++;
@@ -598,12 +596,8 @@ primerCORE = (function () {
         widget.contextoFiltro.forEach(function (item, curIndex) {
             var filtro;
 
-            console.log(curIndex);
-            console.log(filtros);
-
             (filtros[curIndex] === undefined) ? valor = "" : valor = filtros[curIndex].valor;
              
-
             // Caso o filtro esteja disponivel
             if (item !== undefined) {
                 pesquisa += '{ "id": "' + item + '", "tipo": "contexto", "filtro": "' + valor + '" }, ';
@@ -614,7 +608,7 @@ primerCORE = (function () {
 
         })
 
-        // Adicionar pesquisa
+        // Adicionar pesquisas(Filtro?)
         //widget.seriesU
         //pesquisa += '{ "id": "' + widget.id + '", "tipo": "contexto", "filtro": "' + filtros[curIndex].valor + '" }, ';
 
@@ -623,33 +617,60 @@ primerCORE = (function () {
 
         //series = '[{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Somatorio", "campo": "valor.valorMin", "index": "indicadores", "type": "" }],';
 
-        // CORRIGIR!!!
-        // Modificara parametro para aceitar dashboards não criadas??
-        if (dashboardID === 0) {
-            dashboardID = 12;
+        console.log($.datepicker.formatDate('yy/mm/dd', new Date()));
+
+        if (widget.periodoEscolhido instanceof Object) {
+            if (widget.periodoEscolhido.periodo === "fixo") {
+
+                var index = _.findIndex(intervaloDataPT, function (data) { return data === widget.periodoEscolhido.valor; }),
+                    datainicio = moment($.datepicker.formatDate('yy/mm/dd', new Date())).subtract(30, intervaloData[index]).format("YYYY/MM/DD");
+
+
+                query = '{ "sessaoID": "sessaoDebug", "dashboardID": "' + dashboardID + '", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
+                        + '[{ "id": "' + widget.id + '", '
+                        + '"tipo": "dados",'
+                        + '"elemento": "' + widget.widgetElemento + '", '
+                        + '"contexto": ["' + opcoes.id + '"' + contexto + '], '
+                        + '"series":' + series
+                        + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "' + widget.periodoEscolhido.valor + '" }] }], '
+                        + '"widgetsContexto":' + pesquisa
+                        + '"contextoData": [{ "id": "' + opcoes.id + '", "campo": "data", '
+                                            + '"dataInicio": \"' + datainicio + '\",  '
+                                            + '"dataFim": \"' + $.datepicker.formatDate('yy/mm/dd', new Date()) + '\"  }] } }';
+
+
+
+            } else if(widget.periodoEscolhido.periodo === "contexto") {
+                query = '{ "sessaoID": "sessaoDebug", "dashboardID": "' + dashboardID + '", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
+                        + '[{ "id": "' + widget.id + '", '
+                        + '"tipo": "dados",'
+                        + '"elemento": "' + widget.widgetElemento + '", '
+                        + '"contexto": ["' + opcoes.id + '"' + contexto + '], '
+                        + '"series":' + series
+                        + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "' + intervaloDataPT[index] + '" }] }], '
+                        + '"widgetsContexto":' + pesquisa
+                        + '"contextoData": [{ "id": "' + opcoes.id + '", "campo": "data", '
+                                            + '"dataInicio": \"' + opcoes.dataInicio + '\",  '
+                                            + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
+
+            }
+
+        } else {
+            query = '{ "sessaoID": "sessaoDebug", "dashboardID": "' + dashboardID + '", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
+        + '[{ "id": "' + widget.id + '", '
+        + '"tipo": "dados",'
+        + '"elemento": "' + widget.widgetElemento + '", '
+        + '"contexto": ["' + opcoes.id + '"' + contexto + '], '
+        + '"series":' + series
+        + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "' + intervaloDataPT[index] + '" }] }], '
+        + '"widgetsContexto":' + pesquisa
+        + '"contextoData": [{ "id": "' + opcoes.id + '", "campo": "data", '
+                            + '"dataInicio": \"' + opcoes.dataInicio + '\",  '
+                            + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
         }
 
 
-        query = '{ "sessaoID": "sessaoDebug", "dashboardID": "' + dashboardID + '", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
-                + '[{ "id": "' + widget.id + '", '
-                + '"tipo": "dados",'
-                + '"elemento": "' + widget.widgetElemento + '", '
-                + '"contexto": ["'+ opcoes.id +'"'+ contexto + '], '
-                + '"series":' + series
-                + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "'+ intervaloDataPT[index] + '" }] }], '
-                + '"widgetsContexto":' + pesquisa
-                + '"contextoData": [{ "id": "' + opcoes.id + '", "campo": "data", '
-                                    + '"dataInicio": \"' + opcoes.dataInicio + '\",  '
-                                    + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
-
-
         console.log(query);
-
-        //query = '{ "sessaoID": "sessaoDebug", "dashboardID": "12","utilizadorID": "2502", "widgetsDados": [ { "id": \"' + widget.id +
-        //    '\", "tipo": \"' + widget.widgetTipo +
-        //    '\", "elemento": \"' + widget.widgetElemento +
-        //    '\", "contexto": [ "widget3", "widget8" ], "series": [ {"funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": ""}, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMin", "index": "indicadores", "type": "" } ], "buckets": [ {"tipo": "histogramadata", "campo": "data", "intervalo": "dia" } ]} ], "widgetsContexto": { "contextoPesquisa": [ { "id": "widget3", "tipo": "contexto",  "filtro": "valor.tagID: 3072" }, { "id": "widget4", "tipo": "contexto", "filtro": "valor.tagID: 3073"} ],  "contextoData": [  {  "id": "widget8",  "campo": "data", "dataInicio": \"' + opcoes.dataInicio + '\",  "dataFim": \"' + opcoes.dataFim + '\" } ] } }';
-
 
         $.ajax({
             type: "POST",
@@ -664,7 +685,7 @@ primerCORE = (function () {
                 // Apaga a representação antes de pedir novos dados
                 $("#" + widget.id).find(".wrapper").find("svg").remove();
                 $("#" + widget.id).find(".dataTables_wrapper").remove();
-                $("#" + widget.id).find(".legenda").hide();
+                $("#" + widget.id).find(".legenda").css("display", "none");
 
                 // Constroi o spinner 
                 ConstroiSpinner(widget);
@@ -681,17 +702,17 @@ primerCORE = (function () {
                 // Adiciona opção de selecionar
                 $("#" + widget.id).css("pointer-events", "auto");
 
-                // Caso seja um widget do tipo dados
-                if (widget.widgetTipo === "dados") {
-                    widget.dados = $.parseJSON(event.responseText);
-                    widget.RedesenhaGrafico(widget.id);
-                }
+                //// Caso seja um widget do tipo dados
+                //if (widget.widgetTipo === "dados") {
+                //    widget.dados = $.parseJSON(event.responseText);
+                //    widget.RedesenhaGrafico(widget.id);
+                //}
 
                 // Parar widget
                 widget.spinner.stop();
 
-
-                $("#" + widget.id).find(".legenda").show();
+                // Volta a mostrar legenda
+                $("#" + widget.id).find(".legenda").css("display", "show");
 
                 // Remover class do spinner
                 $("#" + widget.id).removeClass("carregar");
@@ -699,14 +720,39 @@ primerCORE = (function () {
             },
             url: url,
             // Ao receber o pedido
-            success: function () {
+            success: function (event) {
+
+                // Adiciona opção de selecionar
+                $("#" + widget.id).css("pointer-events", "auto");
+
+                // Caso seja um widget do tipo dados
+                if (widget.widgetTipo === "dados") {
+                    widget.dados = event;
+                    widget.RedesenhaGrafico(widget.id);
+                }
+
+                // Remove aviso pois foi feito com sucesso o pedido
+                widget.RemoveAviso();
+
                 console.log("Dados obtidos");
+
             },
             error: function (xhr, ajaxOptions, thrownError) {
-                console.log(xhr.responseText);
-                //alert(xhr.status);
-                //alert(thrownError);
+                console.log(xhr);
                 alert("O seu pedido sofreu um erro e não foi concretizado");
+
+                // Adiciona opção de selecionar
+                $("#" + widget.id).css("pointer-events", "auto");
+               
+                // Desenha aviso visual para o utilizador saber qual o widget que está a falhar
+                widget.setAviso();
+
+                // Parar widget
+                widget.spinner.stop();
+
+                // Remover class do spinner
+                $("#" + widget.id).removeClass("carregar");
+
             },
         });
 

@@ -271,8 +271,8 @@
 
 			if (getValueFuncs) {
 			    getValueFuncs[name] = function () {
-                    // TODO
-				    return ($('#' + elemId).spectrum('get') !== null)? $('#' + elemId).spectrum('get').toHexString() : "empty" ;
+                    // TODO - Feito?
+				    return ($('#' + elemId).spectrum('get') !== null)? $('#' + elemId).spectrum('get').toString() : "empty" ;
 				};
 			}
 
@@ -399,10 +399,14 @@
 
 	    /* ADICIONADO
         *  Verificação, caso esteja no modo de visualização o color picker vai ser mostrado como disabled
+        *  Caso o picker venha com o indicador alpha, é possivel escolher o alpha da cor também
         */
 
-		if(mode === "visualizacao")
-		opts["disabled"] = true;
+        if (mode === "visualizacao") {
+		    opts["disabled"] = true;
+        } else if (mode.split("-")[1] === "alpha") {
+            opts["showAlpha"] = true;
+        }
 
         //-------------------------------------------------------------------------------------------------
 

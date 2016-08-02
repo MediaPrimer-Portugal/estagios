@@ -331,7 +331,7 @@
     /* Definições de cada célula na property Grid*/
     .pgCell {
         border: none !important;
-        padding: 16px 4px 16px 8px !important;
+        padding: 16px 4px 16px 5px !important;
         color: white;
     }
 
@@ -374,7 +374,7 @@
     ------------------*/
 
     .legenda {
-        display: inline-block !important;
+        display: inline-block;
 
         /*height: 5%;
         width: 120px;*/

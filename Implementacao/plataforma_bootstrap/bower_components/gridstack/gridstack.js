@@ -1267,12 +1267,9 @@
         this.opts.PropertyGrid.AdicionaCheckboxMenu();
 
 
+        // Verifica qual é o tipo de grid ativa
         tipoGrid = $(".active").children("a").attr("class");
-
-
         tipoGrid = tipoGrid.split(" ")[0];
-        console.log(tipoGrid);
-
 
 
         // Dependendo do tipo de Grid, vai preencher novamente essa grid
