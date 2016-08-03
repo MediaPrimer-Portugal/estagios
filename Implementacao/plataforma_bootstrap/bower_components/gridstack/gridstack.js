@@ -1251,9 +1251,10 @@
             if (item.widgetTipo === "contexto") {
                 // Caso não seja um widget de filtros
                 if (item.widgetElemento !== "filtros") {
-                    listaWidgetsContexto.push({ text: item.titulo, value: item.id })
-                } else {
-                    // TODO widget filtro
+                    // Caso não seja um virtual
+                    if (item.titulo !== "virtual") {
+                        listaWidgetsContexto.push({ text: item.titulo, value: item.id })
+                    }
                 }
 
             } else {

@@ -112,7 +112,7 @@
 	 * @param {string} displayName - The group display name
 	 */
 	function getGroupHeaderRowHtml(displayName) {
-		return '<tr class="pgGroupRow"><td colspan="2" class="pgGroupCell">' + displayName + '</td></tr>';
+	    return '<tr class="pgGroupRow nao-seleciona showPointer"><td colspan="2" class="pgGroupCell">' + displayName + '<span class="fa arrow" style="-webkit-transform: rotate(0); -moz-transform: rotate(0)"></span></td></tr>';
 	}
 
 	/**
@@ -166,9 +166,7 @@
              *
             */
 		} else if (type === "filtro") {
-
-		    console.log(meta);
-
+            
 		    displayName = '<input class="' + elemId + '" type="text" value="' + meta.description + '" />';
 		    valueHTML = '<input type="text" class="valor' + elemId + '" value="' + value + '" />';
 
@@ -421,10 +419,6 @@
 	function onSpinnerChange() {
 		var $spinner = $(this);
 		var value = $spinner.spinner('value');
-
-        // TODO 07/15
-		console.log($spinner.attr("value"));
-		console.log(value);
 
 		// If the value is null and the real value in the textbox is string we empty the textbox
 		if (value === null && typeof $spinner.val() === 'string') {

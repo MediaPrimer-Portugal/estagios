@@ -64,27 +64,15 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
 
-               // $("#" + widget.id).find("wrapper").css("display", "none");
-
-                // Constroi o spinner 
-                //ConstroiSpinner(widget);
-                // Adicionar class ao spinner
-                //$("#" + widget.id).addClass("carregar")
+             
             },
             // Depois do pedido estar completo
             complete: function () {
-                // Parar widget
-                //widget.spinner.stop();
-
-                //$("#" + widget.id).find("wrapper").css("display", "block");
-
-                // Remover class do spinner
-                //$("#" + widget.id).removeClass("carregar");
+               
             },
             url: url,
             // Ao receber o pedido
             success: function () {
-                console.log("Dados obtidos");
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 console.log(xhr.responseText);
@@ -113,27 +101,15 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
 
-                // $("#" + widget.id).find("wrapper").css("display", "none");
-
-                // Constroi o spinner 
-                //ConstroiSpinner(widget);
-                // Adicionar class ao spinner
-                //$("#" + widget.id).addClass("carregar")
+              
             },
             // Depois do pedido estar completo
             complete: function () {
-                // Parar widget
-                //widget.spinner.stop();
-
-                //$("#" + widget.id).find("wrapper").css("display", "block");
-
-                // Remover class do spinner
-                //$("#" + widget.id).removeClass("carregar");
+              
             },
             url: url,
             // Ao receber o pedido
             success: function () {
-                console.log("Dados obtidos");
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 console.log(xhr);
@@ -161,27 +137,15 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
 
-                // $("#" + widget.id).find("wrapper").css("display", "none");
-
-                // Constroi o spinner 
-                //ConstroiSpinner(widget);
-                // Adicionar class ao spinner
-                //$("#" + widget.id).addClass("carregar")
+            
             },
             // Depois do pedido estar completo
             complete: function () {
-                // Parar widget
-                //widget.spinner.stop();
-
-                //$("#" + widget.id).find("wrapper").css("display", "block");
-
-                // Remover class do spinner
-                //$("#" + widget.id).removeClass("carregar");
+             
             },
             url: url,
             // Ao receber o pedido
             success: function () {
-                console.log("Dados obtidos");
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 console.log(xhr);
@@ -208,9 +172,6 @@ primerCORE = (function () {
     /// <returns> Retorna todos os dashboards ligados ao ID do utilizador que foi enviado </returns>
     objecto.DashboardsUtilizadorLista = function (id) {
 
-        console.log(cookie.id);
-        console.log("sessaoDebug");
-
         var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/utilizador/" + id;
 
         return $.ajax({
@@ -223,27 +184,15 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
 
-                // $("#" + widget.id).find("wrapper").css("display", "none");
-
-                // Constroi o spinner 
-                //ConstroiSpinner(widget);
-                // Adicionar class ao spinner
-                //$("#" + widget.id).addClass("carregar")
+        
             },
             // Depois do pedido estar completo
             complete: function () {
-                // Parar widget
-                //widget.spinner.stop();
-
-                //$("#" + widget.id).find("wrapper").css("display", "block");
-
-                // Remover class do spinner
-                //$("#" + widget.id).removeClass("carregar");
+            
             },
             url: url,
             // Ao receber o pedido
             success: function () {
-                console.log("Dados obtidos");
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 console.log(xhr);
@@ -263,7 +212,6 @@ primerCORE = (function () {
     /// <returns></returns>
     objecto.DashboardCria = function (idUtilizador, dashboard) {
 
-        console.log(dashboard);
 
         var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/cria",
             query = '{'
@@ -274,7 +222,6 @@ primerCORE = (function () {
                 + '"Activo":' + "'" + true + "'"
             + '}';
 
-        console.log(query);
 
         return $.ajax({
             type: "PUT",
@@ -287,27 +234,15 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
 
-                // $("#" + widget.id).find("wrapper").css("display", "none");
-
-                // Constroi o spinner 
-                //ConstroiSpinner(widget);
-                // Adicionar class ao spinner
-                //$("#" + widget.id).addClass("carregar")
             },
             // Depois do pedido estar completo
             complete: function () {
-                // Parar widget
-                //widget.spinner.stop();
-
-                //$("#" + widget.id).find("wrapper").css("display", "block");
-
-                // Remover class do spinner
-                //$("#" + widget.id).removeClass("carregar");
+           
             },
             url: url,
             // Ao receber o pedido
             success: function () {
-                console.log("Dados obtidos");
+
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 console.log(xhr);
@@ -324,8 +259,6 @@ primerCORE = (function () {
     /// </summary>
     objecto.DashboardApaga = function (id) {
 
-        console.log(id);
-
         var url = "http://prodserver1/MP/primerCORE/db2/rest/dashboard/" + id;
 
         return $.ajax({
@@ -338,27 +271,15 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
 
-                // $("#" + widget.id).find("wrapper").css("display", "none");
-
-                // Constroi o spinner 
-                //ConstroiSpinner(widget);
-                // Adicionar class ao spinner
-                //$("#" + widget.id).addClass("carregar")
+    
             },
             // Depois do pedido estar completo
             complete: function () {
-                // Parar widget
-                //widget.spinner.stop();
-
-                //$("#" + widget.id).find("wrapper").css("display", "block");
-
-                // Remover class do spinner
-                //$("#" + widget.id).removeClass("carregar");
+             
             },
             url: url,
             // Ao receber o pedido
             success: function () {
-                console.log("Dados obtidos");
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 console.log(xhr);
@@ -384,9 +305,6 @@ primerCORE = (function () {
                 + '"Activo":' + "'" + true + "'"
             + '}';
 
-        console.log(url);
-        console.log(query);
-
         return $.ajax({
             type: "POST",
             data: query,
@@ -398,27 +316,15 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
 
-                // $("#" + widget.id).find("wrapper").css("display", "none");
-
-                // Constroi o spinner 
-                //ConstroiSpinner(widget);
-                // Adicionar class ao spinner
-                //$("#" + widget.id).addClass("carregar")
+           
             },
             // Depois do pedido estar completo
             complete: function () {
-                // Parar widget
-                //widget.spinner.stop();
-
-                //$("#" + widget.id).find("wrapper").css("display", "block");
-
-                // Remover class do spinner
-                //$("#" + widget.id).removeClass("carregar");
+            
             },
             url: url,
             // Ao receber o pedido
             success: function () {
-                console.log("Dados obtidos");
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 alert(thrownError);
@@ -446,27 +352,15 @@ primerCORE = (function () {
             // Antes de enviar
             beforeSend: function () {
 
-                // $("#" + widget.id).find("wrapper").css("display", "none");
-
-                // Constroi o spinner 
-                //ConstroiSpinner(widget);
-                // Adicionar class ao spinner
-                //$("#" + widget.id).addClass("carregar")
+          
             },
             // Depois do pedido estar completo
             complete: function () {
-                // Parar widget
-                //widget.spinner.stop();
-
-                //$("#" + widget.id).find("wrapper").css("display", "block");
-
-                // Remover class do spinner
-                //$("#" + widget.id).removeClass("carregar");
+         
             },
             url: url,
             // Ao receber o pedido
             success: function () {
-                console.log("Dados obtidos");
             },
             error: function (xhr, ajaxOptions, thrownError) {
                 console.log(xhr);
@@ -501,27 +395,15 @@ primerCORE = (function () {
                 // Antes de enviar
                 beforeSend: function () {
 
-                    // $("#" + widget.id).find("wrapper").css("display", "none");
-
-                    // Constroi o spinner 
-                    //ConstroiSpinner(widget);
-                    // Adicionar class ao spinner
-                    //$("#" + widget.id).addClass("carregar")
+   
                 },
                 // Depois do pedido estar completo
                 complete: function () {
-                    // Parar widget
-                    //widget.spinner.stop();
-
-                    //$("#" + widget.id).find("wrapper").css("display", "block");
-
-                    // Remover class do spinner
-                    //$("#" + widget.id).removeClass("carregar");
+       
                 },
                 url: url,
                 // Ao receber o pedido
                 success: function () {
-                    console.log("Dados obtidos");
                 },
                 error: function (xhr, ajaxOptions, thrownError) {
                     console.log(xhr);
@@ -551,30 +433,14 @@ primerCORE = (function () {
             intervaloData = ["seconds", "hours", "minutes", "days", "weeks", "months", "years"],
             intervaloDataPT = ["Segundo", "Hora", "Minuto", "Dia", "Semana", "Mes", "Ano"];
 
-        //query = '{ "sessaoID": cookie.sessaoid, "dashboardID": "12", "utilizadorID": "'+ utilizadorID +'", "widgetsDados":'
-        //        + '[{ "id": "'+ widget.id +'", '
-        //        + '"tipo": "1",'
-        //        + '"elemento": "'+ widget.widgetElemento +'", '
-        //        + '"contexto": ["widget3", "widget4", "widget8"], '
-        //        + '"series": [{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, '
-        //                    +'{ "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, '
-        //                    +'{ "funcao": "media", "campo": "valor.valorMin", "index": "indicadores", "type": "" }], '
-        //        + '"buckets": [{ "tipo": "histogramadata", "campo": "data", "intervalo": "dia" }] }], '
-        //        + '"widgetsContexto": { "contextoPesquisa": [{ "id": "widget3", "tipo": "contexto", "filtro": "_index:indicadores" }, '
-        //                                + '{ "id": "widget4", "tipo": "contexto", "filtro": "_type:dadomedidotriplo" }], '
-        //        + '"contextoData": [{ "id": "widget8", "campo": "data", '
-        //                            + '"dataInicio": \"' + opcoes.dataInicio + '\",  '
-        //                            + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
-
-
+     
         // years, months, weeks, days, hours, minutes, and seconds. 
-        
+
         // Enquanto a diferença das datas for maior que 30 num determinado intervalo, seja dias, meses, etc
         // vai avançando no array a testar novos intervalos
         // Com isto ée pretendido achar o numero ideal de dados a dispor, sem causar grande sobrecarga
         // nos pedidos/aplicação
         while (moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]) > 40) {
-            console.log(moment(opcoes.dataFim).diff(moment(opcoes.dataInicio), intervaloData[index]) > 40);
             index++;
         }
 
@@ -607,19 +473,11 @@ primerCORE = (function () {
             }
 
         })
-
-        // Adicionar pesquisas(Filtro?)
-        //widget.seriesU
-        //pesquisa += '{ "id": "' + widget.id + '", "tipo": "contexto", "filtro": "' + filtros[curIndex].valor + '" }, ';
-
         pesquisa += '],';
 
-
-        //series = '[{ "funcao": "Media", "campo": "valor.valorMax", "index": "indicadores", "type": "" }, { "funcao": "Media", "campo": "valor.valorMed", "index": "indicadores", "type": "" }, { "funcao": "Somatorio", "campo": "valor.valorMin", "index": "indicadores", "type": "" }],';
-
-        console.log($.datepicker.formatDate('yy/mm/dd', new Date()));
-
+        // Caso exista objecto de onde escolher
         if (widget.periodoEscolhido instanceof Object) {
+            // Se for do tipo fixo (Vai utilizar a data atual e adaptar conforme a opção escolhida)
             if (widget.periodoEscolhido.periodo === "fixo") {
 
                 var index = _.findIndex(intervaloDataPT, function (data) { return data === widget.periodoEscolhido.valor; }),
@@ -639,7 +497,7 @@ primerCORE = (function () {
                                             + '"dataFim": \"' + $.datepicker.formatDate('yy/mm/dd', new Date()) + '\"  }] } }';
 
 
-
+            // Senão utiliza a opção do contexto
             } else if(widget.periodoEscolhido.periodo === "contexto") {
                 query = '{ "sessaoID": "sessaoDebug", "dashboardID": "' + dashboardID + '", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
                         + '[{ "id": "' + widget.id + '", '
@@ -654,7 +512,7 @@ primerCORE = (function () {
                                             + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
 
             }
-
+        // Como não tem objecto vamos é assumido que tem contexto, é utilizado as opcoes do contexto
         } else {
             query = '{ "sessaoID": "sessaoDebug", "dashboardID": "' + dashboardID + '", "utilizadorID": "' + utilizadorID + '", "widgetsDados":'
         + '[{ "id": "' + widget.id + '", '
@@ -669,8 +527,6 @@ primerCORE = (function () {
                             + '"dataFim": \"' + opcoes.dataFim + '\"  }] } }';
         }
 
-
-        console.log(query);
 
         $.ajax({
             type: "POST",
@@ -702,12 +558,6 @@ primerCORE = (function () {
                 // Adiciona opção de selecionar
                 $("#" + widget.id).css("pointer-events", "auto");
 
-                //// Caso seja um widget do tipo dados
-                //if (widget.widgetTipo === "dados") {
-                //    widget.dados = $.parseJSON(event.responseText);
-                //    widget.RedesenhaGrafico(widget.id);
-                //}
-
                 // Parar widget
                 widget.spinner.stop();
 
@@ -734,7 +584,6 @@ primerCORE = (function () {
                 // Remove aviso pois foi feito com sucesso o pedido
                 widget.RemoveAviso();
 
-                console.log("Dados obtidos");
 
             },
             error: function (xhr, ajaxOptions, thrownError) {
